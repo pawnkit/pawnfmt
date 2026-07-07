@@ -1,0 +1,1 @@
+stock TestRanges(x){switch(x){case 1,3 .. 5,12:return 9;case 0..1:return 1;default:return 0;}}

@@ -1,0 +1,17 @@
+version: 3
+tasks:
+  default:
+    cmds:
+      - go build -o ./bin/pawnfmt/pawnfmt ./cmd/pawnfmt
+
+  test:
+    cmds:
+      - go test ./...
+
+  vet:
+    cmds:
+      - go vet ./...
+
+  bench:
+    cmds:
+      - go test ./internal/bench/... -bench=. -benchmem -run=^$

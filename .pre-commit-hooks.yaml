@@ -1,0 +1,8 @@
+- id: pawnfmt
+  name: pawnfmt
+  description: Format Pawn (.pwn/.inc) source with pawnfmt.
+  entry: pawnfmt
+  args: [--write]
+  language: golang
+  types_or: [file]
+  files: \.(pwn|inc)$

@@ -1,0 +1,1 @@
+stock   Foo(playerid){return 1;}
