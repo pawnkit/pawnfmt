@@ -3,7 +3,7 @@ module github.com/pawnkit/pawnfmt
 go 1.26.2
 
 require (
-	github.com/BurntSushi/toml v1.4.0
+	github.com/BurntSushi/toml v1.6.0
 	github.com/pawnkit/pawn-parser v1.0.1-0.20260705164408-a56d5f0e4edd
 	gopkg.in/yaml.v3 v3.0.1
 )
