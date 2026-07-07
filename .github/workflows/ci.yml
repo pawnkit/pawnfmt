@@ -20,6 +20,15 @@ jobs:
         with:
           go-version-file: go.mod
 
+      - name: Cache real-world corpus
+        uses: actions/cache@v4
+        with:
+          path: testdata/real-world
+          key: real-world-corpus-${{ hashFiles('testdata/real-world/sources.tsv') }}
+
+      - name: Fetch real-world corpus
+        run: testdata/real-world/fetch.sh
+
       - name: Build
         run: go build ./...
 
@@ -42,7 +51,7 @@ jobs:
           go-version-file: go.mod
 
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v9
         with:
           version: latest
           only-new-issues: true
