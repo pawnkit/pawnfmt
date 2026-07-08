@@ -166,51 +166,44 @@ func TestNestedConditionalDirectivesAlignWithEnclosingBrace(t *testing.T) {
 	}
 }
 
-func TestMagicTrailingCommaForcesExplosion(t *testing.T) {
+func TestOnlyEnumsGetTrailingCommas(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		name   string
 		source string
 		want   string
 	}{
 		{
+			name:   "parameter_list",
+			source: "stock F(a, b,) {\n    return a + b;\n}\n",
+			want:   "stock F(a, b)\n{\n    return a + b;\n}\n",
+		},
+		{
 			name:   "call_arguments",
 			source: "stock F() {\n    Call(a, b,);\n}\n",
-			want:   "stock F()\n{\n    Call(\n        a,\n        b,\n    );\n}\n",
+			want:   "stock F()\n{\n    Call(a, b);\n}\n",
 		},
 		{
 			name:   "array_literal",
 			source: "new arr[] = {1, 2,};\n",
-			want:   "new arr[] = {\n    1,\n    2,\n};\n",
+			want:   "new arr[] = {1, 2};\n",
 		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			formatted := mustFormat(t, []byte(tc.source), config.Default())
 			if string(formatted) != tc.want {
-				t.Fatalf("magic trailing comma did not force explosion\nexpected:\n%s\nactual:\n%s", tc.want, formatted)
+				t.Fatalf("expected the trailing comma to be stripped, not preserved or forced into an explosion\nexpected:\n%s\nactual:\n%s", tc.want, formatted)
 			}
+
 			second := mustFormat(t, formatted, config.Default())
 			if string(second) != string(formatted) {
-				t.Fatalf("magic trailing comma output is not idempotent\nfirst:\n%s\nsecond:\n%s", formatted, second)
+				t.Fatalf("output is not idempotent\nfirst:\n%s\nsecond:\n%s", formatted, second)
 			}
 		})
-	}
-}
-
-func TestParameterListNeverGetsTrailingComma(t *testing.T) {
-	t.Parallel()
-
-	source := []byte("stock F(a, b,) {\n    return a + b;\n}\n")
-	want := []byte("stock F(a, b)\n{\n    return a + b;\n}\n")
-
-	formatted := mustFormat(t, source, config.Default())
-	if string(formatted) != string(want) {
-		t.Fatalf("expected magic trailing comma to be stripped from parameter list\nexpected:\n%s\nactual:\n%s", want, formatted)
-	}
-
-	second := mustFormat(t, formatted, config.Default())
-	if string(second) != string(formatted) {
-		t.Fatalf("output is not idempotent\nfirst:\n%s\nsecond:\n%s", formatted, second)
 	}
 }
 
@@ -220,17 +213,6 @@ func TestNoTrailingCommaStillCollapsesToOneLine(t *testing.T) {
 	formatted := mustFormat(t, source, config.Default())
 	if string(formatted) != want {
 		t.Fatalf("list without a trailing comma should still collapse\nexpected:\n%s\nactual:\n%s", want, formatted)
-	}
-}
-
-func TestMagicTrailingCommaDisabledByTrailingCommaNever(t *testing.T) {
-	cfg := config.Default()
-	cfg.TrailingComma = config.TrailingCommaNever
-	source := []byte("stock F() {\n    Call(a, b,);\n}\n")
-	want := "stock F()\n{\n    Call(a, b);\n}\n"
-	formatted := mustFormat(t, source, cfg)
-	if string(formatted) != want {
-		t.Fatalf("TrailingComma=never should ignore the magic trailing comma and collapse normally\nexpected:\n%s\nactual:\n%s", want, formatted)
 	}
 }
 

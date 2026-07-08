@@ -50,9 +50,6 @@ func (cfg Config) Validate() error {
 	if err := oneOf("multiline_call_args", string(cfg.MultilineCallArgs), string(MultilineListAuto), string(MultilineListOnePerLine), string(MultilineListBinPack)); err != nil {
 		return err
 	}
-	if err := oneOf("trailing_comma", string(cfg.TrailingComma), string(TrailingCommaNever), string(TrailingCommaMultiline)); err != nil {
-		return err
-	}
 	if err := oneOf("break_binary_operator", string(cfg.BreakBinaryOperator), string(BinaryOperatorBreakAfter), string(BinaryOperatorBreakBefore)); err != nil {
 		return err
 	}

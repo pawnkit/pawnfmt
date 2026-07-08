@@ -170,10 +170,10 @@ func (s *state) formatArgumentList(n *parser.Node) doc.Doc {
 		return doc.Text("()")
 	}
 	if hasConditionalItem(n.Children) {
-		return s.formatDirectiveList(n.Children, "(", ")", s.config.TrailingComma == config.TrailingCommaMultiline)
+		return s.formatDirectiveList(n.Children, "(", ")", false)
 	}
 
-	return s.formatParenList(n.Children, s.config.MultilineCallArgs, s.hasMagicTrailingComma(n), true)
+	return s.formatParenList(n.Children, s.config.MultilineCallArgs)
 }
 
 func (s *state) formatSubscriptExpression(n *parser.Node) doc.Doc {
@@ -238,22 +238,15 @@ func (s *state) formatArrayLiteral(n *parser.Node) doc.Doc {
 		return doc.Text("{}")
 	}
 	if hasConditionalItem(n.Children) {
-		return s.formatDirectiveList(n.Children, "{", "}", s.config.TrailingComma == config.TrailingCommaMultiline)
+		return s.formatDirectiveList(n.Children, "{", "}", false)
 	}
 	open, close := "{", "}"
 	if s.config.SpaceInsideBraces {
 		open, close = "{ ", " }"
 	}
-	if s.hasMagicTrailingComma(n) {
-		return s.formatExplodedList(n.Children, open, close, true)
-	}
 	items := make([]doc.Doc, len(n.Children))
 	for i, c := range n.Children {
-		if i == len(n.Children)-1 {
-			items[i] = s.formatLastListItem(c)
-		} else {
-			items[i] = s.formatListItem(c, true)
-		}
+		items[i] = s.formatListItem(c, i < len(n.Children)-1)
 	}
 	separator := doc.Line()
 	if !s.config.SpaceAfterComma {

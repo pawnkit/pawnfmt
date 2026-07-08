@@ -2,13 +2,8 @@ package format
 
 import (
 	parser "github.com/pawnkit/pawn-parser"
-	"github.com/pawnkit/pawnfmt/internal/config"
 	"github.com/pawnkit/pawnfmt/internal/doc"
 )
-
-func (s *state) hasMagicTrailingComma(n *parser.Node) bool {
-	return s.config.TrailingComma == config.TrailingCommaMultiline && sourceHasTrailingComma(n, s.source)
-}
 
 func hasConditionalItem(items []*parser.Node) bool {
 	for _, it := range items {

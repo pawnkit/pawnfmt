@@ -59,17 +59,17 @@ func (s *state) formatParameterList(n *parser.Node) doc.Doc {
 		return s.formatDirectiveList(n.Children, "(", ")", false)
 	}
 
-	return s.formatParenList(n.Children, s.config.MultilineFunctionParams, false, false)
+	return s.formatParenList(n.Children, s.config.MultilineFunctionParams)
 }
 
-func (s *state) formatParenList(nodes []*parser.Node, style config.MultilineListStyle, forceMultiline, allowTrailingComma bool) doc.Doc {
+func (s *state) formatParenList(nodes []*parser.Node, style config.MultilineListStyle) doc.Doc {
 	open, close := "(", ")"
 	if s.config.SpaceInsideParens {
 		open, close = "( ", " )"
 	}
 
-	if forceMultiline || style == config.MultilineListOnePerLine {
-		return s.formatExplodedList(nodes, open, close, allowTrailingComma)
+	if style == config.MultilineListOnePerLine {
+		return s.formatExplodedList(nodes, open, close)
 	}
 
 	sepLine := doc.SoftLine()
@@ -99,15 +99,7 @@ func (s *state) formatParenList(nodes []*parser.Node, style config.MultilineList
 
 	items := make([]doc.Doc, len(nodes))
 	for i, n := range nodes {
-		if i == len(nodes)-1 {
-			if allowTrailingComma {
-				items[i] = s.formatLastListItem(n)
-			} else {
-				items[i] = s.formatListItem(n, false)
-			}
-		} else {
-			items[i] = s.formatListItem(n, true)
-		}
+		items[i] = s.formatListItem(n, i < len(nodes)-1)
 	}
 	joined := doc.Join(sepLine, items...)
 	return doc.Group(doc.Concat(
@@ -118,12 +110,10 @@ func (s *state) formatParenList(nodes []*parser.Node, style config.MultilineList
 	))
 }
 
-func (s *state) formatExplodedList(nodes []*parser.Node, open, closeTok string, allowTrailingComma bool) doc.Doc {
-	trailingComma := allowTrailingComma && s.config.TrailingComma == config.TrailingCommaMultiline
+func (s *state) formatExplodedList(nodes []*parser.Node, open, closeTok string) doc.Doc {
 	items := make([]doc.Doc, len(nodes))
 	for i, n := range nodes {
-		last := i == len(nodes)-1
-		items[i] = s.formatListItem(n, !last || trailingComma)
+		items[i] = s.formatListItem(n, i < len(nodes)-1)
 	}
 	return doc.Concat(
 		doc.Text(open),

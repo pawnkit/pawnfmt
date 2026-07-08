@@ -85,10 +85,6 @@ multiline_call_args = %q
 # "before" moves it to the next line.
 break_binary_operator = %q
 
-# Trailing commas in multiline lists: "never" or "multiline".
-# With "multiline", an existing trailing comma also keeps that list expanded.
-trailing_comma = %q
-
 # Format code inside pawnfmt off/on regions.
 format_disabled_regions = %t
 # Add one blank line after the top include block.
@@ -142,7 +138,6 @@ exclude = []
 		string(d.MultilineFunctionParams),
 		string(d.MultilineCallArgs),
 		string(d.BreakBinaryOperator),
-		string(d.TrailingComma),
 		d.FormatDisabledRegions,
 		d.BlankLinesAfterIncludeBlock,
 		d.BlankLinesBetweenPublics,

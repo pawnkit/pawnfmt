@@ -45,19 +45,6 @@ func TestDebugDocTreeCoversResetIndentAndOutdent(t *testing.T) {
 	}
 }
 
-func TestDebugDocTreeCoversIfBreak(t *testing.T) {
-	cfg := config.Default()
-	cfg.LineWidth = 20
-	source := []byte("stock F() {\n    Call(aaaaaaaaaa, bbbbbbbbbb, cccccccccc);\n}\n")
-	got, err := formatter.DebugDocTree(source, cfg)
-	if err != nil {
-		t.Fatalf("DebugDocTree returned an error: %v", err)
-	}
-	if !strings.Contains(got, "IfBreak") {
-		t.Fatalf("DebugDocTree output missing IfBreak marker:\n%s", got)
-	}
-}
-
 func TestDebugDocTreeCoversFill(t *testing.T) {
 	cfg := config.Default()
 	cfg.MultilineCallArgs = config.MultilineListBinPack

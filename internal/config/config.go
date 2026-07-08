@@ -59,13 +59,6 @@ const (
 	TagColonSpacingPreserve TagColonSpacing = "preserve"
 )
 
-type TrailingComma string
-
-const (
-	TrailingCommaNever     TrailingComma = "never"
-	TrailingCommaMultiline TrailingComma = "multiline"
-)
-
 type MultilineListStyle string
 
 const (
@@ -111,7 +104,6 @@ type Config struct {
 	SpaceBeforeArrayBrackets       bool                  `json:"space_before_array_brackets" yaml:"space_before_array_brackets" toml:"space_before_array_brackets"`
 	MultilineFunctionParams        MultilineListStyle    `json:"multiline_function_params" yaml:"multiline_function_params" toml:"multiline_function_params"`
 	MultilineCallArgs              MultilineListStyle    `json:"multiline_call_args" yaml:"multiline_call_args" toml:"multiline_call_args"`
-	TrailingComma                  TrailingComma         `json:"trailing_comma" yaml:"trailing_comma" toml:"trailing_comma"`
 	FormatDisabledRegions          bool                  `json:"format_disabled_regions" yaml:"format_disabled_regions" toml:"format_disabled_regions"`
 	BlankLinesAfterIncludeBlock    bool                  `json:"blank_lines_after_include_block" yaml:"blank_lines_after_include_block" toml:"blank_lines_after_include_block"`
 	BlankLinesBetweenPublics       bool                  `json:"blank_lines_between_publics" yaml:"blank_lines_between_publics" toml:"blank_lines_between_publics"`

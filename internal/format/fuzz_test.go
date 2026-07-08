@@ -23,7 +23,6 @@ func configFromVariant(variant uint8) config.Config {
 		cfg.AlignEnumFields = true
 	}
 	if variant&0x08 != 0 {
-		cfg.TrailingComma = config.TrailingCommaNever
 		cfg.MultilineCallArgs = config.MultilineListOnePerLine
 		cfg.MultilineFunctionParams = config.MultilineListOnePerLine
 	}

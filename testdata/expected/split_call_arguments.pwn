@@ -7,6 +7,6 @@ stock ArgSplit(playerid)
     #else
         0x00FF00FF,
     #endif
-        "hello",
+        "hello"
     );
 }

@@ -57,17 +57,6 @@ func (s *state) formatListItem(n *parser.Node, addComma bool) doc.Doc {
 	return doc.Concat(parts...)
 }
 
-func (s *state) formatLastListItem(n *parser.Node) doc.Doc {
-	if s.config.TrailingComma != config.TrailingCommaMultiline {
-		return s.formatListItem(n, false)
-	}
-	parts := []doc.Doc{s.itemCore(n), doc.IfBreak(doc.Text(","), doc.Text(""))}
-	if trail := s.trailingDoc(n.TrailingTrivia()); trail != nil {
-		parts = append(parts, trail)
-	}
-	return doc.Concat(parts...)
-}
-
 func (s *state) withTrivia(n *parser.Node, core doc.Doc) doc.Doc {
 	lead := s.leadingDocs(n.LeadingTrivia())
 	trail := s.trailingDoc(n.TrailingTrivia())

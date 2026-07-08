@@ -31,7 +31,6 @@ func Default() Config {
 		SpaceBeforeArrayBrackets:       false,
 		MultilineFunctionParams:        MultilineListAuto,
 		MultilineCallArgs:              MultilineListAuto,
-		TrailingComma:                  TrailingCommaMultiline,
 		FormatDisabledRegions:          false,
 		BlankLinesAfterIncludeBlock:    true,
 		BlankLinesBetweenPublics:       true,
@@ -83,9 +82,6 @@ func (cfg *Config) ApplyDefaults() {
 	}
 	if cfg.MultilineCallArgs == "" {
 		cfg.MultilineCallArgs = defaults.MultilineCallArgs
-	}
-	if cfg.TrailingComma == "" {
-		cfg.TrailingComma = defaults.TrailingComma
 	}
 	if cfg.BreakBinaryOperator == "" {
 		cfg.BreakBinaryOperator = defaults.BreakBinaryOperator
