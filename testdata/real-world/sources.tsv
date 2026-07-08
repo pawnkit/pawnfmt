@@ -44,3 +44,4 @@ omp-stdlib	open.mp.inc	https://raw.githubusercontent.com/openmultiplayer/omp-std
 open-mp-time	pawn_chrono_version.inc	https://raw.githubusercontent.com/Zorono/open.mp-time/master/pawn_chrono_version.inc
 sa-mp-fixes	test-a_npc.pwn	https://raw.githubusercontent.com/pawn-lang/sa-mp-fixes/master/test-a_npc.pwn
 sa-mp	BasicServerFilterscript.pwn	https://raw.githubusercontent.com/MouizGhouri/SA-MP/master/filterscripts/BasicServerFilterscript.pwn
+samp-weapon-config	weapon-config.inc	https://raw.githubusercontent.com/oscar-broman/samp-weapon-config/master/weapon-config.inc

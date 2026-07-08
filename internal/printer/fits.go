@@ -52,6 +52,9 @@ func fits(width int, next command, rest []command, mustBeFlat bool, _ Options) b
 				return false
 			}
 			return true
+		case doc.BreakParentDoc:
+		case doc.LineSuffixDoc:
+			// skip
 		case doc.ConcatDoc:
 			for index := len(node.Parts) - 1; index >= 0; index-- {
 				local = append(local, command{indent: current.indent, mode: current.mode, doc: node.Parts[index]})

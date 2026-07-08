@@ -65,6 +65,16 @@ type FillDoc struct {
 
 func (FillDoc) docNode() {}
 
+type BreakParentDoc struct{}
+
+func (BreakParentDoc) docNode() {}
+
+type LineSuffixDoc struct {
+	Contents Doc
+}
+
+func (LineSuffixDoc) docNode() {}
+
 func Text(value string) Doc {
 	return TextDoc{Value: value}
 }
@@ -79,6 +89,18 @@ func SoftLine() Doc {
 
 func HardLine() Doc {
 	return HardLineDoc{}
+}
+
+func BreakParent() Doc {
+	return BreakParentDoc{}
+}
+
+func LineSuffix(contents Doc) Doc {
+	if contents == nil {
+		return Text("")
+	}
+
+	return LineSuffixDoc{Contents: contents}
 }
 
 func Concat(parts ...Doc) Doc {

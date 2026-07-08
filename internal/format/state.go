@@ -23,6 +23,8 @@ type state struct {
 	renderedComments map[int]bool
 
 	commentPadWidths map[int]int
+
+	paramQualifiers map[*parser.Node]*parser.Node
 }
 
 type nextItemHint struct {

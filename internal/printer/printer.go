@@ -52,10 +52,39 @@ func (options Options) withDefaults() Options {
 
 func render(root doc.Doc, options Options) string {
 	var builder strings.Builder
+
 	commands := []command{{indent: 0, mode: modeBreak, doc: root}}
+
+	var lineSuffixes []command
+
 	column := 0
 
-	for len(commands) > 0 {
+	deferLine := func(current command) bool {
+		if len(lineSuffixes) == 0 {
+			return false
+		}
+
+		commands = append(commands, current)
+		for index := len(lineSuffixes) - 1; index >= 0; index-- {
+			commands = append(commands, lineSuffixes[index])
+		}
+
+		lineSuffixes = nil
+
+		return true
+	}
+
+	for len(commands) > 0 || len(lineSuffixes) > 0 {
+		if len(commands) == 0 {
+			for index := len(lineSuffixes) - 1; index >= 0; index-- {
+				commands = append(commands, lineSuffixes[index])
+			}
+
+			lineSuffixes = nil
+
+			continue
+		}
+
 		current := commands[len(commands)-1]
 		commands = commands[:len(commands)-1]
 
@@ -68,18 +97,23 @@ func render(root doc.Doc, options Options) string {
 			if current.mode == modeFlat {
 				builder.WriteByte(' ')
 				column++
-			} else {
+			} else if !deferLine(current) {
 				writeIndent(&builder, current.indent, options)
 				column = current.indent * options.IndentWidth
 			}
 		case doc.SoftLineDoc:
-			if current.mode == modeBreak {
+			if current.mode == modeBreak && !deferLine(current) {
 				writeIndent(&builder, current.indent, options)
 				column = current.indent * options.IndentWidth
 			}
 		case doc.HardLineDoc:
-			writeIndent(&builder, current.indent, options)
-			column = current.indent * options.IndentWidth
+			if !deferLine(current) {
+				writeIndent(&builder, current.indent, options)
+				column = current.indent * options.IndentWidth
+			}
+		case doc.BreakParentDoc:
+		case doc.LineSuffixDoc:
+			lineSuffixes = append(lineSuffixes, command{indent: current.indent, mode: current.mode, doc: node.Contents})
 		case doc.ConcatDoc:
 			for index := len(node.Parts) - 1; index >= 0; index-- {
 				commands = append(commands, command{indent: current.indent, mode: current.mode, doc: node.Parts[index]})
@@ -93,7 +127,7 @@ func render(root doc.Doc, options Options) string {
 			commands = append(commands, command{indent: indent, mode: current.mode, doc: node.Contents})
 		case doc.GroupDoc:
 			next := command{indent: current.indent, mode: modeFlat, doc: node.Contents}
-			if fits(options.LineWidth-column, next, commands, false, options) {
+			if !hasForcedBreak(node.Contents) && fits(options.LineWidth-column, next, commands, false, options) {
 				commands = append(commands, command{indent: current.indent, mode: modeFlat, doc: node.Contents})
 			} else {
 				commands = append(commands, command{indent: current.indent, mode: modeBreak, doc: node.Contents})

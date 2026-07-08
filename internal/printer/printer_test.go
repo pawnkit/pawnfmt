@@ -228,3 +228,65 @@ func TestIndentStyleTabUsesTabsNotSpaces(t *testing.T) {
 		t.Fatalf("Print with IndentStyle=tab = %q, want %q", got, want)
 	}
 }
+
+func TestBreakParentForcesEnclosingGroupToBreak(t *testing.T) {
+	t.Parallel()
+
+	d := doc.Group(doc.Concat(doc.Text("a"), doc.BreakParent(), doc.Line(), doc.Text("b")))
+	want := "a\nb"
+
+	if got := printer.Print(d, opts(80)); got != want {
+		t.Fatalf("Print(fitting Group with BreakParent) = %q, want %q (forced break)", got, want)
+	}
+}
+
+func TestBreakParentPropagatesThroughNestedGroups(t *testing.T) {
+	t.Parallel()
+
+	inner := doc.Group(doc.Concat(doc.Text("x"), doc.BreakParent()))
+	outer := doc.Group(doc.Concat(inner, doc.Line(), doc.Text("y")))
+	want := "x\ny"
+
+	if got := printer.Print(outer, opts(80)); got != want {
+		t.Fatalf("Print(outer Group containing a forced-break nested Group) = %q, want %q", got, want)
+	}
+}
+
+func TestLineSuffixDefersContentUntilTheNextLineBreak(t *testing.T) {
+	t.Parallel()
+
+	d := doc.Concat(doc.Text("a"), doc.LineSuffix(doc.Text("//c")), doc.Text("b"), doc.HardLine(), doc.Text("d"))
+	want := "ab//c\nd"
+
+	if got := printer.Print(d, opts(80)); got != want {
+		t.Fatalf("Print(LineSuffix before a HardLine) = %q, want %q (suffix flushed right before the break)", got, want)
+	}
+}
+
+func TestLineSuffixWithBreakParentForcesAGroupToBreakAndFlushesAtThatBreak(t *testing.T) {
+	t.Parallel()
+
+	d := doc.Group(doc.Concat(
+		doc.Text("a"),
+		doc.Concat(doc.LineSuffix(doc.Text("//c")), doc.BreakParent()),
+		doc.Text(" op"),
+		doc.Line(),
+		doc.Text("b"),
+	))
+	want := "a op//c\nb"
+
+	if got := printer.Print(d, opts(80)); got != want {
+		t.Fatalf("Print(LineSuffix+BreakParent inside an otherwise-fitting Group) = %q, want %q", got, want)
+	}
+}
+
+func TestLineSuffixStillFlushesAtEndOfDocumentWithNoTrailingLineBreak(t *testing.T) {
+	t.Parallel()
+
+	d := doc.Concat(doc.Text("a"), doc.LineSuffix(doc.Text("//c")))
+	want := "a//c"
+
+	if got := printer.Print(d, opts(80)); got != want {
+		t.Fatalf("Print(LineSuffix with nothing after it) = %q, want %q (flushed at end, not dropped)", got, want)
+	}
+}

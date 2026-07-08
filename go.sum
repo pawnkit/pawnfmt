@@ -14,8 +14,8 @@ github.com/google/renameio v0.1.0 h1:GOZbcHa3HfsPKPlmyPyN2KEohoMXOhdMbHrvbpl2QaA
 github.com/google/renameio v0.1.0/go.mod h1:KWCgfxg9yswjAJkECMjeO8J8rahYeXnNhOm40UhjYkI=
 github.com/hexops/gotextdiff v1.0.3 h1:gitA9+qJrrTCsiCl7+kh75nPqQt1cx4ZkudSTLoUqJM=
 github.com/hexops/gotextdiff v1.0.3/go.mod h1:pSWU5MAI3yDq+fZBTazCSJysOMbxWL1BSow5/V2vxeg=
-github.com/pawnkit/pawn-parser v1.0.1-0.20260705164408-a56d5f0e4edd h1:OffeSICmYUh9UueEjiyMJYx/yGnMb9OiN9LFJfDwzDo=
-github.com/pawnkit/pawn-parser v1.0.1-0.20260705164408-a56d5f0e4edd/go.mod h1:5xoNFJqL0dMOr4hglTMFotkLYb2mMbbpHCpnRmyTO2E=
+github.com/pawnkit/pawn-parser v1.0.1-0.20260708203237-7ab54b23c3b5 h1:rprvIAwz/IaKUSHymdp2NVKY3uqILsAq9A7NfABIAJM=
+github.com/pawnkit/pawn-parser v1.0.1-0.20260708203237-7ab54b23c3b5/go.mod h1:5xoNFJqL0dMOr4hglTMFotkLYb2mMbbpHCpnRmyTO2E=
 golang.org/x/mod v0.37.0 h1:vF1DjpVEshcIqoEaauuHebaLk1O1forxjxBaVn884JQ=
 golang.org/x/mod v0.37.0/go.mod h1:m8S8VeM9r4dzDwjrKO0a1sZP3YjeMamRRlD+fmR2Q/0=
 golang.org/x/sync v0.21.0 h1:HLII4xRRTtCRkxYp4HNFF0Js/Og6q2i++KXbg0gHCwM=

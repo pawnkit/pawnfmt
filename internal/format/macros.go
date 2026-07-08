@@ -119,6 +119,8 @@ func containsHardLine(d doc.Doc) bool {
 	switch v := d.(type) {
 	case doc.HardLineDoc:
 		return true
+	case doc.BreakParentDoc:
+		return true
 	case doc.ConcatDoc:
 		if slices.ContainsFunc(v.Parts, containsHardLine) {
 			return true
@@ -134,6 +136,8 @@ func containsHardLine(d doc.Doc) bool {
 	case doc.OutdentDoc:
 		return containsHardLine(v.Contents)
 	case doc.GroupDoc:
+		return containsHardLine(v.Contents)
+	case doc.LineSuffixDoc:
 		return containsHardLine(v.Contents)
 	case doc.IfBreakDoc:
 		return containsHardLine(v.Broken) || containsHardLine(v.Flat)

@@ -55,11 +55,49 @@ func (s *state) formatParameterList(n *parser.Node) doc.Doc {
 	if len(n.Children) == 0 {
 		return doc.Text("()")
 	}
-	if hasConditionalItem(n.Children) {
-		return s.formatDirectiveList(n.Children, "(", ")", false)
+
+	children := s.mergeBareParameterQualifiers(n.Children)
+	if hasConditionalItem(children) {
+		return s.formatDirectiveList(children, "(", ")", false)
 	}
 
-	return s.formatParenList(n.Children, s.config.MultilineFunctionParams)
+	return s.formatParenList(children, s.config.MultilineFunctionParams)
+}
+
+func (s *state) mergeBareParameterQualifiers(children []*parser.Node) []*parser.Node {
+	merged := make([]*parser.Node, 0, len(children))
+	for i, c := range children {
+		if isBareParameterIdentifier(c) && i+1 < len(children) && children[i+1].Kind == parser.KindParameter &&
+			!hasCommaBetween(s.source, c.End, children[i+1].Start) {
+			if s.paramQualifiers == nil {
+				s.paramQualifiers = make(map[*parser.Node]*parser.Node)
+			}
+
+			s.paramQualifiers[children[i+1]] = c
+
+			continue
+		}
+
+		merged = append(merged, c)
+	}
+
+	return merged
+}
+
+func isBareParameterIdentifier(n *parser.Node) bool {
+	return n.Kind == parser.KindParameter && len(n.Children) == 1 &&
+		n.Children[0].Kind == parser.KindIdentifier &&
+		n.Start == n.Children[0].Start && n.End == n.Children[0].End
+}
+
+func hasCommaBetween(source []byte, from, to int) bool {
+	for i := from; i < to && i < len(source); i++ {
+		if source[i] == ',' {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (s *state) formatParenList(nodes []*parser.Node, style config.MultilineListStyle) doc.Doc {
@@ -124,8 +162,12 @@ func (s *state) formatExplodedList(nodes []*parser.Node, open, closeTok string) 
 }
 
 func (s *state) formatParameter(n *parser.Node) doc.Doc {
+	var qualifier doc.Doc
+	if q := s.paramQualifiers[n]; q != nil {
+		qualifier = doc.Concat(doc.Text(q.Text(s.source)), doc.Text(" "))
+	}
 	if len(n.Children) == 0 {
-		return doc.Text(n.Text(s.source))
+		return doc.Concat(qualifier, doc.Text(n.Text(s.source)))
 	}
 	tag, name := n.Field("tag"), n.Field("name")
 	var parts []doc.Doc
@@ -152,7 +194,8 @@ func (s *state) formatParameter(n *parser.Node) doc.Doc {
 	if def := n.Field("default_value"); def != nil {
 		parts = append(parts, s.assignmentSeparator(), s.formatNode(def))
 	}
-	return doc.Concat(parts...)
+
+	return doc.Concat(qualifier, doc.Concat(parts...))
 }
 
 func byRefBeforeName(n *parser.Node, source []byte) bool {

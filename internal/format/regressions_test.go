@@ -378,3 +378,66 @@ func TestStringConcatNormalizesExtraWhitespaceBetweenPieces(t *testing.T) {
 		t.Fatalf("string concat whitespace normalization mismatch\nexpected:\n%s\nactual:\n%s", want, formatted)
 	}
 }
+
+func TestBareIdentifierBeforeParameterIsNotTreatedAsItsOwnParameter(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("#define WC_CONST\nstock F(playerid, WC_CONST animlib[])\n{\n    return 1;\n}\n")
+	want := "#define WC_CONST\n\nstock F(playerid, WC_CONST animlib[])\n{\n    return 1;\n}\n"
+
+	formatted := mustFormat(t, source, config.Default())
+	if string(formatted) != want {
+		t.Fatalf("expected the macro qualifier and parameter to stay one parameter, with no comma between them\nexpected:\n%s\nactual:\n%s", want, formatted)
+	}
+
+	second := mustFormat(t, formatted, config.Default())
+	if string(second) != string(formatted) {
+		t.Fatalf("output is not idempotent\nfirst:\n%s\nsecond:\n%s", formatted, second)
+	}
+}
+
+func TestStateStatementKeepsTagQualifiedTarget(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("public F()\n{\n    state _ALS : _ALS_go;\n    return 1;\n}\n")
+	want := "public F()\n{\n    state _ALS: _ALS_go;\n    return 1;\n}\n"
+
+	formatted := mustFormat(t, source, config.Default())
+	if string(formatted) != want {
+		t.Fatalf("expected the tag-qualified state target to survive formatting\nexpected:\n%s\nactual:\n%s", want, formatted)
+	}
+
+	second := mustFormat(t, formatted, config.Default())
+	if string(second) != string(formatted) {
+		t.Fatalf("output is not idempotent\nfirst:\n%s\nsecond:\n%s", formatted, second)
+	}
+}
+
+func TestTrailingLineCommentInGroupForcesABreakInsteadOfSwallowingCode(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("stock F(x)\n{\n    if (x == 1 // a\n    || x == 2)\n    {\n        return 1;\n    }\n    return 0;\n}\n")
+
+	formatted := mustFormat(t, source, config.Default())
+
+	text := string(formatted)
+	if !strings.Contains(text, "x == 2") {
+		t.Fatalf("the second operand was swallowed into the preceding line comment:\n%s", text)
+	}
+
+	if idx := strings.Index(text, "// a"); idx >= 0 {
+		lineEnd := strings.IndexByte(text[idx:], '\n')
+		if lineEnd < 0 {
+			lineEnd = len(text) - idx
+		}
+
+		if strings.TrimSpace(text[idx+len("// a"):idx+lineEnd]) != "" {
+			t.Fatalf("content was printed on the same line as the trailing \"//\" comment:\n%s", text)
+		}
+	}
+
+	second := mustFormat(t, formatted, config.Default())
+	if string(second) != text {
+		t.Fatalf("output is not idempotent\nfirst:\n%s\nsecond:\n%s", text, second)
+	}
+}

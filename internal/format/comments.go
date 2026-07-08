@@ -76,7 +76,13 @@ func (s *state) trailingDoc(trail []token.Trivia) doc.Doc {
 	if n := s.commentPadWidths[t.Start.Offset]; n > 0 {
 		pad = strings.Repeat(" ", n)
 	}
-	return doc.Concat(doc.Text(" "+pad), doc.Text(commentText(t, s.source)))
+
+	text := commentText(t, s.source)
+	if strings.HasPrefix(text, "//") {
+		return doc.Concat(doc.LineSuffix(doc.Concat(doc.Text(" "+pad), doc.Text(text))), doc.BreakParent())
+	}
+
+	return doc.Concat(doc.Text(" "+pad), doc.Text(text))
 }
 
 func firstTrailingComment(trail []token.Trivia) (token.Trivia, bool) {

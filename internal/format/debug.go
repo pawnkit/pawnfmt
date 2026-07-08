@@ -40,6 +40,11 @@ func dumpDoc(b *strings.Builder, d doc.Doc, depth int) {
 		fmt.Fprintf(b, "%sSoftLine\n", indent)
 	case doc.HardLineDoc:
 		fmt.Fprintf(b, "%sHardLine\n", indent)
+	case doc.BreakParentDoc:
+		fmt.Fprintf(b, "%sBreakParent\n", indent)
+	case doc.LineSuffixDoc:
+		fmt.Fprintf(b, "%sLineSuffix\n", indent)
+		dumpDoc(b, n.Contents, depth+1)
 	case doc.ConcatDoc:
 		fmt.Fprintf(b, "%sConcat\n", indent)
 		for _, part := range n.Parts {

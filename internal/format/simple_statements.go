@@ -1,7 +1,9 @@
 package format
 
 import (
-	"github.com/pawnkit/pawn-parser"
+	"bytes"
+
+	parser "github.com/pawnkit/pawn-parser"
 	"github.com/pawnkit/pawnfmt/internal/doc"
 )
 
@@ -24,7 +26,35 @@ func (s *state) formatSimpleTrailingSemi(n *parser.Node, prefix, field string) d
 	if target == nil {
 		return doc.Concat(doc.Text(prefix), semiDoc(n))
 	}
+
+	if extra := nextSibling(n, target); extra != nil {
+		return doc.Concat(doc.Text(prefix), s.formatTagQualifiedTarget(target, extra), semiDoc(n))
+	}
+
 	return doc.Concat(doc.Text(prefix), doc.Text(target.Text(s.source)), semiDoc(n))
+}
+
+func nextSibling(n, target *parser.Node) *parser.Node {
+	for i, c := range n.Children {
+		if c == target {
+			if i+1 < len(n.Children) {
+				return n.Children[i+1]
+			}
+
+			return nil
+		}
+	}
+
+	return nil
+}
+
+func (s *state) formatTagQualifiedTarget(tag, name *parser.Node) doc.Doc {
+	colon := bytes.IndexByte(s.source[tag.End:name.Start], ':')
+	if colon < 0 {
+		return doc.Text(string(s.source[tag.Start:name.End]))
+	}
+
+	return doc.Concat(s.formatSimpleTag(tag, tag.End+colon+1, false), doc.Text(name.Text(s.source)))
 }
 
 func (s *state) formatLabelStatement(n *parser.Node) doc.Doc {
