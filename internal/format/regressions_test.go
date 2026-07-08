@@ -198,12 +198,16 @@ func TestMagicTrailingCommaForcesExplosion(t *testing.T) {
 }
 
 func TestParameterListNeverGetsTrailingComma(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("stock F(a, b,) {\n    return a + b;\n}\n")
 	want := []byte("stock F(a, b)\n{\n    return a + b;\n}\n")
+
 	formatted := mustFormat(t, source, config.Default())
 	if string(formatted) != string(want) {
 		t.Fatalf("expected magic trailing comma to be stripped from parameter list\nexpected:\n%s\nactual:\n%s", want, formatted)
 	}
+
 	second := mustFormat(t, formatted, config.Default())
 	if string(second) != string(formatted) {
 		t.Fatalf("output is not idempotent\nfirst:\n%s\nsecond:\n%s", formatted, second)

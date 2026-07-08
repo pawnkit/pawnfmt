@@ -58,6 +58,7 @@ func (s *state) formatParameterList(n *parser.Node) doc.Doc {
 	if hasConditionalItem(n.Children) {
 		return s.formatDirectiveList(n.Children, "(", ")", false)
 	}
+
 	return s.formatParenList(n.Children, s.config.MultilineFunctionParams, false, false)
 }
 
@@ -117,7 +118,7 @@ func (s *state) formatParenList(nodes []*parser.Node, style config.MultilineList
 	))
 }
 
-func (s *state) formatExplodedList(nodes []*parser.Node, open, close string, allowTrailingComma bool) doc.Doc {
+func (s *state) formatExplodedList(nodes []*parser.Node, open, closeTok string, allowTrailingComma bool) doc.Doc {
 	trailingComma := allowTrailingComma && s.config.TrailingComma == config.TrailingCommaMultiline
 	items := make([]doc.Doc, len(nodes))
 	for i, n := range nodes {
@@ -128,7 +129,7 @@ func (s *state) formatExplodedList(nodes []*parser.Node, open, close string, all
 		doc.Text(open),
 		doc.Indent(doc.Concat(doc.HardLine(), doc.Join(doc.HardLine(), items...))),
 		doc.HardLine(),
-		doc.Text(close),
+		doc.Text(closeTok),
 	)
 }
 

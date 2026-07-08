@@ -172,6 +172,7 @@ func (s *state) formatArgumentList(n *parser.Node) doc.Doc {
 	if hasConditionalItem(n.Children) {
 		return s.formatDirectiveList(n.Children, "(", ")", s.config.TrailingComma == config.TrailingCommaMultiline)
 	}
+
 	return s.formatParenList(n.Children, s.config.MultilineCallArgs, s.hasMagicTrailingComma(n), true)
 }
 
