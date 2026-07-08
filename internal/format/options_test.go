@@ -241,8 +241,8 @@ func TestDirectiveIndentNone(t *testing.T) {
 		"#if defined INNER",
 		"        retry: continue;",
 		"#endif",
-		"    }",
-		"#else",
+		closingBraceIndented,
+		elseDirective,
 		"    guard: #warning fallback branch",
 		"#endif",
 		"}",
@@ -260,14 +260,14 @@ func TestDirectiveIndentNoneAcrossNestedContainers(t *testing.T) {
 		"#if FEATURE",
 		"        case 2: return 2;",
 		"#endif",
-		"    }",
+		closingBraceIndented,
 		"#if OUTER",
 		"    if (value) {",
-		"#else",
+		elseDirective,
 		"    if (!value) {",
 		"#endif",
 		"        return 3;",
-		"    }",
+		closingBraceIndented,
 		"}",
 		"",
 	}, "\n"))
@@ -515,7 +515,8 @@ func TestBraceStyleAppliesToEveryConstruct(t *testing.T) {
 				if trimmed == "{" || trimmed == "" || !strings.Contains(trimmed, "{") {
 					continue
 				}
-				if trimmed == "{ }" {
+
+				if trimmed == emptyBraceBody {
 					continue
 				}
 				t.Fatalf("%s: found a non-own-line '{' under BraceStyleAllman: %q\nfull output:\n%s", tc.name, line, formatted)

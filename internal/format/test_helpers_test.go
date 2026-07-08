@@ -11,6 +11,13 @@ import (
 	formatter "github.com/pawnkit/pawnfmt/internal/format"
 )
 
+const (
+	elseDirective         = "#else"
+	elseDirectiveIndented = "    #else"
+	emptyBraceBody        = "{ }"
+	closingBraceIndented  = "    }"
+)
+
 func mustFormat(t *testing.T, source []byte, cfg config.Config) []byte {
 	t.Helper()
 	formatted, err := formatter.FormatSource(source, cfg)

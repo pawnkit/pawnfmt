@@ -141,6 +141,7 @@ func (s *state) formatConditionalRegion(n *parser.Node) doc.Doc {
 			default:
 				base = blankLineSeparator(s.blankLinesBefore(item.LeadingTrivia()))
 			}
+
 			separator := base
 			if !indentNested {
 				separator = s.directiveAwareSeparator(base, item)
