@@ -116,12 +116,15 @@ func Concat(parts ...Doc) Doc {
 			filtered = append(filtered, part)
 		}
 	}
+
 	if len(filtered) == 0 {
 		return Text("")
 	}
+
 	if len(filtered) == 1 {
 		return filtered[0]
 	}
+
 	return ConcatDoc{Parts: filtered}
 }
 
@@ -129,6 +132,7 @@ func Indent(contents Doc) Doc {
 	if contents == nil {
 		return Text("")
 	}
+
 	return IndentDoc{Contents: contents}
 }
 
@@ -136,6 +140,7 @@ func ResetIndent(contents Doc) Doc {
 	if contents == nil {
 		return Text("")
 	}
+
 	return ResetIndentDoc{Contents: contents}
 }
 
@@ -143,6 +148,7 @@ func Outdent(contents Doc) Doc {
 	if contents == nil {
 		return Text("")
 	}
+
 	return OutdentDoc{Contents: contents}
 }
 
@@ -150,6 +156,7 @@ func Group(contents Doc) Doc {
 	if contents == nil {
 		return Text("")
 	}
+
 	return GroupDoc{Contents: contents}
 }
 
@@ -160,16 +167,20 @@ func Join(separator Doc, parts ...Doc) Doc {
 			filtered = append(filtered, part)
 		}
 	}
+
 	if len(filtered) == 0 {
 		return Text("")
 	}
+
 	out := make([]Doc, 0, len(filtered)*2-1)
 	for index, part := range filtered {
 		if index > 0 && separator != nil {
 			out = append(out, separator)
 		}
+
 		out = append(out, part)
 	}
+
 	return Concat(out...)
 }
 
@@ -184,12 +195,15 @@ func Fill(parts ...Doc) Doc {
 			filtered = append(filtered, part)
 		}
 	}
+
 	if len(filtered) == 0 {
 		return Text("")
 	}
+
 	if len(filtered) == 1 {
 		return filtered[0]
 	}
+
 	return FillDoc{Parts: filtered}
 }
 
@@ -197,27 +211,35 @@ func RawTextBlock(value string) Doc {
 	if value == "" {
 		return Text("")
 	}
+
 	parts := make([]Doc, 0, len(value)/8+1)
 	start := 0
+
 	for index := range len(value) {
 		if value[index] != '\n' {
 			continue
 		}
+
 		line := value[start:index]
 		if len(line) > 0 && line[len(line)-1] == '\r' {
 			line = line[:len(line)-1]
 		}
+
 		parts = append(parts, Text(line), HardLine())
 		start = index + 1
 	}
+
 	if start < len(value) {
 		parts = append(parts, Text(value[start:]))
 	}
+
 	if len(parts) == 0 {
 		return Text("")
 	}
+
 	if len(parts) == 1 {
 		return parts[0]
 	}
+
 	return ResetIndent(Concat(parts...))
 }

@@ -23,10 +23,13 @@ func LoadFile(path string) (Config, error) {
 	if err := decodeFile(path, data, &cfg); err != nil {
 		return Config{}, err
 	}
+
 	cfg.ApplyDefaults()
+
 	if err := cfg.Validate(); err != nil {
 		return Config{}, err
 	}
+
 	return cfg, nil
 }
 
@@ -41,9 +44,11 @@ func decodeFile(path string, data []byte, out *Config) error {
 		if err := decodeTOMLStrict(data, out); err == nil {
 			return nil
 		}
+
 		if err := decodeYAMLStrict(data, out); err == nil {
 			return nil
 		}
+
 		return fmt.Errorf("unsupported config file extension %q", ext)
 	}
 }
@@ -53,21 +58,26 @@ func decodeTOMLStrict(data []byte, out *Config) error {
 	if err != nil {
 		return fmt.Errorf("decode toml config: %w", err)
 	}
+
 	if undecoded := md.Undecoded(); len(undecoded) > 0 {
 		return fmt.Errorf("decode toml config: unknown key %q", undecoded[0].String())
 	}
+
 	return nil
 }
 
 func decodeYAMLStrict(data []byte, out *Config) error {
 	dec := yaml.NewDecoder(bytes.NewReader(data))
 	dec.KnownFields(true)
+
 	if err := dec.Decode(out); err != nil {
 		if errors.Is(err, io.EOF) {
 			return nil
 		}
+
 		return fmt.Errorf("decode yaml config: %w", err)
 	}
+
 	return nil
 }
 
@@ -78,6 +88,7 @@ func Discover(startDir string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("resolve start directory: %w", err)
 	}
+
 	for {
 		for _, name := range ConfigFileNames {
 			candidate := filepath.Join(dir, name)
@@ -85,13 +96,16 @@ func Discover(startDir string) (string, error) {
 				return candidate, nil
 			}
 		}
+
 		if _, err := os.Stat(filepath.Join(dir, ".git")); err == nil {
 			return "", nil
 		}
+
 		parent := filepath.Dir(dir)
 		if parent == dir {
 			return "", nil
 		}
+
 		dir = parent
 	}
 }

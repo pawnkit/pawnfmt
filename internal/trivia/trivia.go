@@ -43,6 +43,7 @@ func Scan(source []byte) Index {
 	lines := make([]Line, 0, bytes.Count(source, []byte("\n"))+1)
 	start := 0
 	lineNumber := 1
+
 	for start <= len(source) {
 		end := indexOfLineEnd(source, start)
 		lineBytes := source[start:end]
@@ -62,10 +63,12 @@ func Scan(source []byte) Index {
 			TurnsOn:       commentOnly && pawnfmtOnPattern.MatchString(text),
 		}
 		lines = append(lines, line)
+
 		newlineLen := lineEndingLength(source, end)
 		if newlineLen == 0 {
 			break
 		}
+
 		start = end + newlineLen
 		lineNumber++
 	}
@@ -77,9 +80,11 @@ func lineEndingLength(source []byte, end int) int {
 	if end >= len(source) {
 		return 0
 	}
+
 	if source[end] == '\r' {
 		return 2
 	}
+
 	return 1
 }
 
@@ -88,11 +93,14 @@ func (index Index) OverlapsDisabled(startByte, endByte uint32) bool {
 		if int(endByte) <= region.StartByte {
 			continue
 		}
+
 		if int(startByte) >= region.EndByte {
 			continue
 		}
+
 		return true
 	}
+
 	return false
 }
 
@@ -100,6 +108,7 @@ func detectNewline(source []byte) string {
 	if bytes.Contains(source, []byte("\r\n")) {
 		return "\r\n"
 	}
+
 	return "\n"
 }
 
@@ -109,12 +118,14 @@ func buildDisabledRegions(lines []Line, source []byte) []Region {
 	active := false
 	startLine := 0
 	startByte := 0
+
 	for _, line := range lines {
 		if line.TurnsOff && !active {
 			active = true
 			startLine = line.Number
 			startByte = line.StartByte
 		}
+
 		if line.TurnsOn && active {
 			regions = append(regions, Region{
 				StartLine: startLine,
@@ -125,6 +136,7 @@ func buildDisabledRegions(lines []Line, source []byte) []Region {
 			active = false
 		}
 	}
+
 	if active {
 		regions = append(regions, Region{
 			StartLine: startLine,
@@ -133,6 +145,7 @@ func buildDisabledRegions(lines []Line, source []byte) []Region {
 			EndByte:   sourceLen,
 		})
 	}
+
 	return regions
 }
 
@@ -146,8 +159,10 @@ func indexOfLineEnd(source []byte, start int) int {
 			if index > start && source[index-1] == '\r' {
 				return index - 1
 			}
+
 			return index
 		}
 	}
+
 	return len(source)
 }

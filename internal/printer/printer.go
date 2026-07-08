@@ -34,7 +34,9 @@ func Print(root doc.Doc, options Options) string {
 	if root == nil {
 		return finalize("", options)
 	}
+
 	options = options.withDefaults()
+
 	return finalize(render(root, options), options)
 }
 
@@ -42,12 +44,15 @@ func (options Options) withDefaults() Options {
 	if options.LineWidth <= 0 {
 		options.LineWidth = 100
 	}
+
 	if options.IndentWidth <= 0 {
 		options.IndentWidth = 4
 	}
+
 	if options.Newline == "" {
 		options.Newline = "\n"
 	}
+
 	return options
 }
 
@@ -97,6 +102,7 @@ func render(root doc.Doc, options Options) string {
 		case doc.LineDoc:
 			if current.mode == modeFlat {
 				builder.WriteByte(' ')
+
 				column++
 			} else if !deferLine(current) {
 				writeIndent(&builder, current.indent, options)

@@ -11,6 +11,7 @@ func semiDoc(n *parser.Node) doc.Doc {
 	if n.MissingSemi {
 		return nil
 	}
+
 	return doc.Text(";")
 }
 
@@ -18,6 +19,7 @@ func (s *state) formatReturnStatement(n *parser.Node) doc.Doc {
 	if val := n.Field("value"); val != nil {
 		return doc.Concat(doc.Text("return "), s.formatNode(val), semiDoc(n))
 	}
+
 	return doc.Concat(doc.Text("return"), semiDoc(n))
 }
 
@@ -67,6 +69,7 @@ func (s *state) formatExpressionStatement(n *parser.Node) doc.Doc {
 	if n.HasError && expr == nil {
 		return s.raw(n)
 	}
+
 	return doc.Group(doc.Concat(s.formatNode(expr), semiDoc(n)))
 }
 
@@ -74,6 +77,7 @@ func (s *state) formatMacroInvocationBlock(n *parser.Node) doc.Doc {
 	fn := n.Field("function")
 	args := n.Field("arguments")
 	body := n.Field("body")
+
 	return doc.Concat(
 		doc.Text(fn.Text(s.source)),
 		s.formatArgumentList(args),

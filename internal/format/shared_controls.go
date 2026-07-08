@@ -14,19 +14,24 @@ func expandSharedSimpleControl(line string, cfg config.Config) []string {
 		tokens[0].Kind == token.KwDo && strings.TrimSpace(line[tokens[0].End.Offset:]) == "{" {
 		return []string{"do", "{"}
 	}
+
 	if len(tokens) < 4 {
 		return []string{line}
 	}
+
 	if tokens[0].Kind == token.KwElse && tokens[1].Kind != token.KwIf {
 		body := strings.TrimSpace(line[tokens[0].End.Offset:])
 		return expandSharedControlBody(line, "else", body, cfg)
 	}
+
 	closeOffset := sharedControlHeaderEnd(line, tokens)
 	if closeOffset < 0 {
 		return []string{line}
 	}
+
 	header := strings.TrimSpace(line[:closeOffset])
 	body := strings.TrimSpace(line[closeOffset:])
+
 	return expandSharedControlBody(line, header, body, cfg)
 }
 
@@ -44,17 +49,22 @@ func sharedControlHeaderEnd(line string, tokens []token.Token) int {
 	default:
 		return -1
 	}
+
 	open := -1
+
 	for i, tok := range tokens {
 		if tok.Kind == token.LParen {
 			open = i
 			break
 		}
 	}
+
 	if open < 0 {
 		return -1
 	}
+
 	depth := 0
+
 	for _, tok := range tokens[open:] {
 		switch tok.Kind {
 		case token.LParen:
@@ -66,6 +76,7 @@ func sharedControlHeaderEnd(line string, tokens []token.Token) int {
 			}
 		}
 	}
+
 	return -1
 }
 
@@ -73,15 +84,19 @@ func expandSharedControlBody(original, header, body string, cfg config.Config) [
 	if body == "{" && cfg.BraceStyle == config.BraceStyleAllman {
 		return []string{header, "{"}
 	}
+
 	if !sharedCompleteSimpleBody(body) {
 		return []string{original}
 	}
+
 	if cfg.SingleStatementBraces == config.SingleStatementBracesAlways {
 		return sharedBracedControl(header, body, cfg)
 	}
+
 	if !cfg.KeepSimpleStatementsSingleLine {
 		return sharedSplitSimpleControl(header, body, cfg)
 	}
+
 	return []string{original}
 }
 
@@ -90,6 +105,7 @@ func sharedSplitSimpleControl(header, body string, cfg config.Config) []string {
 	if cfg.IndentStyle == config.IndentStyleTab {
 		unit = "\t"
 	}
+
 	return []string{header, unit + body}
 }
 
@@ -103,6 +119,7 @@ func sharedBracedControl(header, body string, cfg config.Config) []string {
 	if cfg.IndentStyle == config.IndentStyleTab {
 		unit = "\t"
 	}
+
 	switch cfg.BraceStyle {
 	case config.BraceStyle1TBS:
 		return []string{header + " {", unit + body, "}"}
@@ -118,6 +135,7 @@ func sharedLineStartsContinuation(line string) bool {
 	if len(tokens) == 0 {
 		return false
 	}
+
 	return sharedContinuationOperator(tokens[0].Kind)
 }
 
@@ -127,8 +145,10 @@ func sharedLineEndsContinuation(line string) bool {
 		if tokens[i].Kind == token.EOF {
 			continue
 		}
+
 		return tokens[i].Kind == token.Comma || sharedContinuationOperator(tokens[i].Kind)
 	}
+
 	return false
 }
 

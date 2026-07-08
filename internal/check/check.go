@@ -17,5 +17,6 @@ func Idempotent(formatted []byte, fn func([]byte) ([]byte, error)) (bool, error)
 	if err != nil {
 		return false, fmt.Errorf("re-format for idempotency check: %w", err)
 	}
+
 	return bytes.Equal(formatted, second), nil
 }

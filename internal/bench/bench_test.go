@@ -32,6 +32,7 @@ func benchLexer(b *testing.B, source []byte) {
 	b.Helper()
 	b.SetBytes(int64(len(source)))
 	b.ResetTimer()
+
 	for range b.N {
 		lexer.Tokenize(source)
 	}
@@ -45,6 +46,7 @@ func benchParser(b *testing.B, source []byte) {
 	b.Helper()
 	b.SetBytes(int64(len(source)))
 	b.ResetTimer()
+
 	for range b.N {
 		parser.Parse(source)
 	}
@@ -56,9 +58,12 @@ func BenchmarkFormatLarge(b *testing.B)  { benchFormat(b, largeSource) }
 
 func benchFormat(b *testing.B, source []byte) {
 	b.Helper()
+
 	cfg := config.Default()
+
 	b.SetBytes(int64(len(source)))
 	b.ResetTimer()
+
 	for range b.N {
 		if _, err := formatter.FormatSource(source, cfg); err != nil {
 			b.Fatal(err)

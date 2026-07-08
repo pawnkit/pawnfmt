@@ -18,13 +18,16 @@ func commentText(t token.Trivia, source []byte) string {
 			text[2] != '!' && text[2] != '#' {
 			text = "// " + text[2:]
 		}
+
 		return text
 	}
+
 	return text
 }
 
 func (s *state) leadingDocs(lead []token.Trivia) []doc.Doc {
 	var parts []doc.Doc
+
 	i := 0
 	for i < len(lead) {
 		t := lead[i]
@@ -32,20 +35,26 @@ func (s *state) leadingDocs(lead []token.Trivia) []doc.Doc {
 			i++
 			continue
 		}
+
 		followedByNewline := false
+
 		for j := i + 1; j < len(lead); j++ {
 			if lead[j].Kind == token.Newline {
 				followedByNewline = true
 				break
 			}
+
 			if lead[j].Kind == token.Comment {
 				break
 			}
 		}
+
 		i++
+
 		if !s.claimComment(t) {
 			continue
 		}
+
 		text := commentText(t, s.source)
 		if strings.HasPrefix(text, "//") || followedByNewline || i == len(lead) {
 			parts = append(parts, doc.RawTextBlock(text), doc.HardLine())
@@ -53,6 +62,7 @@ func (s *state) leadingDocs(lead []token.Trivia) []doc.Doc {
 			parts = append(parts, doc.Text(text), doc.Text(" "))
 		}
 	}
+
 	return parts
 }
 
@@ -60,7 +70,9 @@ func (s *state) claimComment(t token.Trivia) bool {
 	if s.renderedComments[t.Start.Offset] {
 		return false
 	}
+
 	s.renderedComments[t.Start.Offset] = true
+
 	return true
 }
 
@@ -69,9 +81,11 @@ func (s *state) trailingDoc(trail []token.Trivia) doc.Doc {
 	if !ok {
 		return nil
 	}
+
 	if !s.claimComment(t) {
 		return nil
 	}
+
 	pad := ""
 	if n := s.commentPadWidths[t.Start.Offset]; n > 0 {
 		pad = strings.Repeat(" ", n)
@@ -90,10 +104,12 @@ func firstTrailingComment(trail []token.Trivia) (token.Trivia, bool) {
 		if t.Kind == token.Comment {
 			return t, true
 		}
+
 		if t.Kind == token.Newline {
 			break
 		}
 	}
+
 	return token.Trivia{}, false
 }
 
@@ -105,9 +121,14 @@ func (s *state) commentAlignmentWidths(items []*parser.Node) map[int]int {
 	if !s.config.AlignTrailingComments {
 		return nil
 	}
+
 	widths := make(map[int]int)
-	var offsets []int
-	var coreWidths []int
+
+	var (
+		offsets    []int
+		coreWidths []int
+	)
+
 	flush := func() {
 		if len(offsets) > 1 {
 			maxWidth := 0
@@ -116,34 +137,43 @@ func (s *state) commentAlignmentWidths(items []*parser.Node) map[int]int {
 					maxWidth = w
 				}
 			}
+
 			for i, offset := range offsets {
 				if pad := maxWidth - coreWidths[i]; pad > 0 {
 					widths[offset] = pad
 				}
 			}
 		}
+
 		offsets = nil
 		coreWidths = nil
 	}
+
 	for i, item := range items {
 		if i > 0 && s.blankLinesBefore(item.LeadingTrivia()) > 0 {
 			flush()
 		}
+
 		t, ok := firstTrailingComment(item.TrailingTrivia())
 		if !ok {
 			flush()
 			continue
 		}
+
 		full := s.measureFlat(item)
+
 		suffix := " " + commentText(t, s.source)
 		if strings.Contains(full, "\n") || !strings.HasSuffix(full, suffix) {
 			flush()
 			continue
 		}
+
 		offsets = append(offsets, t.Start.Offset)
 		coreWidths = append(coreWidths, len(full)-len(suffix))
 	}
+
 	flush()
+
 	return widths
 }
 
@@ -159,24 +189,31 @@ func (s *state) blankLinesBefore(lead []token.Trivia) int {
 		} else {
 			count += run
 		}
+
 		run = 0
 	}
+
 	for _, t := range lead {
 		switch t.Kind {
 		case token.Newline:
 			run++
 		case token.Comment:
 			flush()
+
 			afterComment = true
 		}
 	}
+
 	flush()
+
 	if !s.config.CollapseBlankLines {
 		return count
 	}
+
 	if max := s.config.MaxBlankLines; count > max {
 		return max
 	}
+
 	return count
 }
 
@@ -186,6 +223,7 @@ func leadingStartsNewLine(lead []token.Trivia) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -197,15 +235,19 @@ func (s *state) directiveAwareSeparator(separator doc.Doc, item *parser.Node) do
 	if item != nil && item.Kind == parser.KindLabelStatement && !s.config.IndentGotoLabels {
 		return doc.Outdent(separator)
 	}
+
 	if !firstLineIsDirective(item) {
 		return separator
 	}
+
 	if s.config.DirectiveIndent == config.DirectiveIndentNone {
 		return doc.ResetIndent(separator)
 	}
+
 	if !alignsWithEnclosingBrace(item) {
 		return separator
 	}
+
 	return doc.Outdent(separator)
 }
 
@@ -224,16 +266,20 @@ func firstLineIsDirective(item *parser.Node) bool {
 	if item == nil {
 		return false
 	}
+
 	if item.Kind.IsDirective() {
 		return true
 	}
+
 	if item.Kind == parser.KindSharedConditional || item.Kind == parser.KindSharedConditionalPrefix ||
 		item.Kind == parser.KindConditionalFunction {
 		return true
 	}
+
 	if item.Kind == parser.KindConditionalRegion && len(item.Children) > 0 {
 		return firstLineIsDirective(item.Children[0].Field("directive"))
 	}
+
 	return false
 }
 
@@ -241,11 +287,14 @@ func blankLineSeparator(n int) doc.Doc {
 	if n <= 0 {
 		return doc.HardLine()
 	}
+
 	parts := make([]doc.Doc, 0, n+1)
 	for range n {
 		parts = append(parts, doc.HardLine())
 	}
+
 	parts = append(parts, doc.HardLine())
+
 	return doc.Concat(parts...)
 }
 

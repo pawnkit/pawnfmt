@@ -13,6 +13,7 @@ func TestRunVersionFlagPrintsVersionAndExitsOK(t *testing.T) {
 	if code != exitOK {
 		t.Fatalf("exit code = %d, want %d (stderr: %s)", code, exitOK, stderr)
 	}
+
 	if stdout == "" {
 		t.Fatal("-version printed nothing to stdout")
 	}
@@ -23,6 +24,7 @@ func TestRunVersionFlagTakesPrecedenceOverOtherFlags(t *testing.T) {
 	if code != exitOK {
 		t.Fatalf("exit code = %d, want %d (stderr: %s)", code, exitOK, stderr)
 	}
+
 	if stdout == "" {
 		t.Fatal("-version printed nothing to stdout")
 	}

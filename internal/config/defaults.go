@@ -51,39 +51,51 @@ func (cfg *Config) ApplyDefaults() {
 	if cfg.LineWidth == 0 {
 		cfg.LineWidth = defaults.LineWidth
 	}
+
 	if cfg.IndentStyle == "" {
 		cfg.IndentStyle = defaults.IndentStyle
 	}
+
 	if cfg.IndentWidth == 0 {
 		cfg.IndentWidth = defaults.IndentWidth
 	}
+
 	if cfg.NewlineStyle == "" {
 		cfg.NewlineStyle = defaults.NewlineStyle
 	}
+
 	if cfg.BraceStyle == "" {
 		cfg.BraceStyle = defaults.BraceStyle
 	}
+
 	if cfg.Semicolons == "" {
 		cfg.Semicolons = defaults.Semicolons
 	}
+
 	if cfg.SingleStatementBraces == "" {
 		cfg.SingleStatementBraces = defaults.SingleStatementBraces
 	}
+
 	if cfg.DirectiveIndent == "" {
 		cfg.DirectiveIndent = defaults.DirectiveIndent
 	}
+
 	if cfg.EnumTrailingComma == "" {
 		cfg.EnumTrailingComma = defaults.EnumTrailingComma
 	}
+
 	if cfg.TagColonSpacing == "" {
 		cfg.TagColonSpacing = defaults.TagColonSpacing
 	}
+
 	if cfg.MultilineFunctionParams == "" {
 		cfg.MultilineFunctionParams = defaults.MultilineFunctionParams
 	}
+
 	if cfg.MultilineCallArgs == "" {
 		cfg.MultilineCallArgs = defaults.MultilineCallArgs
 	}
+
 	if cfg.BreakBinaryOperator == "" {
 		cfg.BreakBinaryOperator = defaults.BreakBinaryOperator
 	}

@@ -17,7 +17,9 @@ func versionString() string {
 	}
 
 	var revision string
+
 	dirty := false
+
 	for _, setting := range info.Settings {
 		switch setting.Key {
 		case "vcs.revision":
@@ -26,14 +28,18 @@ func versionString() string {
 			dirty = setting.Value == "true"
 		}
 	}
+
 	if revision == "" {
 		return "pawnfmt " + version
 	}
+
 	if len(revision) > 12 {
 		revision = revision[:12]
 	}
+
 	if dirty {
 		revision += "-dirty"
 	}
+
 	return fmt.Sprintf("pawnfmt %s (%s)", version, revision)
 }

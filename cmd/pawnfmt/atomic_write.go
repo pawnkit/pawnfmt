@@ -13,12 +13,15 @@ func atomicWrite(path string, data []byte) error {
 	}
 
 	dir := filepath.Dir(path)
+
 	tmp, err := os.CreateTemp(dir, ".pawnfmt-*.tmp")
 	if err != nil {
 		return fmt.Errorf("create temp file: %w", err)
 	}
+
 	tmpPath := tmp.Name()
 	cleanup := true
+
 	defer func() {
 		if cleanup {
 			_ = os.Remove(tmpPath)
@@ -29,19 +32,25 @@ func atomicWrite(path string, data []byte) error {
 		_ = tmp.Close()
 		return fmt.Errorf("write temp file: %w", err)
 	}
+
 	if err := tmp.Sync(); err != nil {
 		_ = tmp.Close()
 		return fmt.Errorf("sync temp file: %w", err)
 	}
+
 	if err := tmp.Close(); err != nil {
 		return fmt.Errorf("close temp file: %w", err)
 	}
+
 	if err := os.Chmod(tmpPath, mode); err != nil {
 		return fmt.Errorf("chmod temp file: %w", err)
 	}
+
 	if err := os.Rename(tmpPath, path); err != nil {
 		return fmt.Errorf("rename temp file into place: %w", err)
 	}
+
 	cleanup = false
+
 	return nil
 }

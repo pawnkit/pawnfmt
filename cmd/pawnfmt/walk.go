@@ -38,9 +38,11 @@ func (c *fileCollector) visit(path string, d os.DirEntry, err error) error {
 	if err != nil {
 		return err
 	}
+
 	if d.IsDir() {
 		return c.visitDir(path, d)
 	}
+
 	return c.visitFile(path)
 }
 
@@ -48,14 +50,17 @@ func (c *fileCollector) visitDir(path string, d os.DirEntry) error {
 	if c.respectIgnoreFiles {
 		c.stack.sync(path)
 	}
+
 	if path != c.root && !matchesAny(path, c.include) {
 		if defaultIgnoredDirs[d.Name()] || (c.respectIgnoreFiles && c.stack.ignored(path, true)) {
 			return filepath.SkipDir
 		}
 	}
+
 	if c.respectIgnoreFiles {
 		c.stack.pushDir(path)
 	}
+
 	return nil
 }
 
@@ -63,24 +68,31 @@ func (c *fileCollector) visitFile(path string) error {
 	if matchesAny(path, c.exclude) {
 		return nil
 	}
+
 	if len(c.include) > 0 && !matchesAny(path, c.include) {
 		return nil
 	}
+
 	if !isFormattableExt(path) {
 		return nil
 	}
+
 	if c.respectIgnoreFiles && !matchesAny(path, c.include) {
 		c.stack.sync(filepath.Dir(path))
+
 		if c.stack.ignored(path, false) {
 			return nil
 		}
 	}
+
 	c.addFile(path)
+
 	return nil
 }
 
 func collectFiles(paths, include, exclude []string, respectIgnoreFiles bool) ([]string, error) {
 	var out []string
+
 	seen := make(map[string]bool)
 
 	addFile := func(path string) {
@@ -88,8 +100,10 @@ func collectFiles(paths, include, exclude []string, respectIgnoreFiles bool) ([]
 		if err != nil {
 			abs = path
 		}
+
 		if !seen[abs] {
 			seen[abs] = true
+
 			out = append(out, path)
 		}
 	}
@@ -99,14 +113,17 @@ func collectFiles(paths, include, exclude []string, respectIgnoreFiles bool) ([]
 		if err != nil {
 			return nil, err
 		}
+
 		if !info.IsDir() {
 			addFile(p)
 			continue
 		}
+
 		stack := &ignoreStack{}
 		if respectIgnoreFiles {
 			stack = newIgnoreStack(p)
 		}
+
 		c := &fileCollector{
 			root:               p,
 			include:            include,
@@ -119,6 +136,7 @@ func collectFiles(paths, include, exclude []string, respectIgnoreFiles bool) ([]
 			return nil, err
 		}
 	}
+
 	return out, nil
 }
 
@@ -128,9 +146,11 @@ func matchesAny(path string, patterns []string) bool {
 		if ok, err := filepath.Match(pat, base); err == nil && ok {
 			return true
 		}
+
 		if ok, err := filepath.Match(pat, path); err == nil && ok {
 			return true
 		}
 	}
+
 	return false
 }

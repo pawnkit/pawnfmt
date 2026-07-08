@@ -14,13 +14,17 @@ func fits(width int, next command, rest []command, mustBeFlat bool, _ Options) b
 		if n := len(local); n > 0 {
 			c := local[n-1]
 			local = local[:n-1]
+
 			return c, true
 		}
+
 		if restIdx >= 0 {
 			c := rest[restIdx]
 			restIdx--
+
 			return c, true
 		}
+
 		return command{}, false
 	}
 
@@ -51,6 +55,7 @@ func fits(width int, next command, rest []command, mustBeFlat bool, _ Options) b
 			if mustBeFlat {
 				return false
 			}
+
 			return true
 		case doc.BreakParentDoc:
 		case doc.LineSuffixDoc:
@@ -80,5 +85,6 @@ func fits(width int, next command, rest []command, mustBeFlat bool, _ Options) b
 			}
 		}
 	}
+
 	return width >= 0
 }

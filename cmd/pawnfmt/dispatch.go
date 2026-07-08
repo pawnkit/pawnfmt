@@ -21,10 +21,12 @@ func dispatch(opts *options, stdin io.Reader, stdout, stderr io.Writer) int {
 			writeErrorf(stderr, errColors, "%v", err)
 			return exitConfigError
 		}
+
 		if err := printResolvedConfig(cfg, stdout); err != nil {
 			writeErrorf(stderr, errColors, "%v", err)
 			return exitInternalError
 		}
+
 		return exitOK
 	}
 
@@ -46,6 +48,7 @@ func dispatch(opts *options, stdin io.Reader, stdout, stderr io.Writer) int {
 
 func runStdin(opts *options, stdin io.Reader, stdout, stderr io.Writer) int {
 	errColors := colorsFor(opts.Color, stderr)
+
 	source, err := io.ReadAll(stdin)
 	if err != nil {
 		writeErrorf(stderr, errColors, "read stdin: %v", err)
@@ -67,10 +70,12 @@ func runStdin(opts *options, stdin io.Reader, stdout, stderr io.Writer) int {
 		writeErrorf(stderr, errColors, "%v", err)
 		return exitFormatError
 	}
+
 	if _, err := stdout.Write(formatted); err != nil {
 		writeErrorf(stderr, errColors, "write stdout: %v", err)
 		return exitInternalError
 	}
+
 	return exitOK
 }
 
@@ -88,7 +93,9 @@ func runDebugModes(opts *options, source []byte, cfg config.Config, stdout, stde
 			writeErrorf(stderr, colorsFor(opts.Color, stderr), "%v", err)
 			return exitFormatError, true
 		}
+
 		_, _ = fmt.Fprintln(stdout, s)
+
 		return exitOK, true
 	default:
 		return exitOK, false

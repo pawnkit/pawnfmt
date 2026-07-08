@@ -10,21 +10,26 @@ func (s *state) formatNode(n *parser.Node) doc.Doc {
 	if n == nil {
 		return doc.Text("")
 	}
+
 	if n.Kind == parser.KindSourceFile {
 		return s.dispatch(n)
 	}
+
 	if n.Kind == parser.KindConditionalRegion {
 		return s.dispatch(n)
 	}
+
 	var core doc.Doc
 	if n.Kind == parser.KindRaw || n.HasError || s.isDisabled(n) {
 		core = s.withTrivia(n, s.raw(n))
 	} else {
 		core = s.withTrivia(n, s.dispatch(n))
 	}
+
 	if n.Kind.IsDirective() && s.config.DirectiveIndent == config.DirectiveIndentNone {
 		return doc.ResetIndent(core)
 	}
+
 	return core
 }
 
@@ -32,17 +37,22 @@ func (s *state) itemCore(n *parser.Node) doc.Doc {
 	if n == nil {
 		return doc.Text("")
 	}
+
 	lead := s.leadingDocs(n.LeadingTrivia())
+
 	var core doc.Doc
 	if n.Kind == parser.KindRaw || n.HasError {
 		core = s.raw(n)
 	} else {
 		core = s.dispatch(n)
 	}
+
 	if len(lead) == 0 {
 		return core
 	}
+
 	parts := append(append([]doc.Doc{}, lead...), core)
+
 	return doc.Concat(parts...)
 }
 
@@ -51,24 +61,30 @@ func (s *state) formatListItem(n *parser.Node, addComma bool) doc.Doc {
 	if addComma {
 		parts = append(parts, doc.Text(","))
 	}
+
 	if trail := s.trailingDoc(n.TrailingTrivia()); trail != nil {
 		parts = append(parts, trail)
 	}
+
 	return doc.Concat(parts...)
 }
 
 func (s *state) withTrivia(n *parser.Node, core doc.Doc) doc.Doc {
 	lead := s.leadingDocs(n.LeadingTrivia())
+
 	trail := s.trailingDoc(n.TrailingTrivia())
 	if len(lead) == 0 && trail == nil {
 		return core
 	}
+
 	parts := make([]doc.Doc, 0, len(lead)+2)
 	parts = append(parts, lead...)
+
 	parts = append(parts, core)
 	if trail != nil {
 		parts = append(parts, trail)
 	}
+
 	return doc.Concat(parts...)
 }
 
@@ -80,6 +96,7 @@ func (s *state) isDisabled(n *parser.Node) bool {
 	if s.config.FormatDisabledRegions {
 		return false
 	}
+
 	return s.trivia.OverlapsDisabled(uint32(n.Start), uint32(n.End)) //nolint:gosec // Pawn source files stay well under 4GB; offsets cannot overflow uint32
 }
 
@@ -87,15 +104,19 @@ func (s *state) dispatch(n *parser.Node) doc.Doc {
 	if formatted, ok := s.dispatchTopLevel(n); ok {
 		return formatted
 	}
+
 	if formatted, ok := s.dispatchDeclaration(n); ok {
 		return formatted
 	}
+
 	if formatted, ok := s.dispatchStatement(n); ok {
 		return formatted
 	}
+
 	if formatted, ok := s.dispatchExpression(n); ok {
 		return formatted
 	}
+
 	return s.raw(n)
 }
 

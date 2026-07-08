@@ -10,6 +10,7 @@ func ResolveNewline(style NewlineStyle, detected string) string {
 		if detected == "\r\n" {
 			return detected
 		}
+
 		return "\n"
 	}
 }

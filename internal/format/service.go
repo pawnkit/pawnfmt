@@ -17,9 +17,11 @@ type Formatter struct {
 
 func New(cfg config.Config) (*Formatter, error) {
 	cfg.ApplyDefaults()
+
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
+
 	return &Formatter{config: cfg}, nil
 }
 
@@ -30,11 +32,14 @@ func (formatter *Formatter) FormatSource(source []byte) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		if bytes.Equal(formatted, current) {
 			return formatted, nil
 		}
+
 		current = formatted
 	}
+
 	return nil, errors.New("formatting did not converge after 4 passes")
 }
 
@@ -46,6 +51,7 @@ func (formatter *Formatter) formatOnce(source []byte) ([]byte, error) {
 
 	index := trivia.Scan(source)
 	st := newState(parsed, formatter.config, index)
+
 	formatted := printer.Print(st.formatNode(parsed.Root), st.printerOptions())
 	if !formatter.config.SortIncludes {
 		if err := verifySemanticTokens(source, []byte(formatted)); err != nil {
@@ -66,5 +72,6 @@ func FormatSource(source []byte, cfg config.Config) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return formatter.FormatSource(source)
 }

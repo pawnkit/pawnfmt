@@ -10,9 +10,11 @@ import (
 
 func writeFixture(t *testing.T, path string) {
 	t.Helper()
+
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		t.Fatalf("mkdir for %s: %v", path, err)
 	}
+
 	if err := os.WriteFile(path, []byte("new x;\n"), 0o644); err != nil {
 		t.Fatalf("write %s: %v", path, err)
 	}
@@ -22,10 +24,12 @@ func TestCollectFilesExplicitSingleFileIsUsedRegardlessOfExtension(t *testing.T)
 	dir := t.TempDir()
 	path := filepath.Join(dir, "explicit.txt")
 	writeFixture(t, path)
+
 	files, err := collectFiles([]string{path}, nil, nil, true)
 	if err != nil {
 		t.Fatalf("collectFiles: %v", err)
 	}
+
 	if len(files) != 1 || files[0] != path {
 		t.Fatalf("collectFiles(explicit file) = %v, want [%s] (an explicitly named file bypasses the extension filter)", files, path)
 	}
@@ -42,6 +46,7 @@ func TestCollectFilesWalksADirectoryForPwnAndIncOnly(t *testing.T) {
 	if err != nil {
 		t.Fatalf("collectFiles: %v", err)
 	}
+
 	want := []string{
 		filepath.Join(dir, "a.pwn"),
 		filepath.Join(dir, "b.inc"),
@@ -52,6 +57,7 @@ func TestCollectFilesWalksADirectoryForPwnAndIncOnly(t *testing.T) {
 			t.Fatalf("collectFiles(dir) = %v, missing %s", files, w)
 		}
 	}
+
 	if slices.ContainsFunc(files, func(f string) bool { return filepath.Base(f) == "c.txt" }) {
 		t.Fatalf("collectFiles(dir) = %v, should not include c.txt", files)
 	}
@@ -67,6 +73,7 @@ func TestCollectFilesSkipsDefaultIgnoredDirectories(t *testing.T) {
 	if err != nil {
 		t.Fatalf("collectFiles: %v", err)
 	}
+
 	for _, f := range files {
 		if filepath.Base(f) == "skip.pwn" {
 			t.Fatalf("collectFiles(dir) = %v, should skip files under ignored directories", files)
@@ -83,9 +90,11 @@ func TestCollectFilesExcludePatternFiltersMatchingFiles(t *testing.T) {
 	if err != nil {
 		t.Fatalf("collectFiles: %v", err)
 	}
+
 	if slices.ContainsFunc(files, func(f string) bool { return filepath.Base(f) == "generated.pwn" }) {
 		t.Fatalf("collectFiles(dir, exclude=generated.pwn) = %v, should exclude it", files)
 	}
+
 	if !slices.ContainsFunc(files, func(f string) bool { return filepath.Base(f) == "keep.pwn" }) {
 		t.Fatalf("collectFiles(dir, exclude=generated.pwn) = %v, should still include keep.pwn", files)
 	}
@@ -100,6 +109,7 @@ func TestCollectFilesIncludePatternRestrictsToMatchingFiles(t *testing.T) {
 	if err != nil {
 		t.Fatalf("collectFiles: %v", err)
 	}
+
 	if len(files) != 1 || filepath.Base(files[0]) != "keep.pwn" {
 		t.Fatalf("collectFiles(dir, include=keep.pwn) = %v, want only keep.pwn", files)
 	}
@@ -113,6 +123,7 @@ func TestCollectFilesIncludePatternCanRescueAnIgnoredDirectory(t *testing.T) {
 	if err != nil {
 		t.Fatalf("collectFiles: %v", err)
 	}
+
 	if !slices.ContainsFunc(files, func(f string) bool { return filepath.Base(f) == "wanted.pwn" }) {
 		t.Fatalf("collectFiles(dir, include=[vendor,wanted.pwn]) = %v, want wanted.pwn rescued", files)
 	}
@@ -127,6 +138,7 @@ func TestCollectFilesDeduplicatesTheSameFileNamedTwice(t *testing.T) {
 	if err != nil {
 		t.Fatalf("collectFiles: %v", err)
 	}
+
 	if len(files) != 1 {
 		t.Fatalf("collectFiles(same path twice) = %v, want exactly 1 entry", files)
 	}
@@ -141,9 +153,11 @@ func TestCollectFilesReturnsErrorForANonexistentPath(t *testing.T) {
 
 func writeText(t *testing.T, path, contents string) {
 	t.Helper()
+
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		t.Fatalf("mkdir for %s: %v", path, err)
 	}
+
 	if err := os.WriteFile(path, []byte(contents), 0o644); err != nil {
 		t.Fatalf("write %s: %v", path, err)
 	}
@@ -160,12 +174,15 @@ func TestCollectFilesRespectsGitignore(t *testing.T) {
 	if err != nil {
 		t.Fatalf("collectFiles: %v", err)
 	}
+
 	if !slices.ContainsFunc(files, func(f string) bool { return filepath.Base(f) == "keep.pwn" }) {
 		t.Fatalf("collectFiles(dir) = %v, want keep.pwn included", files)
 	}
+
 	if slices.ContainsFunc(files, func(f string) bool { return filepath.Base(f) == "skip.gen.pwn" }) {
 		t.Fatalf("collectFiles(dir) = %v, want *.gen.pwn excluded by .gitignore", files)
 	}
+
 	if slices.ContainsFunc(files, func(f string) bool { return filepath.Base(f) == "artifact.pwn" }) {
 		t.Fatalf("collectFiles(dir) = %v, want build/ excluded by .gitignore", files)
 	}
@@ -180,6 +197,7 @@ func TestCollectFilesNoGitignoreOptOutFormatsEverything(t *testing.T) {
 	if err != nil {
 		t.Fatalf("collectFiles: %v", err)
 	}
+
 	if !slices.ContainsFunc(files, func(f string) bool { return filepath.Base(f) == "skip.gen.pwn" }) {
 		t.Fatalf("collectFiles(dir, respectIgnoreFiles=false) = %v, want *.gen.pwn included since gitignore is disabled", files)
 	}
@@ -197,11 +215,13 @@ func TestCollectFilesPawnfmtignoreLayersOnTopOfGitignore(t *testing.T) {
 	if err != nil {
 		t.Fatalf("collectFiles: %v", err)
 	}
+
 	for _, skip := range []string{"skip.gen.pwn", "extra.pwn"} {
 		if slices.ContainsFunc(files, func(f string) bool { return filepath.Base(f) == skip }) {
 			t.Fatalf("collectFiles(dir) = %v, want %s excluded", files, skip)
 		}
 	}
+
 	if !slices.ContainsFunc(files, func(f string) bool { return filepath.Base(f) == "keep.pwn" }) {
 		t.Fatalf("collectFiles(dir) = %v, want keep.pwn included", files)
 	}
@@ -217,9 +237,11 @@ func TestCollectFilesGitignoreNegationRescuesAFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("collectFiles: %v", err)
 	}
+
 	if slices.ContainsFunc(files, func(f string) bool { return filepath.Base(f) == "other.pwn" }) {
 		t.Fatalf("collectFiles(dir) = %v, want other.pwn excluded", files)
 	}
+
 	if !slices.ContainsFunc(files, func(f string) bool { return filepath.Base(f) == "important.pwn" }) {
 		t.Fatalf("collectFiles(dir) = %v, want important.pwn rescued by negation", files)
 	}
@@ -235,9 +257,11 @@ func TestCollectFilesGitignoreAnchoredPatternOnlyMatchesAtItsOwnLevel(t *testing
 	if err != nil {
 		t.Fatalf("collectFiles: %v", err)
 	}
+
 	if slices.ContainsFunc(files, func(f string) bool { return f == filepath.Join(dir, "root_only.pwn") }) {
 		t.Fatalf("collectFiles(dir) = %v, want top-level root_only.pwn excluded", files)
 	}
+
 	if !slices.ContainsFunc(files, func(f string) bool { return f == filepath.Join(dir, "sub", "root_only.pwn") }) {
 		t.Fatalf("collectFiles(dir) = %v, want sub/root_only.pwn NOT excluded (anchored pattern shouldn't match nested)", files)
 	}
@@ -254,11 +278,13 @@ func TestCollectFilesGitignoreDoubleStarMatchesAnyDepth(t *testing.T) {
 	if err != nil {
 		t.Fatalf("collectFiles: %v", err)
 	}
+
 	for _, skip := range []string{"x.pwn", "y.pwn"} {
 		if slices.ContainsFunc(files, func(f string) bool { return filepath.Base(f) == skip }) {
 			t.Fatalf("collectFiles(dir) = %v, want %s excluded by **/generated/*.pwn", files, skip)
 		}
 	}
+
 	if !slices.ContainsFunc(files, func(f string) bool { return filepath.Base(f) == "keep.pwn" }) {
 		t.Fatalf("collectFiles(dir) = %v, want keep.pwn included", files)
 	}
@@ -275,9 +301,11 @@ func TestCollectFilesNestedGitignoreOverridesParent(t *testing.T) {
 	if err != nil {
 		t.Fatalf("collectFiles: %v", err)
 	}
+
 	if !slices.ContainsFunc(files, func(f string) bool { return filepath.Base(f) == "rescued.pwn" }) {
 		t.Fatalf("collectFiles(dir) = %v, want rescued.pwn rescued by nested .gitignore", files)
 	}
+
 	if slices.ContainsFunc(files, func(f string) bool { return filepath.Base(f) == "other.pwn" }) {
 		t.Fatalf("collectFiles(dir) = %v, want other.pwn still excluded by parent .gitignore", files)
 	}

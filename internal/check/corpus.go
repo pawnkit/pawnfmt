@@ -14,20 +14,26 @@ import (
 
 func CollectPawnFiles(root string) ([]string, error) {
 	var files []string
+
 	err := filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
+
 		if d.IsDir() {
 			return nil
 		}
+
 		switch strings.ToLower(filepath.Ext(path)) {
 		case ".pwn", ".inc":
 			files = append(files, path)
 		}
+
 		return nil
 	})
+
 	sort.Strings(files)
+
 	return files, err
 }
 
@@ -51,6 +57,7 @@ type CorpusResult struct {
 
 func AnalyzeCorpusFile(path string, cfg config.Config) (r CorpusResult) {
 	r.Path = path
+
 	defer func() {
 		if rec := recover(); rec != nil {
 			r.Status = CorpusStatusFail
@@ -62,6 +69,7 @@ func AnalyzeCorpusFile(path string, cfg config.Config) (r CorpusResult) {
 	if err != nil {
 		r.Status = CorpusStatusFail
 		r.Detail = err.Error()
+
 		return r
 	}
 
@@ -69,6 +77,7 @@ func AnalyzeCorpusFile(path string, cfg config.Config) (r CorpusResult) {
 	if parsed.HasParseErrors() {
 		r.Status = CorpusStatusFail
 		r.Detail = "parser reported Broken (internal confusion, not just a raw region)"
+
 		return r
 	}
 
@@ -81,20 +90,25 @@ func AnalyzeCorpusFile(path string, cfg config.Config) (r CorpusResult) {
 	if ferr != nil {
 		r.Status = CorpusStatusFail
 		r.Detail = "format: " + ferr.Error()
+
 		return r
 	}
+
 	idempotent, ferr2 := Idempotent(formatted, func(b []byte) ([]byte, error) {
 		return formatter.FormatSource(b, cfg)
 	})
 	if ferr2 != nil {
 		r.Status = CorpusStatusFail
 		r.Detail = "second-pass format: " + ferr2.Error()
+
 		return r
 	}
+
 	r.Idempotent = idempotent
 	if !r.Idempotent {
 		r.Status = CorpusStatusFail
 		r.Detail = "not idempotent (format(format(x)) != format(x))"
+
 		return r
 	}
 
@@ -106,6 +120,7 @@ func AnalyzeCorpusFile(path string, cfg config.Config) (r CorpusResult) {
 	default:
 		r.Status = CorpusStatusPreserve
 	}
+
 	return r
 }
 
@@ -113,22 +128,28 @@ func corpusRawCoverage(n *parser.Node) (total, raw int) {
 	if n == nil {
 		return 0, 0
 	}
+
 	span := max(n.End-n.Start, 0)
 	if n.Kind != parser.KindSourceFile && n.Kind != parser.KindConditionalRegion && n.Kind != parser.KindConditionalBranch {
 		if n.Kind == parser.KindRaw || n.HasError {
 			return span, span
 		}
 	}
+
 	if len(n.Children) == 0 {
 		return span, 0
 	}
+
 	covered := 0
+
 	for _, c := range n.Children {
 		ct, cr := corpusRawCoverage(c)
 		total += ct
 		raw += cr
 		covered += c.End - c.Start
 	}
+
 	total += span - covered
+
 	return total, raw
 }

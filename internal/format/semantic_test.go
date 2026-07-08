@@ -4,6 +4,7 @@ import "testing"
 
 func TestVerifySemanticTokensAllowsFormattingStructure(t *testing.T) {
 	before := []byte("if (ready) return Call(a, b);\n")
+
 	after := []byte("if (ready) {\n    return Call(a, b,);\n}\n")
 	if err := verifySemanticTokens(before, after); err != nil {
 		t.Fatalf("structural formatting should be allowed: %v", err)
@@ -20,6 +21,7 @@ func TestVerifySemanticTokensRejectsMeaningfulChanges(t *testing.T) {
 		{name: "literal", after: "value = source + 2;"},
 	}
 	before := []byte("value = source + 1;")
+
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			if err := verifySemanticTokens(before, []byte(test.after)); err == nil {

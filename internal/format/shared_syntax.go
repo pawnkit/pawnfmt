@@ -13,10 +13,12 @@ func sharedExpressionDirective(line string) bool {
 		if !strings.HasPrefix(line, prefix) {
 			continue
 		}
+
 		if len(line) == len(prefix) || !isIdentByte(line[len(prefix)]) {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -26,6 +28,7 @@ func horizontalGap(gap string) bool {
 			return false
 		}
 	}
+
 	return true
 }
 
@@ -33,6 +36,7 @@ func sharedTagName(name string) bool {
 	if name == "_" || name == "bool" || name == "Float" || name == "File" {
 		return true
 	}
+
 	return len(name) > 0 && name[0] >= 'A' && name[0] <= 'Z'
 }
 
@@ -40,6 +44,7 @@ func sharedKeywordNeedsSpace(current, next token.Kind) bool {
 	if next == token.LParen && (current == token.KwSizeof || current == token.KwTagof || current == token.KwDefined) {
 		return false
 	}
+
 	switch current {
 	case token.KwPublic, token.KwStock, token.KwStatic, token.KwNative,
 		token.KwForward, token.KwConst, token.KwNew, token.KwDecl,
@@ -64,7 +69,9 @@ func sharedForClosingParen(tokens []token.Token, i int) bool {
 	if i < 0 || i >= len(tokens) || tokens[i].Kind != token.RParen {
 		return false
 	}
+
 	depth := 0
+
 	for j := i; j >= 0; j-- {
 		switch tokens[j].Kind {
 		case token.RParen:
@@ -76,6 +83,7 @@ func sharedForClosingParen(tokens []token.Token, i int) bool {
 			}
 		}
 	}
+
 	return false
 }
 
@@ -83,6 +91,7 @@ func sharedTightKeywordOpeningParen(tokens []token.Token, i int) bool {
 	if i <= 0 || i >= len(tokens) || tokens[i].Kind != token.LParen {
 		return false
 	}
+
 	switch tokens[i-1].Kind {
 	case token.KwSizeof, token.KwTagof, token.KwDefined:
 		return true
@@ -95,7 +104,9 @@ func sharedTightKeywordClosingParen(tokens []token.Token, i int) bool {
 	if i < 0 || i >= len(tokens) || tokens[i].Kind != token.RParen {
 		return false
 	}
+
 	depth := 0
+
 	for j := i; j >= 0; j-- {
 		switch tokens[j].Kind {
 		case token.RParen:
@@ -107,6 +118,7 @@ func sharedTightKeywordClosingParen(tokens []token.Token, i int) bool {
 			}
 		}
 	}
+
 	return false
 }
 
@@ -114,14 +126,17 @@ func sharedDeclarationTagColon(tokens []token.Token, i int) bool {
 	if i < 1 || i+1 >= len(tokens) || tokens[i-1].Kind != token.Identifier || tokens[i+1].Kind != token.Identifier {
 		return false
 	}
+
 	if i == 1 {
 		for _, tok := range tokens[i+2:] {
 			if tok.Kind == token.Comma || tok.Kind == token.RParen {
 				return true
 			}
 		}
+
 		return false
 	}
+
 	switch tokens[i-2].Kind {
 	case token.KwPublic, token.KwStock, token.KwStatic, token.KwNative,
 		token.KwForward, token.KwConst, token.KwNew,
@@ -134,6 +149,7 @@ func sharedDeclarationTagColon(tokens []token.Token, i int) bool {
 
 func sharedTernaryColon(tokens []token.Token, i int) bool {
 	depth := 0
+
 	for j := 0; j <= i && j < len(tokens); j++ {
 		switch tokens[j].Kind {
 		case token.Question:
@@ -142,11 +158,13 @@ func sharedTernaryColon(tokens []token.Token, i int) bool {
 			if j == i {
 				return depth > 0
 			}
+
 			if depth > 0 {
 				depth--
 			}
 		}
 	}
+
 	return false
 }
 
@@ -154,16 +172,20 @@ func sharedCaseOrLabelColon(tokens []token.Token, i int, source []byte) bool {
 	if i <= 0 || i >= len(tokens) || tokens[i].Kind != token.Colon || sharedTernaryColon(tokens, i) {
 		return false
 	}
+
 	if tokens[0].Kind == token.KwCase || tokens[0].Kind == token.KwDefault {
 		return true
 	}
+
 	if i != 1 || tokens[0].Kind != token.Identifier {
 		return false
 	}
+
 	if i+1 < len(tokens) && tokens[i+1].Kind != token.EOF &&
 		sharedTagName(tokens[0].Text(source)) {
 		return false
 	}
+
 	return true
 }
 
@@ -172,6 +194,7 @@ func sharedDeclarationLine(tokens []token.Token) bool {
 		if tok.Kind == token.EOF {
 			return false
 		}
+
 		switch tok.Kind {
 		case token.KwPublic, token.KwStock, token.KwStatic, token.KwNative,
 			token.KwForward, token.KwConst, token.KwNew:
@@ -182,12 +205,14 @@ func sharedDeclarationLine(tokens []token.Token) bool {
 			return false
 		}
 	}
+
 	return false
 }
 
 func sharedBeforeInitializer(tokens []token.Token, i int) bool {
 	depth := 0
 	initializerDepth := -1
+
 	for j := 0; j < i && j < len(tokens); j++ {
 		switch tokens[j].Kind {
 		case token.RParen, token.RBracket, token.RBrace:
@@ -210,6 +235,7 @@ func sharedBeforeInitializer(tokens []token.Token, i int) bool {
 			depth++
 		}
 	}
+
 	return initializerDepth < 0
 }
 
@@ -218,12 +244,16 @@ func sharedArrayBraceTokens(tokens []token.Token) map[int]bool {
 		index int
 		array bool
 	}
+
 	var stack []brace
+
 	result := make(map[int]bool)
+
 	for i, tok := range tokens {
 		switch tok.Kind {
 		case token.LBrace:
 			array := false
+
 			if i > 0 {
 				switch tokens[i-1].Kind {
 				case token.Assign, token.Comma, token.LParen:
@@ -232,19 +262,23 @@ func sharedArrayBraceTokens(tokens []token.Token) map[int]bool {
 					array = result[i-1]
 				}
 			}
+
 			result[i] = array
 			stack = append(stack, brace{index: i, array: array})
 		case token.RBrace:
 			if len(stack) == 0 {
 				continue
 			}
+
 			open := stack[len(stack)-1]
 			stack = stack[:len(stack)-1]
+
 			if open.array {
 				result[i] = true
 			}
 		}
 	}
+
 	return result
 }
 
@@ -252,6 +286,7 @@ func sharedBinaryOperator(tokens []token.Token, i int) bool {
 	if i < 0 || i >= len(tokens) {
 		return false
 	}
+
 	switch tokens[i].Kind {
 	case token.Assign, token.PlusAssign, token.MinusAssign, token.StarAssign, token.SlashAssign,
 		token.PercentAssign, token.ShlAssign, token.ShrAssign, token.UshrAssign,
@@ -271,6 +306,7 @@ func sharedPrefixOperator(tokens []token.Token, i int) bool {
 	if i < 0 || i >= len(tokens) {
 		return false
 	}
+
 	switch tokens[i].Kind {
 	case token.Bang, token.Tilde:
 		return true
@@ -287,6 +323,7 @@ func sharedPostfixOperator(tokens []token.Token, i int) bool {
 	if i <= 0 || i >= len(tokens) {
 		return false
 	}
+
 	return (tokens[i].Kind == token.PlusPlus || tokens[i].Kind == token.MinusMinus) &&
 		sharedTokenEndsOperand(tokens[i-1].Kind)
 }
@@ -307,13 +344,17 @@ func sharedTokenEndsOperand(kind token.Kind) bool {
 func normalizeSharedComments(line string) string {
 	tokens := lexer.Tokenize([]byte(line))
 	seen := make(map[int]bool)
+
 	var offsets []int
+
 	collect := func(items []token.Trivia) {
 		for _, item := range items {
 			if item.Kind != token.Comment || seen[item.Start.Offset] {
 				continue
 			}
+
 			seen[item.Start.Offset] = true
+
 			start := item.Start.Offset
 			if start+2 < len(line) && line[start:start+2] == "//" {
 				ch := line[start+2]
@@ -327,9 +368,11 @@ func normalizeSharedComments(line string) string {
 		collect(tok.LeadingTrivia)
 		collect(tok.TrailingTrivia)
 	}
+
 	for i := len(offsets) - 1; i >= 0; i-- {
 		at := offsets[i]
 		line = line[:at] + " " + line[at:]
 	}
+
 	return line
 }

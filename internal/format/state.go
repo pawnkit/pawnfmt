@@ -36,18 +36,21 @@ type nextItemHint struct {
 func (s *state) takeSuppressIfAlternative() bool {
 	v := s.hint.suppressIfAlternative
 	s.hint.suppressIfAlternative = false
+
 	return v
 }
 
 func (s *state) takeAlignDeclarationWidth() int {
 	v := s.hint.alignDeclarationWidth
 	s.hint.alignDeclarationWidth = 0
+
 	return v
 }
 
 func (s *state) takeAlignMacroValueWidth() int {
 	v := s.hint.alignMacroValueWidth
 	s.hint.alignMacroValueWidth = 0
+
 	return v
 }
 
@@ -66,11 +69,13 @@ func (s *state) continuationIndentWidth() int {
 	if s.config.ContinuationIndentWidth > 0 {
 		return s.config.ContinuationIndentWidth
 	}
+
 	return s.config.IndentWidth
 }
 
 func (s *state) printerOptions() printer.Options {
 	newline := config.ResolveNewline(s.config.NewlineStyle, s.trivia.DetectedNewline)
+
 	return printer.Options{
 		LineWidth:              s.config.LineWidth,
 		IndentWidth:            s.config.IndentWidth,
@@ -86,6 +91,7 @@ func (s *state) renderFlat(node doc.Doc) string {
 	opts.LineWidth = 1 << 30
 	opts.InsertFinalNewline = false
 	opts.TrimTrailingWhitespace = false
+
 	return printer.Print(node, opts)
 }
 
@@ -93,6 +99,7 @@ func (s *state) renderDoc(node doc.Doc) string {
 	opts := s.printerOptions()
 	opts.InsertFinalNewline = false
 	opts.TrimTrailingWhitespace = false
+
 	return printer.Print(node, opts)
 }
 
@@ -100,5 +107,6 @@ func (s *state) measureFlat(n *parser.Node) string {
 	tmp := *s
 	tmp.renderedComments = make(map[int]bool, len(s.renderedComments))
 	tmp.hint = nextItemHint{}
+
 	return tmp.renderFlat(tmp.formatNode(n))
 }

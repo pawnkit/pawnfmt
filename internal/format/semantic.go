@@ -16,6 +16,7 @@ type semanticToken struct {
 func verifySemanticTokens(before, after []byte) error {
 	want := semanticTokens(before)
 	got := semanticTokens(after)
+
 	limit := min(len(got), len(want))
 	for i := range limit {
 		if want[i].kind != got[i].kind || !bytes.Equal(want[i].text, got[i].text) {
@@ -23,21 +24,26 @@ func verifySemanticTokens(before, after []byte) error {
 				want[i].kind, want[i].text, got[i].kind, got[i].text)
 		}
 	}
+
 	if len(want) != len(got) {
 		return fmt.Errorf("semantic token count changed from %d to %d", len(want), len(got))
 	}
+
 	return nil
 }
 
 func semanticTokens(source []byte) []semanticToken {
 	tokens := lexer.Tokenize(source)
+
 	out := make([]semanticToken, 0, len(tokens))
 	for _, tok := range tokens {
 		if nonSemanticFormattingToken(tok.Kind) {
 			continue
 		}
+
 		out = append(out, semanticToken{kind: tok.Kind, text: append([]byte(nil), tok.Text(source)...)})
 	}
+
 	return out
 }
 

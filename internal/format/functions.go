@@ -8,23 +8,30 @@ import (
 
 func (s *state) formatFunction(n *parser.Node) doc.Doc {
 	var parts []doc.Doc
+
 	for _, c := range n.Children {
 		if c.Kind != parser.KindIdentifier {
 			break
 		}
+
 		if c == n.Field("name") {
 			break
 		}
+
 		parts = append(parts, doc.Text(c.Text(s.source)), doc.Text(" "))
 	}
+
 	if tag := n.Field("tag"); tag != nil {
 		parts = append(parts, s.formatTagPrefix(tag, false))
 	}
+
 	parts = append(parts, s.formatDimensions(dimsOf(n)))
+
 	parts = append(parts, doc.Text(n.Field("name").Text(s.source)))
 	if s.config.SpaceBeforeFunctionParen {
 		parts = append(parts, doc.Text(" "))
 	}
+
 	parts = append(parts, s.formatParameterList(n.Field("parameters")))
 	if state := n.Field("state"); state != nil {
 		parts = append(parts, doc.Text(" "), s.formatStateSelector(state))
@@ -35,16 +42,21 @@ func (s *state) formatFunction(n *parser.Node) doc.Doc {
 		if alias := n.Field("alias"); alias != nil {
 			parts = append(parts, s.assignmentSeparator(), s.formatNode(alias))
 		}
+
 		if !n.MissingSemi {
 			parts = append(parts, doc.Text(";"))
 		}
+
 		return doc.Concat(parts...)
 	}
+
 	if body.Kind == parser.KindConditionalRegion {
 		parts = append(parts, doc.Indent(doc.Concat(doc.HardLine(), s.formatNode(body))))
 		return doc.Concat(parts...)
 	}
+
 	parts = append(parts, s.joinBraceStyle(s.formatNode(body)))
+
 	return doc.Concat(parts...)
 }
 
@@ -52,6 +64,7 @@ func (s *state) formatParameterList(n *parser.Node) doc.Doc {
 	if n == nil {
 		return doc.Text("()")
 	}
+
 	if len(n.Children) == 0 {
 		return doc.Text("()")
 	}
@@ -120,13 +133,17 @@ func (s *state) formatParenList(nodes []*parser.Node, style config.MultilineList
 		for i, n := range nodes {
 			items[i] = s.formatListItem(n, i < len(nodes)-1)
 		}
+
 		var fillParts []doc.Doc
+
 		for i, it := range items {
 			if i > 0 {
 				fillParts = append(fillParts, sepLine)
 			}
+
 			fillParts = append(fillParts, it)
 		}
+
 		return doc.Group(doc.Concat(
 			doc.Text(open),
 			doc.Indent(doc.Concat(doc.SoftLine(), doc.Fill(fillParts...))),
@@ -139,7 +156,9 @@ func (s *state) formatParenList(nodes []*parser.Node, style config.MultilineList
 	for i, n := range nodes {
 		items[i] = s.formatListItem(n, i < len(nodes)-1)
 	}
+
 	joined := doc.Join(sepLine, items...)
+
 	return doc.Group(doc.Concat(
 		doc.Text(open),
 		doc.Indent(doc.Concat(doc.SoftLine(), joined)),
@@ -153,6 +172,7 @@ func (s *state) formatExplodedList(nodes []*parser.Node, open, closeTok string) 
 	for i, n := range nodes {
 		items[i] = s.formatListItem(n, i < len(nodes)-1)
 	}
+
 	return doc.Concat(
 		doc.Text(open),
 		doc.Indent(doc.Concat(doc.HardLine(), doc.Join(doc.HardLine(), items...))),
@@ -166,30 +186,39 @@ func (s *state) formatParameter(n *parser.Node) doc.Doc {
 	if q := s.paramQualifiers[n]; q != nil {
 		qualifier = doc.Concat(doc.Text(q.Text(s.source)), doc.Text(" "))
 	}
+
 	if len(n.Children) == 0 {
 		return doc.Concat(qualifier, doc.Text(n.Text(s.source)))
 	}
+
 	tag, name := n.Field("tag"), n.Field("name")
+
 	var parts []doc.Doc
+
 	for _, c := range n.Children {
 		if c == tag || c == name {
 			break
 		}
+
 		if c.Kind == parser.KindIdentifier {
 			parts = append(parts, doc.Text(c.Text(s.source)), doc.Text(" "))
 		}
 	}
+
 	if byRefBeforeName(n, s.source) {
 		parts = append(parts, doc.Text("&"))
 	}
+
 	if tag != nil {
 		parts = append(parts, s.formatTagPrefix(tag, false))
 	}
+
 	if name != nil {
 		parts = append(parts, doc.Text(name.Text(s.source)))
 	} else {
 		parts = append(parts, doc.Text("..."))
 	}
+
 	parts = append(parts, s.formatDimensions(dimsOf(n)))
 	if def := n.Field("default_value"); def != nil {
 		parts = append(parts, s.assignmentSeparator(), s.formatNode(def))
@@ -203,12 +232,15 @@ func byRefBeforeName(n *parser.Node, source []byte) bool {
 	if anchor == nil {
 		anchor = n.Field("name")
 	}
+
 	if anchor == nil {
 		return false
 	}
+
 	pos := anchor.Start - 1
 	for pos >= n.Start && (source[pos] == ' ' || source[pos] == '\t') {
 		pos--
 	}
+
 	return pos >= n.Start && source[pos] == '&'
 }

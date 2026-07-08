@@ -6,12 +6,15 @@ func fillCommands(parts []doc.Doc, indent, remaining int, options Options) []com
 	if len(parts) == 0 {
 		return nil
 	}
+
 	content := parts[0]
 	contentFits := fits(remaining, command{indent: indent, mode: modeFlat, doc: content}, nil, true, options)
+
 	contentMode := modeBreak
 	if contentFits {
 		contentMode = modeFlat
 	}
+
 	if len(parts) == 1 {
 		return []command{{indent: indent, mode: contentMode, doc: content}}
 	}

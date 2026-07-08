@@ -4,6 +4,7 @@ import "fmt"
 
 func DefaultTOML() string {
 	d := Default()
+
 	return fmt.Sprintf(`# pawnfmt configuration.
 # Every key is shown with its default value. Change the options you care
 # about, or delete a line to keep using its default.

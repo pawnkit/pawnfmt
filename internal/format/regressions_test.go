@@ -16,10 +16,12 @@ func TestMacroBodyFallbackPreservesOwnBackslashes(t *testing.T) {
 		"\tpublic %0_%2(%1) <> { return (%3); }",
 		"",
 	}, "\n"))
+
 	formatted := mustFormat(t, source, config.Default())
 	if strings.Contains(string(formatted), `\ \`) {
 		t.Fatalf("macro body backslash continuation was duplicated:\n%s", formatted)
 	}
+
 	second := mustFormat(t, formatted, config.Default())
 	if string(second) != string(formatted) {
 		t.Fatalf("macro body formatting is not idempotent\nfirst:\n%s\nsecond:\n%s", formatted, second)
@@ -28,10 +30,12 @@ func TestMacroBodyFallbackPreservesOwnBackslashes(t *testing.T) {
 
 func TestSubscriptPreservesWildcardBraceDelimiter(t *testing.T) {
 	source := []byte("stock F(playerid) { if (!items[playerid][i]{0}) Call(); }\n")
+
 	formatted := mustFormat(t, source, config.Default())
 	if !strings.Contains(string(formatted), "items[playerid][i]{0}") {
 		t.Fatalf("wildcard-tag subscript delimiter was not preserved:\n%s", formatted)
 	}
+
 	second := mustFormat(t, formatted, config.Default())
 	if string(second) != string(formatted) {
 		t.Fatalf("wildcard subscript formatting is not idempotent\nfirst:\n%s\nsecond:\n%s", formatted, second)
@@ -40,10 +44,12 @@ func TestSubscriptPreservesWildcardBraceDelimiter(t *testing.T) {
 
 func TestVariableDeclaratorRendersCapacitySuffix(t *testing.T) {
 	source := []byte("#if defined foreach\nnew\n\tIterator:FCNPC<MAX_PLAYERS>;\n#endif\n")
+
 	formatted := mustFormat(t, source, config.Default())
 	if !strings.Contains(string(formatted), "<MAX_PLAYERS>") {
 		t.Fatalf("declarator's capacity suffix was dropped:\n%s", formatted)
 	}
+
 	second := mustFormat(t, formatted, config.Default())
 	if string(second) != string(formatted) {
 		t.Fatalf("capacity suffix formatting is not idempotent\nfirst:\n%s\nsecond:\n%s", formatted, second)
@@ -52,10 +58,12 @@ func TestVariableDeclaratorRendersCapacitySuffix(t *testing.T) {
 
 func TestFunctionRendersCallingConventionDimension(t *testing.T) {
 	source := []byte("native ArgTag:[2]pawn_arg_pack(AnyTag:value, tag_id = tagof value);\n")
+
 	formatted := mustFormat(t, source, config.Default())
 	if !strings.Contains(string(formatted), "[2]") {
 		t.Fatalf("return-type array dimension was dropped:\n%s", formatted)
 	}
+
 	second := mustFormat(t, formatted, config.Default())
 	if string(second) != string(formatted) {
 		t.Fatalf("calling_convention dimension formatting is not idempotent\nfirst:\n%s\nsecond:\n%s", formatted, second)
@@ -66,13 +74,16 @@ func TestConditionalSpliceGetsLineNormalization(t *testing.T) {
 	source := readFile(t, filepath.Join(testdataDir(), "regressions", "conditional_splice_creator", "source.pwn"))
 	requireSharedConditionalPath(t, source)
 	formatted := mustFormat(t, source, config.Default())
+
 	text := string(formatted)
 	if strings.Contains(text, "\t\t\t\t\t\tif(keys & KEY_WALK && keys & KEY_JUMP) GetDynamicObjectRot") {
 		t.Fatalf("conditional_splice content was passed through verbatim instead of normalized:\n%s", text)
 	}
+
 	if !strings.Contains(text, "if (keys & KEY_WALK && keys & KEY_JUMP)") {
 		t.Fatalf("conditional_splice content did not get normal operator spacing:\n%s", text)
 	}
+
 	second := mustFormat(t, formatted, config.Default())
 	if string(second) != text {
 		t.Fatalf("conditional_splice formatting is not idempotent\nfirst:\n%s\nsecond:\n%s", text, second)
@@ -82,18 +93,22 @@ func TestConditionalSpliceGetsLineNormalization(t *testing.T) {
 func TestLongConditionDirectiveWrapsWithContinuation(t *testing.T) {
 	source := []byte("stock F() {\n\t#if defined IsValidDynamicObject && defined IsDynamicObjectMaterialTextUsed && defined GetDynamicObjectMaterialText && defined SetDynamicObjectMaterialText\n\tnew x;\n\t#endif\n}\n")
 	formatted := mustFormat(t, source, config.Default())
+
 	text := string(formatted)
 	for line := range strings.SplitSeq(text, "\n") {
 		if len(line) > 100 {
 			t.Fatalf("condition directive line exceeds LineWidth despite needing to wrap:\n%s", text)
 		}
 	}
+
 	if !strings.Contains(text, "\\\n") {
 		t.Fatalf("long condition directive did not wrap with \"\\\" continuation:\n%s", text)
 	}
+
 	if strings.Contains(text, "\n"+"defined") {
 		t.Fatalf("continuation line lost its indentation:\n%s", text)
 	}
+
 	second := mustFormat(t, formatted, config.Default())
 	if string(second) != text {
 		t.Fatalf("condition directive wrapping is not idempotent\nfirst:\n%s\nsecond:\n%s", text, second)
@@ -115,6 +130,7 @@ func TestNestedConditionalDirectivesAlignWithEnclosingBrace(t *testing.T) {
 	if string(formatted) != want {
 		t.Fatalf("top-level nested directives did not indent by nesting depth\nexpected:\n%s\nactual:\n%s", want, formatted)
 	}
+
 	second := mustFormat(t, formatted, config.Default())
 	if string(second) != string(formatted) {
 		t.Fatalf("nested directive indent is not idempotent\nfirst:\n%s\nsecond:\n%s", formatted, second)
@@ -134,6 +150,7 @@ func TestNestedConditionalDirectivesAlignWithEnclosingBrace(t *testing.T) {
 		"",
 	}, "\n"))
 	nestedFormatted := mustFormat(t, nested, config.Default())
+
 	nestedWant := strings.Join([]string{
 		"stock F()",
 		"{",
@@ -152,6 +169,7 @@ func TestNestedConditionalDirectivesAlignWithEnclosingBrace(t *testing.T) {
 	if string(nestedFormatted) != nestedWant {
 		t.Fatalf("nested directives did not align with the enclosing if-block's brace\nexpected:\n%s\nactual:\n%s", nestedWant, nestedFormatted)
 	}
+
 	nestedSecond := mustFormat(t, nestedFormatted, config.Default())
 	if string(nestedSecond) != string(nestedFormatted) {
 		t.Fatalf("nested directive indent (in a block) is not idempotent\nfirst:\n%s\nsecond:\n%s", nestedFormatted, nestedSecond)
@@ -159,6 +177,7 @@ func TestNestedConditionalDirectivesAlignWithEnclosingBrace(t *testing.T) {
 
 	cfg := config.Default()
 	cfg.DirectiveIndent = config.DirectiveIndentNone
+
 	noneFormatted := mustFormat(t, nested, cfg)
 	for line := range strings.SplitSeq(string(noneFormatted), "\n") {
 		if strings.HasPrefix(strings.TrimSpace(line), "#") && strings.HasPrefix(line, " ") {
@@ -211,6 +230,7 @@ func TestOnlyEnumsGetTrailingCommas(t *testing.T) {
 func TestNoTrailingCommaStillCollapsesToOneLine(t *testing.T) {
 	source := []byte("stock F() {\n    Call(a, b);\n}\n")
 	want := "stock F()\n{\n    Call(a, b);\n}\n"
+
 	formatted := mustFormat(t, source, config.Default())
 	if string(formatted) != want {
 		t.Fatalf("list without a trailing comma should still collapse\nexpected:\n%s\nactual:\n%s", want, formatted)
@@ -253,10 +273,12 @@ func TestAlignConsecutiveDeclarationsAlignsWithinARun(t *testing.T) {
 		"}",
 		"",
 	}, "\n")
+
 	formatted := mustFormat(t, source, cfg)
 	if string(formatted) != want {
 		t.Fatalf("consecutive declarations were not aligned as expected\nexpected:\n%s\nactual:\n%s", want, formatted)
 	}
+
 	second := mustFormat(t, formatted, cfg)
 	if string(second) != string(formatted) {
 		t.Fatalf("aligned declaration output is not idempotent\nfirst:\n%s\nsecond:\n%s", formatted, second)
@@ -266,6 +288,7 @@ func TestAlignConsecutiveDeclarationsAlignsWithinARun(t *testing.T) {
 func TestAlignConsecutiveDeclarationsDisabledByDefault(t *testing.T) {
 	source := []byte("new gShort = 1;\nnew gVeryLongName = 2;\n")
 	want := "new gShort = 1;\nnew gVeryLongName = 2;\n"
+
 	formatted := mustFormat(t, source, config.Default())
 	if string(formatted) != want {
 		t.Fatalf("declarations should stay unaligned by default\nexpected:\n%s\nactual:\n%s", want, formatted)
@@ -277,6 +300,7 @@ func TestAlignConsecutiveDeclarationsBreaksOnLeadingComment(t *testing.T) {
 	cfg.AlignConsecutiveDeclarations = true
 	source := []byte("new gShort = 1;\n// a comment\nnew gVeryLongName = 2;\n")
 	want := "new gShort = 1;\n// a comment\nnew gVeryLongName = 2;\n"
+
 	formatted := mustFormat(t, source, cfg)
 	if string(formatted) != want {
 		t.Fatalf("a leading comment should break the alignment run\nexpected:\n%s\nactual:\n%s", want, formatted)
@@ -295,16 +319,20 @@ func TestAlignConsecutiveDeclarationsSkipsMultiDeclaratorStatements(t *testing.T
 		"",
 	}, "\n"))
 	formatted := mustFormat(t, source, cfg)
+
 	text := string(formatted)
 	if !strings.Contains(text, "new gShort        = 1;\nnew gVeryLongName = 2;") {
 		t.Fatalf("first run before the multi-declarator statement did not align:\n%s", text)
 	}
+
 	if !strings.Contains(text, "new a = 1, b = 2;") {
 		t.Fatalf("multi-declarator statement should be left untouched:\n%s", text)
 	}
+
 	if !strings.Contains(text, "new gX            = 3;\nnew gVeryLongTail = 4;") {
 		t.Fatalf("second run after the multi-declarator statement did not align:\n%s", text)
 	}
+
 	second := mustFormat(t, formatted, cfg)
 	if string(second) != text {
 		t.Fatalf("output is not idempotent\nfirst:\n%s\nsecond:\n%s", text, second)
@@ -314,10 +342,12 @@ func TestAlignConsecutiveDeclarationsSkipsMultiDeclaratorStatements(t *testing.T
 func TestAssignmentChainStaysOnOneLineWhenItFits(t *testing.T) {
 	source := []byte("stock F() {\n    a = b = c = 1;\n}\n")
 	want := "stock F()\n{\n    a = b = c = 1;\n}\n"
+
 	formatted := mustFormat(t, source, config.Default())
 	if string(formatted) != want {
 		t.Fatalf("assignment chain mismatch\nexpected:\n%s\nactual:\n%s", want, formatted)
 	}
+
 	second := mustFormat(t, formatted, config.Default())
 	if string(second) != string(formatted) {
 		t.Fatalf("assignment chain output is not idempotent\nfirst:\n%s\nsecond:\n%s", formatted, second)
@@ -337,10 +367,12 @@ func TestAssignmentChainWrapsOneAssignmentPerLineWhenTooLong(t *testing.T) {
 		"}",
 		"",
 	}, "\n")
+
 	formatted := mustFormat(t, source, cfg)
 	if string(formatted) != want {
 		t.Fatalf("wrapped assignment chain mismatch\nexpected:\n%s\nactual:\n%s", want, formatted)
 	}
+
 	second := mustFormat(t, formatted, cfg)
 	if string(second) != string(formatted) {
 		t.Fatalf("wrapped assignment chain is not idempotent\nfirst:\n%s\nsecond:\n%s", formatted, second)
@@ -352,6 +384,7 @@ func TestAssignmentChainRespectsSpaceAroundOperatorsFalse(t *testing.T) {
 	cfg.SpaceAroundOperators = false
 	source := []byte("stock F() {\n    a = b = c = 1;\n}\n")
 	want := "stock F()\n{\n    a= b= c=1;\n}\n"
+
 	formatted := mustFormat(t, source, cfg)
 	if string(formatted) != want {
 		t.Fatalf("assignment chain with SpaceAroundOperators=false mismatch\nexpected:\n%s\nactual:\n%s", want, formatted)
@@ -361,10 +394,12 @@ func TestAssignmentChainRespectsSpaceAroundOperatorsFalse(t *testing.T) {
 func TestStringConcatJoinsAdjacentLiteralsWithASpace(t *testing.T) {
 	source := []byte("new s[64] = \"a\" \"b\" \"c\";\n")
 	want := "new s[64] = \"a\" \"b\" \"c\";\n"
+
 	formatted := mustFormat(t, source, config.Default())
 	if string(formatted) != want {
 		t.Fatalf("string concat mismatch\nexpected:\n%s\nactual:\n%s", want, formatted)
 	}
+
 	second := mustFormat(t, formatted, config.Default())
 	if string(second) != string(formatted) {
 		t.Fatalf("string concat output is not idempotent\nfirst:\n%s\nsecond:\n%s", formatted, second)
@@ -374,6 +409,7 @@ func TestStringConcatJoinsAdjacentLiteralsWithASpace(t *testing.T) {
 func TestStringConcatNormalizesExtraWhitespaceBetweenPieces(t *testing.T) {
 	source := []byte("new s[64] = \"a\"    \"b\";\n")
 	want := "new s[64] = \"a\" \"b\";\n"
+
 	formatted := mustFormat(t, source, config.Default())
 	if string(formatted) != want {
 		t.Fatalf("string concat whitespace normalization mismatch\nexpected:\n%s\nactual:\n%s", want, formatted)

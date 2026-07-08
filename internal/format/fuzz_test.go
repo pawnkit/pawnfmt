@@ -15,21 +15,26 @@ func configFromVariant(variant uint8) config.Config {
 		cfg.SpaceInsideParens = true
 		cfg.SpaceInsideBrackets = true
 	}
+
 	if variant&0x02 != 0 {
 		cfg.SpaceInsideBraces = true
 	}
+
 	if variant&0x04 != 0 {
 		cfg.AlignConsecutiveDeclarations = true
 		cfg.AlignEnumFields = true
 	}
+
 	if variant&0x08 != 0 {
 		cfg.MultilineCallArgs = config.MultilineListOnePerLine
 		cfg.MultilineFunctionParams = config.MultilineListOnePerLine
 	}
+
 	if variant&0x40 != 0 {
 		cfg.AlignConsecutiveMacros = true
 		cfg.AlignTrailingComments = true
 	}
+
 	if variant&0x80 != 0 {
 		cfg.BreakBinaryOperator = config.BinaryOperatorBreakBefore
 		cfg.IndentCaseLabels = false
@@ -84,22 +89,27 @@ func FuzzFormatConverges(f *testing.F) {
 		"stock F() {\n    return aaaaaaaaaa + bbbbbbbbbb + cccccccccc + dddddddddd + eeeeeeeeee;\n}\n",
 		"#include \"local.inc\"\n#include <a_samp>\n",
 	}
+
 	variants := []uint8{0x00, 0x0F, 0x10, 0x1F, 0x22, 0x2D, 0x35, 0x3A, 0x40, 0x48, 0x4F, 0x50, 0x5F, 0x80, 0xC0, 0xFF}
 	for _, seed := range seeds {
 		for _, variant := range variants {
 			f.Add(seed, variant)
 		}
 	}
+
 	f.Fuzz(func(t *testing.T, source string, variant uint8) {
 		cfg := configFromVariant(variant)
+
 		first, err := formatter.FormatSource([]byte(source), cfg)
 		if err != nil {
 			return
 		}
+
 		second, err := formatter.FormatSource(first, cfg)
 		if err != nil {
 			t.Fatalf("second format failed after a successful first pass: %v\noutput:\n%s", err, first)
 		}
+
 		if !bytes.Equal(first, second) {
 			t.Fatalf("successful formatting did not reach a fixed point\nfirst:\n%s\nsecond:\n%s", first, second)
 		}

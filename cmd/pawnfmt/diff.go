@@ -12,6 +12,7 @@ func unifiedDiff(path string, before, after []byte) string {
 func unifiedDiffColored(path string, before, after []byte, colors cliColors) string {
 	aLines := splitLines(string(before))
 	bLines := splitLines(string(after))
+
 	ops := diffLines(aLines, bLines)
 	if !opsHaveChanges(ops) {
 		return ""
@@ -22,15 +23,18 @@ func unifiedDiffColored(path string, before, after []byte, colors cliColors) str
 	fmt.Fprintf(&b, "%s\n", colors.green("+++ "+path))
 
 	const context = 3
+
 	for i := 0; i < len(ops); {
 		if ops[i].kind == opEqual {
 			i++
 			continue
 		}
+
 		start := i
 		for i < len(ops) && ops[i].kind != opEqual {
 			i++
 		}
+
 		end := i
 
 		hunkStart := max(start-context, 0)
@@ -38,6 +42,7 @@ func unifiedDiffColored(path string, before, after []byte, colors cliColors) str
 
 		writeHunk(&b, ops[hunkStart:hunkEnd], colors)
 	}
+
 	return b.String()
 }
 
@@ -47,6 +52,7 @@ func opsHaveChanges(ops []lineOp) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -65,6 +71,7 @@ type lineOp struct {
 
 func writeHunk(b *strings.Builder, ops []lineOp, colors cliColors) {
 	oldCount, newCount := 0, 0
+
 	for _, op := range ops {
 		switch op.kind {
 		case opEqual:
@@ -76,7 +83,9 @@ func writeHunk(b *strings.Builder, ops []lineOp, colors cliColors) {
 			newCount++
 		}
 	}
+
 	fmt.Fprintf(b, "%s\n", colors.cyan(fmt.Sprintf("@@ -%d,%d +%d,%d @@", 1, oldCount, 1, newCount)))
+
 	for _, op := range ops {
 		switch op.kind {
 		case opEqual:
@@ -93,19 +102,23 @@ func splitLines(s string) []string {
 	if s == "" {
 		return nil
 	}
+
 	lines := strings.Split(strings.ReplaceAll(s, "\r\n", "\n"), "\n")
 	if len(lines) > 0 && lines[len(lines)-1] == "" {
 		lines = lines[:len(lines)-1]
 	}
+
 	return lines
 }
 
 func diffLines(a, b []string) []lineOp {
 	n, m := len(a), len(b)
+
 	lcs := make([][]int, n+1)
 	for i := range lcs {
 		lcs[i] = make([]int, m+1)
 	}
+
 	for i := n - 1; i >= 0; i-- {
 		for j := m - 1; j >= 0; j-- {
 			switch {
@@ -120,6 +133,7 @@ func diffLines(a, b []string) []lineOp {
 	}
 
 	var ops []lineOp
+
 	i, j := 0, 0
 	for i < n && j < m {
 		switch {
@@ -135,11 +149,14 @@ func diffLines(a, b []string) []lineOp {
 			j++
 		}
 	}
+
 	for ; i < n; i++ {
 		ops = append(ops, lineOp{opDelete, a[i]})
 	}
+
 	for ; j < m; j++ {
 		ops = append(ops, lineOp{opInsert, b[j]})
 	}
+
 	return ops
 }

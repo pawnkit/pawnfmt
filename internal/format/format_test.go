@@ -14,6 +14,7 @@ func TestGolden(t *testing.T) {
 	if err != nil {
 		t.Fatalf("glob golden inputs: %v", err)
 	}
+
 	if len(files) == 0 {
 		t.Fatal("no golden inputs found")
 	}
@@ -23,6 +24,7 @@ func TestGolden(t *testing.T) {
 			source := readFile(t, inputPath)
 			formatted := mustFormat(t, source, config.Default())
 			expectedPath := filepath.Join(testdataDir(), "expected", filepath.Base(inputPath))
+
 			expected := ensureTrailingNewline(readFile(t, expectedPath))
 			if string(formatted) != string(expected) {
 				t.Fatalf("formatted output mismatch\nexpected:\n%s\nactual:\n%s", expected, formatted)
@@ -36,6 +38,7 @@ func TestIdempotence(t *testing.T) {
 	if err != nil {
 		t.Fatalf("glob idempotence inputs: %v", err)
 	}
+
 	if len(files) == 0 {
 		t.Fatal("no idempotence inputs found")
 	}
@@ -44,6 +47,7 @@ func TestIdempotence(t *testing.T) {
 		t.Run(strings.TrimSuffix(filepath.Base(inputPath), filepath.Ext(inputPath)), func(t *testing.T) {
 			source := readFile(t, inputPath)
 			first := mustFormat(t, source, config.Default())
+
 			second := mustFormat(t, first, config.Default())
 			if string(first) != string(second) {
 				t.Fatalf("formatter is not idempotent\nfirst:\n%s\nsecond:\n%s", first, second)
@@ -59,9 +63,11 @@ func TestParseAfterFormat(t *testing.T) {
 		if err != nil {
 			t.Fatalf("glob %s: %v", directory, err)
 		}
+
 		for _, inputPath := range files {
 			t.Run(directory+"/"+strings.TrimSuffix(filepath.Base(inputPath), filepath.Ext(inputPath)), func(t *testing.T) {
 				formatted := mustFormat(t, readFile(t, inputPath), config.Default())
+
 				parsed := parser.Parse(formatted)
 				if parsed.HasParseErrors() {
 					t.Fatal("formatted output has parse errors")

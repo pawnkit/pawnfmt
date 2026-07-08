@@ -18,17 +18,22 @@ func colorsFor(mode string, w io.Writer) cliColors {
 	case "never":
 		return cliColors{}
 	}
+
 	if os.Getenv("NO_COLOR") != "" || strings.EqualFold(os.Getenv("TERM"), "dumb") {
 		return cliColors{}
 	}
+
 	if os.Getenv("FORCE_COLOR") != "" {
 		return cliColors{enabled: true}
 	}
+
 	f, ok := w.(*os.File)
 	if !ok {
 		return cliColors{}
 	}
+
 	info, err := f.Stat()
+
 	return cliColors{enabled: err == nil && info.Mode()&os.ModeCharDevice != 0}
 }
 
@@ -36,6 +41,7 @@ func (c cliColors) paint(code, s string) string {
 	if !c.enabled {
 		return s
 	}
+
 	return "\x1b[" + code + "m" + s + "\x1b[0m"
 }
 

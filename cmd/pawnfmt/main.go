@@ -41,9 +41,11 @@ func main() {
 
 func run(args []string, stdin io.Reader, stdout, stderr io.Writer) (code int) {
 	colors := colorsFor("auto", stderr)
+
 	defer func() {
 		if r := recover(); r != nil {
 			writeErrorf(stderr, colors, "internal error: %v", r)
+
 			code = exitInternalError
 		}
 	}()
@@ -52,6 +54,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) (code int) {
 	if opts != nil {
 		colors = colorsFor(opts.Color, stderr)
 	}
+
 	if done {
 		return exitCode
 	}
@@ -63,6 +66,7 @@ type kongEagerExit struct{ code int }
 
 func parseCLI(args []string, stdout, stderr io.Writer) (opts *options, code int, done bool) {
 	opts = &options{}
+
 	parser, err := kong.New(opts,
 		kong.Name("pawnfmt"),
 		kong.Description("A formatter for Pawn (SA-MP/open.mp) source files."),
@@ -79,10 +83,12 @@ func parseCLI(args []string, stdout, stderr io.Writer) (opts *options, code int,
 		if r == nil {
 			return
 		}
+
 		eager, ok := r.(kongEagerExit)
 		if !ok {
 			panic(r)
 		}
+
 		code = eager.code
 		done = true
 	}()
@@ -91,5 +97,6 @@ func parseCLI(args []string, stdout, stderr io.Writer) (opts *options, code int,
 		writeErrorf(stderr, colorsFor(opts.Color, stderr), "%v", err)
 		return opts, exitConfigError, true
 	}
+
 	return opts, exitOK, false
 }

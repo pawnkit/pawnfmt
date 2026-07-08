@@ -10,9 +10,11 @@ import (
 
 func writeCLIFixture(t *testing.T, path, content string) {
 	t.Helper()
+
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
+
 	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
 		t.Fatalf("write %s: %v", path, err)
 	}
@@ -20,7 +22,9 @@ func writeCLIFixture(t *testing.T, path, content string) {
 
 func runCLI(args []string, stdin string) (code int, stdout, stderr string) {
 	var out, errBuf bytes.Buffer
+
 	code = run(args, strings.NewReader(stdin), &out, &errBuf)
+
 	return code, out.String(), errBuf.String()
 }
 
@@ -33,6 +37,7 @@ func TestRunDefaultModePrintsFormattedOutputForOneFile(t *testing.T) {
 	if code != exitOK {
 		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitOK, stderr)
 	}
+
 	if stdout != "new x = 1;\n" {
 		t.Fatalf("stdout = %q, want %q", stdout, "new x = 1;\n")
 	}
@@ -47,13 +52,16 @@ func TestRunWriteFlagWritesTheFileInPlace(t *testing.T) {
 	if code != exitOK {
 		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitOK, stderr)
 	}
+
 	if stdout != "" {
 		t.Fatalf("-w should not print to stdout, got %q", stdout)
 	}
+
 	got, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatalf("read file after -w: %v", err)
 	}
+
 	if string(got) != "new x = 1;\n" {
 		t.Fatalf("file content after -w = %q, want %q", got, "new x = 1;\n")
 	}
@@ -68,13 +76,16 @@ func TestRunCheckFlagReportsChangesWithoutWriting(t *testing.T) {
 	if code != exitCheckChanges {
 		t.Fatalf("exit code = %d, want %d (exitCheckChanges)", code, exitCheckChanges)
 	}
+
 	if !strings.Contains(stdout, path) {
 		t.Fatalf("-check stdout = %q, want it to name the changed file %s", stdout, path)
 	}
+
 	got, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatalf("read file after -check: %v", err)
 	}
+
 	if string(got) != "new   x=1;\n" {
 		t.Fatalf("-check must not modify the file, got %q", got)
 	}
@@ -100,6 +111,7 @@ func TestRunDiffFlagPrintsAUnifiedDiff(t *testing.T) {
 	if code != exitOK {
 		t.Fatalf("exit code = %d, want %d", code, exitOK)
 	}
+
 	if !strings.Contains(stdout, "--- "+path) || !strings.Contains(stdout, "+++ "+path) {
 		t.Fatalf("-diff stdout missing file headers:\n%s", stdout)
 	}
@@ -114,6 +126,7 @@ func TestRunDiffFlagCanForceColour(t *testing.T) {
 	if code != exitOK {
 		t.Fatalf("exit code = %d, want %d", code, exitOK)
 	}
+
 	if !strings.Contains(stdout, "\x1b[31m") || !strings.Contains(stdout, "\x1b[32m") {
 		t.Fatalf("forced colour diff missing ANSI colour codes:\n%s", stdout)
 	}
@@ -123,6 +136,7 @@ func TestRunMultipleFilesWithoutWriteCheckOrDiffIsAnError(t *testing.T) {
 	dir := t.TempDir()
 	a := filepath.Join(dir, "a.pwn")
 	b := filepath.Join(dir, "b.pwn")
+
 	writeCLIFixture(t, a, "new   x=1;\n")
 	writeCLIFixture(t, b, "new   y=2;\n")
 
@@ -130,6 +144,7 @@ func TestRunMultipleFilesWithoutWriteCheckOrDiffIsAnError(t *testing.T) {
 	if code != exitFormatError {
 		t.Fatalf("exit code = %d, want %d (exitFormatError) when formatting 2 files with no -w/-check/-diff", code, exitFormatError)
 	}
+
 	if !strings.Contains(stderr, "--write") {
 		t.Fatalf("stderr should suggest --write/--check/--diff:\n%s", stderr)
 	}
@@ -140,6 +155,7 @@ func TestRunWriteAndCheckTogetherIsRejected(t *testing.T) {
 	if code != exitConfigError {
 		t.Fatalf("exit code = %d, want %d (exitConfigError)", code, exitConfigError)
 	}
+
 	if !strings.Contains(stderr, "--write and --check") {
 		t.Fatalf("stderr should explain the conflict:\n%s", stderr)
 	}
@@ -150,6 +166,7 @@ func TestRunStdinModeFormatsAndWritesToStdout(t *testing.T) {
 	if code != exitOK {
 		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitOK, stderr)
 	}
+
 	if stdout != "new x = 1;\n" {
 		t.Fatalf("stdin mode stdout = %q, want %q", stdout, "new x = 1;\n")
 	}
@@ -160,6 +177,7 @@ func TestRunStdinCombinedWithPathsIsRejected(t *testing.T) {
 	if code != exitConfigError {
 		t.Fatalf("exit code = %d, want %d (exitConfigError)", code, exitConfigError)
 	}
+
 	if !strings.Contains(stderr, "--stdin cannot be combined") {
 		t.Fatalf("stderr should explain the conflict:\n%s", stderr)
 	}
@@ -170,6 +188,7 @@ func TestRunNoInputAtAllIsAnError(t *testing.T) {
 	if code != exitConfigError {
 		t.Fatalf("exit code = %d, want %d (exitConfigError)", code, exitConfigError)
 	}
+
 	if !strings.Contains(stderr, "no input") {
 		t.Fatalf("stderr should explain no input was given:\n%s", stderr)
 	}
@@ -180,6 +199,7 @@ func TestRunUnknownFlagIsAConfigError(t *testing.T) {
 	if code != exitConfigError {
 		t.Fatalf("exit code = %d, want %d (exitConfigError)", code, exitConfigError)
 	}
+
 	if stderr == "" {
 		t.Fatal("stderr should explain the unknown flag")
 	}
@@ -197,6 +217,7 @@ func TestRunNoSuchFileIsAFormatError(t *testing.T) {
 	if code != exitFormatError {
 		t.Fatalf("exit code = %d, want %d (exitFormatError)", code, exitFormatError)
 	}
+
 	if stderr == "" {
 		t.Fatal("stderr should report the missing file")
 	}
@@ -207,6 +228,7 @@ func TestRunPrintConfigPrintsResolvedTOML(t *testing.T) {
 	if code != exitOK {
 		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitOK, stderr)
 	}
+
 	if !strings.Contains(stdout, "line_width") {
 		t.Fatalf("-print-config stdout missing expected key:\n%s", stdout)
 	}
@@ -220,9 +242,11 @@ func TestRunInitConfigWritesAFileAndRefusesToOverwrite(t *testing.T) {
 	if code != exitOK {
 		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitOK, stderr)
 	}
+
 	if !strings.Contains(stdout, target) {
 		t.Fatalf("stdout should confirm the written path:\n%s", stdout)
 	}
+
 	if _, err := os.Stat(target); err != nil {
 		t.Fatalf("init-config did not create %s: %v", target, err)
 	}
@@ -231,6 +255,7 @@ func TestRunInitConfigWritesAFileAndRefusesToOverwrite(t *testing.T) {
 	if code2 != exitConfigError {
 		t.Fatalf("second -init-config exit code = %d, want %d (should refuse to overwrite)", code2, exitConfigError)
 	}
+
 	if !strings.Contains(stderr2, "already exists") {
 		t.Fatalf("stderr should explain the file already exists:\n%s", stderr2)
 	}
@@ -245,6 +270,7 @@ func TestRunDebugTokensPrintsTokenStream(t *testing.T) {
 	if code != exitOK {
 		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitOK, stderr)
 	}
+
 	if stdout == "" {
 		t.Fatal("-debug-tokens should print something")
 	}
@@ -254,6 +280,7 @@ func TestRunDebugCSTOnMultipleFilesIsRejected(t *testing.T) {
 	dir := t.TempDir()
 	a := filepath.Join(dir, "a.pwn")
 	b := filepath.Join(dir, "b.pwn")
+
 	writeCLIFixture(t, a, "new x;\n")
 	writeCLIFixture(t, b, "new y;\n")
 
@@ -261,6 +288,7 @@ func TestRunDebugCSTOnMultipleFilesIsRejected(t *testing.T) {
 	if code != exitConfigError {
 		t.Fatalf("exit code = %d, want %d (exitConfigError)", code, exitConfigError)
 	}
+
 	if !strings.Contains(stderr, "exactly one input file") {
 		t.Fatalf("stderr should explain debug modes need exactly one file:\n%s", stderr)
 	}

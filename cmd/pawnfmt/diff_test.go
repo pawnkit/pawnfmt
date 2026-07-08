@@ -16,9 +16,11 @@ func TestUnifiedDiffIncludesFileHeaderAndHunkMarkers(t *testing.T) {
 	if !strings.Contains(got, "--- a.pwn\n") || !strings.Contains(got, "+++ a.pwn\n") {
 		t.Fatalf("unifiedDiff should include ---/+++ headers naming the file:\n%s", got)
 	}
+
 	if !strings.Contains(got, "@@") {
 		t.Fatalf("unifiedDiff should include an @@ hunk marker:\n%s", got)
 	}
+
 	if !strings.Contains(got, "-old") || !strings.Contains(got, "+new") {
 		t.Fatalf("unifiedDiff should mark the removed and added lines:\n%s", got)
 	}
@@ -27,6 +29,7 @@ func TestUnifiedDiffIncludesFileHeaderAndHunkMarkers(t *testing.T) {
 func TestUnifiedDiffKeepsUnchangedContextLinesAroundAChange(t *testing.T) {
 	before := "line1\nline2\nold\nline4\nline5\n"
 	after := "line1\nline2\nnew\nline4\nline5\n"
+
 	got := unifiedDiff("a.pwn", []byte(before), []byte(after))
 	for _, want := range []string{" line1", " line2", "-old", "+new", " line4", " line5"} {
 		if !strings.Contains(got, want) {
@@ -48,6 +51,7 @@ func TestUnifiedDiffHandlesAppendedAndRemovedLinesAtTheEnd(t *testing.T) {
 	if !strings.Contains(appended, "+c") {
 		t.Fatalf("unifiedDiff(append) should show +c:\n%s", appended)
 	}
+
 	removed := unifiedDiff("a.pwn", []byte("a\nb\nc\n"), []byte("a\nb\n"))
 	if !strings.Contains(removed, "-c") {
 		t.Fatalf("unifiedDiff(remove) should show -c:\n%s", removed)
@@ -56,10 +60,12 @@ func TestUnifiedDiffHandlesAppendedAndRemovedLinesAtTheEnd(t *testing.T) {
 
 func TestSplitLinesDropsTrailingEmptyLineFromFinalNewline(t *testing.T) {
 	lines := splitLines("a\nb\n")
+
 	want := []string{"a", "b"}
 	if len(lines) != len(want) {
 		t.Fatalf("splitLines(\"a\\nb\\n\") = %v, want %v", lines, want)
 	}
+
 	for i := range want {
 		if lines[i] != want[i] {
 			t.Fatalf("splitLines(\"a\\nb\\n\")[%d] = %q, want %q", i, lines[i], want[i])
