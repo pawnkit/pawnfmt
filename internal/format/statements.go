@@ -71,12 +71,8 @@ func (s *state) formatBlock(n *parser.Node) doc.Doc {
 	for i := 0; i < len(children); i++ {
 		item := children[i]
 		if i > 0 {
-			inner = append(inner, s.itemSeparatorBefore(item))
-			if blanks := s.blankLinesBefore(item.LeadingTrivia()); blanks > 0 {
-				for range blanks {
-					inner = append(inner, doc.HardLine())
-				}
-			}
+			blanks := blankLineSeparator(s.blankLinesBefore(item.LeadingTrivia()))
+			inner = append(inner, s.separatorForItem(blanks, item))
 		}
 		if item.Kind == parser.KindLabelStatement && i+1 < len(children) &&
 			!leadingStartsNewLine(item.TrailingTrivia()) && !leadingStartsNewLine(children[i+1].LeadingTrivia()) {

@@ -457,3 +457,19 @@ func TestEmitDirectiveKeepsStatementIndentInsteadOfAligningWithBrace(t *testing.
 		t.Fatalf("output is not idempotent\nfirst:\n%s\nsecond:\n%s", formatted, second)
 	}
 }
+
+func TestDirectiveAfterBlankLineStillAlignsWithEnclosingBrace(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("stock F()\n{\n    if (outer)\n    {\n        if (before)\n        {\n            Before();\n        }\n\n    #if FEATURE\n        Call();\n    #endif\n    }\n}\n")
+
+	formatted := mustFormat(t, source, config.Default())
+	if string(formatted) != string(source) {
+		t.Fatalf("expected the #if to stay aligned with its #endif despite the preceding blank line\nexpected:\n%s\nactual:\n%s", source, formatted)
+	}
+
+	second := mustFormat(t, formatted, config.Default())
+	if string(second) != string(formatted) {
+		t.Fatalf("output is not idempotent\nfirst:\n%s\nsecond:\n%s", formatted, second)
+	}
+}
