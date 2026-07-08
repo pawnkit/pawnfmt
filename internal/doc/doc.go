@@ -65,10 +65,12 @@ type FillDoc struct {
 
 func (FillDoc) docNode() {}
 
+// BreakParentDoc forces every enclosing Group to render in break mode
 type BreakParentDoc struct{}
 
 func (BreakParentDoc) docNode() {}
 
+// LineSuffixDoc defers printing Contents until just before the next line
 type LineSuffixDoc struct {
 	Contents Doc
 }
@@ -91,10 +93,14 @@ func HardLine() Doc {
 	return HardLineDoc{}
 }
 
+// BreakParent forces every enclosing Group to render in break mode. See
+// BreakParentDoc.
 func BreakParent() Doc {
 	return BreakParentDoc{}
 }
 
+// LineSuffix defers contents until the next line break the printer emits.
+// See LineSuffixDoc.
 func LineSuffix(contents Doc) Doc {
 	if contents == nil {
 		return Text("")

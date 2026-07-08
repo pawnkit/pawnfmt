@@ -1,6 +1,11 @@
+// Package printer renders a doc.
 package printer
 
-import "github.com/pawnkit/pawnfmt/internal/doc"
+import (
+	"slices"
+
+	"github.com/pawnkit/pawnfmt/internal/doc"
+)
 
 func hasForcedBreak(d doc.Doc) bool {
 	switch node := d.(type) {
@@ -9,12 +14,7 @@ func hasForcedBreak(d doc.Doc) bool {
 	case doc.BreakParentDoc:
 		return true
 	case doc.ConcatDoc:
-		for _, part := range node.Parts {
-			if hasForcedBreak(part) {
-				return true
-			}
-		}
-		return false
+		return slices.ContainsFunc(node.Parts, hasForcedBreak)
 	case doc.IndentDoc:
 		return hasForcedBreak(node.Contents)
 	case doc.ResetIndentDoc:
@@ -24,12 +24,7 @@ func hasForcedBreak(d doc.Doc) bool {
 	case doc.GroupDoc:
 		return hasForcedBreak(node.Contents)
 	case doc.FillDoc:
-		for _, part := range node.Parts {
-			if hasForcedBreak(part) {
-				return true
-			}
-		}
-		return false
+		return slices.ContainsFunc(node.Parts, hasForcedBreak)
 	default:
 		return false
 	}

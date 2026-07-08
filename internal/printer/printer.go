@@ -1,6 +1,7 @@
 package printer
 
 import (
+	"slices"
 	"strings"
 	"unicode/utf8"
 
@@ -65,8 +66,8 @@ func render(root doc.Doc, options Options) string {
 		}
 
 		commands = append(commands, current)
-		for index := len(lineSuffixes) - 1; index >= 0; index-- {
-			commands = append(commands, lineSuffixes[index])
+		for _, suffix := range slices.Backward(lineSuffixes) {
+			commands = append(commands, suffix)
 		}
 
 		lineSuffixes = nil
@@ -76,8 +77,8 @@ func render(root doc.Doc, options Options) string {
 
 	for len(commands) > 0 || len(lineSuffixes) > 0 {
 		if len(commands) == 0 {
-			for index := len(lineSuffixes) - 1; index >= 0; index-- {
-				commands = append(commands, lineSuffixes[index])
+			for _, suffix := range slices.Backward(lineSuffixes) {
+				commands = append(commands, suffix)
 			}
 
 			lineSuffixes = nil
