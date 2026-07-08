@@ -172,7 +172,7 @@ func (s *state) formatArgumentList(n *parser.Node) doc.Doc {
 	if hasConditionalItem(n.Children) {
 		return s.formatDirectiveList(n.Children, "(", ")", s.config.TrailingComma == config.TrailingCommaMultiline)
 	}
-	return s.formatParenList(n.Children, s.config.MultilineCallArgs, s.hasMagicTrailingComma(n))
+	return s.formatParenList(n.Children, s.config.MultilineCallArgs, s.hasMagicTrailingComma(n), true)
 }
 
 func (s *state) formatSubscriptExpression(n *parser.Node) doc.Doc {
@@ -244,7 +244,7 @@ func (s *state) formatArrayLiteral(n *parser.Node) doc.Doc {
 		open, close = "{ ", " }"
 	}
 	if s.hasMagicTrailingComma(n) {
-		return s.formatExplodedList(n.Children, open, close)
+		return s.formatExplodedList(n.Children, open, close, true)
 	}
 	items := make([]doc.Doc, len(n.Children))
 	for i, c := range n.Children {

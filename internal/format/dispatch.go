@@ -1,8 +1,6 @@
 package format
 
 import (
-	"strings"
-
 	"github.com/pawnkit/pawn-parser"
 	"github.com/pawnkit/pawnfmt/internal/config"
 	"github.com/pawnkit/pawnfmt/internal/doc"
@@ -61,9 +59,6 @@ func (s *state) formatListItem(n *parser.Node, addComma bool) doc.Doc {
 
 func (s *state) formatLastListItem(n *parser.Node) doc.Doc {
 	if s.config.TrailingComma != config.TrailingCommaMultiline {
-		return s.formatListItem(n, false)
-	}
-	if n.Kind == parser.KindParameter && strings.HasSuffix(n.Text(s.source), "...") {
 		return s.formatListItem(n, false)
 	}
 	parts := []doc.Doc{s.itemCore(n), doc.IfBreak(doc.Text(","), doc.Text(""))}

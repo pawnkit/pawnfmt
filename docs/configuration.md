@@ -64,7 +64,7 @@ exclude = ["vendor/*", "generated/*"]
 | `multiline_function_params` | `"auto"` | `"auto"`, `"one_per_line"`, `"bin_pack"` | Controls wrapping for function parameters. |
 | `multiline_call_args` | `"auto"` | `"auto"`, `"one_per_line"`, `"bin_pack"` | Controls wrapping for call arguments. |
 | `break_binary_operator` | `"after"` | `"after"`, `"before"` | Places wrapped binary operators at the end of the old line or start of the new one. |
-| `trailing_comma` | `"multiline"` | `"never"`, `"multiline"` | Adds trailing commas only to wrapped lists when set to `"multiline"`. |
+| `trailing_comma` | `"multiline"` | `"never"`, `"multiline"` | Adds trailing commas to wrapped call argument lists and array literals when set to `"multiline"`. Never applies to function parameter lists, since Pawn's compiler rejects a trailing comma there. |
 | `format_disabled_regions` | `false` | boolean | Formats code inside `// pawnfmt off` and `// pawnfmt on` regions anyway. |
 | `blank_lines_after_include_block` | `true` | boolean | Keeps one blank line after the top include block. |
 | `blank_lines_between_publics` | `true` | boolean | Keeps adjacent `public` functions separated. |

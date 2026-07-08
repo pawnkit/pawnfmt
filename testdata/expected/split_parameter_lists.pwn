@@ -5,7 +5,7 @@ stock Foo(
     playerid,
     value,
 #endif
-    tail,
+    tail
 )
 {
     return 1;

@@ -56,19 +56,19 @@ func (s *state) formatParameterList(n *parser.Node) doc.Doc {
 		return doc.Text("()")
 	}
 	if hasConditionalItem(n.Children) {
-		return s.formatDirectiveList(n.Children, "(", ")", s.config.TrailingComma == config.TrailingCommaMultiline)
+		return s.formatDirectiveList(n.Children, "(", ")", false)
 	}
-	return s.formatParenList(n.Children, s.config.MultilineFunctionParams, s.hasMagicTrailingComma(n))
+	return s.formatParenList(n.Children, s.config.MultilineFunctionParams, false, false)
 }
 
-func (s *state) formatParenList(nodes []*parser.Node, style config.MultilineListStyle, forceMultiline bool) doc.Doc {
+func (s *state) formatParenList(nodes []*parser.Node, style config.MultilineListStyle, forceMultiline, allowTrailingComma bool) doc.Doc {
 	open, close := "(", ")"
 	if s.config.SpaceInsideParens {
 		open, close = "( ", " )"
 	}
 
 	if forceMultiline || style == config.MultilineListOnePerLine {
-		return s.formatExplodedList(nodes, open, close)
+		return s.formatExplodedList(nodes, open, close, allowTrailingComma)
 	}
 
 	sepLine := doc.SoftLine()
@@ -99,7 +99,11 @@ func (s *state) formatParenList(nodes []*parser.Node, style config.MultilineList
 	items := make([]doc.Doc, len(nodes))
 	for i, n := range nodes {
 		if i == len(nodes)-1 {
-			items[i] = s.formatLastListItem(n)
+			if allowTrailingComma {
+				items[i] = s.formatLastListItem(n)
+			} else {
+				items[i] = s.formatListItem(n, false)
+			}
 		} else {
 			items[i] = s.formatListItem(n, true)
 		}
@@ -113,8 +117,8 @@ func (s *state) formatParenList(nodes []*parser.Node, style config.MultilineList
 	))
 }
 
-func (s *state) formatExplodedList(nodes []*parser.Node, open, close string) doc.Doc {
-	trailingComma := s.config.TrailingComma == config.TrailingCommaMultiline
+func (s *state) formatExplodedList(nodes []*parser.Node, open, close string, allowTrailingComma bool) doc.Doc {
+	trailingComma := allowTrailingComma && s.config.TrailingComma == config.TrailingCommaMultiline
 	items := make([]doc.Doc, len(nodes))
 	for i, n := range nodes {
 		last := i == len(nodes)-1

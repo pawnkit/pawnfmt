@@ -182,11 +182,6 @@ func TestMagicTrailingCommaForcesExplosion(t *testing.T) {
 			source: "new arr[] = {1, 2,};\n",
 			want:   "new arr[] = {\n    1,\n    2,\n};\n",
 		},
-		{
-			name:   "parameter_list",
-			source: "stock F(a, b,) {\n    return a + b;\n}\n",
-			want:   "stock F(\n    a,\n    b,\n)\n{\n    return a + b;\n}\n",
-		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -199,6 +194,19 @@ func TestMagicTrailingCommaForcesExplosion(t *testing.T) {
 				t.Fatalf("magic trailing comma output is not idempotent\nfirst:\n%s\nsecond:\n%s", formatted, second)
 			}
 		})
+	}
+}
+
+func TestParameterListNeverGetsTrailingComma(t *testing.T) {
+	source := []byte("stock F(a, b,) {\n    return a + b;\n}\n")
+	want := []byte("stock F(a, b)\n{\n    return a + b;\n}\n")
+	formatted := mustFormat(t, source, config.Default())
+	if string(formatted) != string(want) {
+		t.Fatalf("expected magic trailing comma to be stripped from parameter list\nexpected:\n%s\nactual:\n%s", want, formatted)
+	}
+	second := mustFormat(t, formatted, config.Default())
+	if string(second) != string(formatted) {
+		t.Fatalf("output is not idempotent\nfirst:\n%s\nsecond:\n%s", formatted, second)
 	}
 }
 

@@ -3,7 +3,7 @@ forward OnDialogFlow(
     dialogid,
     response,
     listitem,
-    inputtext[],
+    inputtext[]
 ) <default, connected, idle>;
 
 public OnDialogFlow(playerid, dialogid, response, listitem, inputtext[]) <connected, idle>
