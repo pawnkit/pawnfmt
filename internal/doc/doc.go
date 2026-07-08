@@ -65,12 +65,12 @@ type FillDoc struct {
 
 func (FillDoc) docNode() {}
 
-// BreakParentDoc forces every enclosing Group to render in break mode
+// BreakParentDoc forces every enclosing Group to render in break mode.
 type BreakParentDoc struct{}
 
 func (BreakParentDoc) docNode() {}
 
-// LineSuffixDoc defers printing Contents until just before the next line
+// LineSuffixDoc defers printing Contents until just before the next line.
 type LineSuffixDoc struct {
 	Contents Doc
 }
