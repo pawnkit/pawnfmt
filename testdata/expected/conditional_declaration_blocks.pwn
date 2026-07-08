@@ -1,7 +1,7 @@
 #if defined DEBUG
-forward DebugLog(const message[]);
+    forward DebugLog(const message[]);
 
-new gDebugLevel = 2;
+    new gDebugLevel = 2;
 #else
-native WriteLog(const message[]);
+    native WriteLog(const message[]);
 #endif

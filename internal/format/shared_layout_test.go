@@ -69,9 +69,9 @@ func TestConditionalFunctionHeadersFormatting(t *testing.T) {
 	source := []byte("#if defined LONG\npublic F(value,extra)\n#else\npublic F(value)\n#endif\n{ return value; }\n")
 	want := strings.Join([]string{
 		"#if defined LONG",
-		"public F(value, extra)",
+		"    public F(value, extra)",
 		"#else",
-		"public F(value)",
+		"    public F(value)",
 		"#endif",
 		"{",
 		"    return value;",
@@ -518,8 +518,8 @@ func TestSharedInlineControlSplitsWithoutBracesWhenConfigured(t *testing.T) {
 		"    if (second)",
 		"        Call(second);",
 		"    #endif",
-		"            Common();",
-		"        }",
+		"        Common();",
+		"    }",
 		"}",
 		"",
 	}, "\n")
@@ -560,8 +560,8 @@ func TestSharedControlStatementWrapsConditionAndBodySeparately(t *testing.T) {
 		"        && secondConditionIsAlsoVeryLong)",
 		"        CallSomeFunctionHere(argumentOne, argumentTwo);",
 		"    #endif",
-		"            Common();",
-		"        }",
+		"        Common();",
+		"    }",
 		"}",
 		"",
 	}, "\n")

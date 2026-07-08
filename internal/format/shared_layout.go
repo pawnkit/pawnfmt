@@ -27,9 +27,12 @@ func (s *state) formatSharedConditional(n *parser.Node) doc.Doc {
 
 func (s *state) formatStructuredSharedConditional(prefix, body, alternative *parser.Node) doc.Doc {
 	parts := []doc.Doc{s.formatNode(prefix)}
+
+	braceLevel := sharedPrefixBraceLevel(s.source, prefix, s.config.IndentWidth)
 	if bracesBalanced(prefix.Text(s.source)) {
-		parts = append(parts, doc.Indent(s.joinBraceStyle(doc.Text("{"))))
+		parts = append(parts, indentLevels(s.joinBraceStyle(doc.Text("{")), braceLevel+1))
 	}
+
 	if len(body.Children) > 0 {
 		var items []doc.Doc
 		for i, item := range body.Children {
@@ -39,11 +42,14 @@ func (s *state) formatStructuredSharedConditional(prefix, body, alternative *par
 				separator := blankLineSeparator(s.blankLinesBefore(item.LeadingTrivia()))
 				items = append(items, s.separatorForItem(separator, item))
 			}
+
 			items = append(items, s.formatNode(item))
 		}
-		parts = append(parts, doc.Indent(doc.Indent(doc.Concat(items...))))
+
+		parts = append(parts, indentLevels(doc.Concat(items...), braceLevel+1))
 	}
-	parts = append(parts, doc.Indent(doc.Concat(doc.HardLine(), doc.Text("}"))))
+
+	parts = append(parts, indentLevels(doc.Concat(doc.HardLine(), doc.Text("}")), braceLevel))
 	if alternative != nil {
 		parts = append(parts, s.blockTrailingKeyword("else"))
 		if alternative.Kind == parser.KindIfStatement {
@@ -53,6 +59,14 @@ func (s *state) formatStructuredSharedConditional(prefix, body, alternative *par
 		}
 	}
 	return doc.Concat(parts...)
+}
+
+func indentLevels(content doc.Doc, levels int) doc.Doc {
+	for range levels {
+		content = doc.Indent(content)
+	}
+
+	return content
 }
 
 func bracesBalanced(text string) bool {

@@ -110,9 +110,10 @@ func TestNestedConditionalDirectivesAlignWithEnclosingBrace(t *testing.T) {
 		"",
 	}, "\n"))
 	formatted := mustFormat(t, topLevel, config.Default())
-	want := "#if OUTER\n#if INNER\nnew x = 1;\n#endif\n#endif\n"
+
+	want := "#if OUTER\n    #if INNER\n        new x = 1;\n    #endif\n#endif\n"
 	if string(formatted) != want {
-		t.Fatalf("top-level nested directives did not stay flat\nexpected:\n%s\nactual:\n%s", want, formatted)
+		t.Fatalf("top-level nested directives did not indent by nesting depth\nexpected:\n%s\nactual:\n%s", want, formatted)
 	}
 	second := mustFormat(t, formatted, config.Default())
 	if string(second) != string(formatted) {
@@ -502,9 +503,12 @@ func TestIndentNestedDirectivesIndentsTopLevelBranchContents(t *testing.T) {
 		t.Fatalf("output is not idempotent\nfirst:\n%s\nsecond:\n%s", formatted, second)
 	}
 
-	defaultFormatted := mustFormat(t, source, config.Default())
+	off := config.Default()
+	off.IndentNestedDirectives = false
 
-	defaultWant := strings.Join([]string{
+	offFormatted := mustFormat(t, source, off)
+
+	offWant := strings.Join([]string{
 		"#if defined _INC_y_va",
 		"#if defined _INC_open_mp",
 		"stock F()",
@@ -519,8 +523,8 @@ func TestIndentNestedDirectivesIndentsTopLevelBranchContents(t *testing.T) {
 		"#endif",
 		"",
 	}, "\n")
-	if string(defaultFormatted) != defaultWant {
-		t.Fatalf("expected default config (IndentNestedDirectives off) to keep top-level directives flat\nexpected:\n%s\nactual:\n%s", defaultWant, defaultFormatted)
+	if string(offFormatted) != offWant {
+		t.Fatalf("expected IndentNestedDirectives=false to keep top-level directives flat\nexpected:\n%s\nactual:\n%s", offWant, offFormatted)
 	}
 }
 

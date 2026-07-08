@@ -4,7 +4,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/pawnkit/pawn-parser"
+	parser "github.com/pawnkit/pawn-parser"
 	"github.com/pawnkit/pawn-parser/lexer"
 	"github.com/pawnkit/pawn-parser/token"
 	"github.com/pawnkit/pawnfmt/internal/config"
@@ -203,4 +203,28 @@ func sharedIndentColumns(line string, width int) int {
 		}
 	}
 	return columns
+}
+
+func sharedPrefixBraceLevel(source []byte, prefix *parser.Node, width int) int {
+	baseIndent := sharedBaseIndent(source, prefix.Start, width)
+	text := strings.TrimRight(prefix.Text(source), " \t\r\n")
+
+	maxColumns := baseIndent
+
+	for line := range strings.SplitSeq(strings.ReplaceAll(text, "\r\n", "\n"), "\n") {
+		trimmed := strings.TrimRight(line, " \t")
+		if trimmed == "" || !strings.HasSuffix(trimmed, "{") {
+			continue
+		}
+
+		if columns := sharedIndentColumns(line, width); columns > maxColumns {
+			maxColumns = columns
+		}
+	}
+
+	if width <= 0 {
+		return 0
+	}
+
+	return (maxColumns - baseIndent) / width
 }
