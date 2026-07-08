@@ -57,6 +57,7 @@ type TagColonSpacing string
 const (
 	TagColonSpacingTight    TagColonSpacing = "tight"
 	TagColonSpacingPreserve TagColonSpacing = "preserve"
+	TagColonSpacingCompact  TagColonSpacing = "compact"
 )
 
 type MultilineListStyle string

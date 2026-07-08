@@ -339,6 +339,7 @@ func TestConfigOptionsChangeOutput(t *testing.T) {
 			mutate:    func(c *config.Config) { c.EnumTrailingComma = config.EnumTrailingCommaAlways },
 		},
 		{name: "tag_colon_spacing_preserve", source: "new Float : x;\n", mutate: func(c *config.Config) { c.TagColonSpacing = config.TagColonSpacingPreserve }},
+		{name: "tag_colon_spacing_compact", source: "new Float: x;\n", mutate: func(c *config.Config) { c.TagColonSpacing = config.TagColonSpacingCompact }},
 		{name: "space_before_array_brackets_true", source: "new x[4];\n", mutate: func(c *config.Config) { c.SpaceBeforeArrayBrackets = true }},
 		{
 			name:   "multiline_function_params_bin_pack",

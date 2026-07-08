@@ -30,7 +30,7 @@ func (s *state) formatTagPrefix(tag *parser.Node, forceTight bool) doc.Doc {
 
 func (s *state) formatSimpleTag(nameLeaf *parser.Node, tagEnd int, forceTight bool) doc.Doc {
 	name := nameLeaf.Text(s.source)
-	if forceTight {
+	if forceTight || s.config.TagColonSpacing == config.TagColonSpacingCompact {
 		return doc.Text(name + ":")
 	}
 	if s.config.TagColonSpacing == config.TagColonSpacingTight {

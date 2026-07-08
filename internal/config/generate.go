@@ -75,7 +75,8 @@ align_consecutive_macros = %t
 align_trailing_comments = %t
 # Enum trailing commas: "preserve" or "always".
 enum_trailing_comma = %q
-# Tag prefix spacing: "tight" normalizes "Float: x"; "preserve" keeps input.
+# Tag prefix spacing: "tight" normalizes "Float: x", "compact" normalizes
+# "Float:x", "preserve" keeps input.
 tag_colon_spacing = %q
 
 # Function parameter wrapping: "auto", "one_per_line", or "bin_pack".

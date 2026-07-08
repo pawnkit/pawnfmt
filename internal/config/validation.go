@@ -41,7 +41,8 @@ func (cfg Config) Validate() error {
 	if err := oneOf("enum_trailing_comma", string(cfg.EnumTrailingComma), string(EnumTrailingCommaPreserve), string(EnumTrailingCommaAlways)); err != nil {
 		return err
 	}
-	if err := oneOf("tag_colon_spacing", string(cfg.TagColonSpacing), string(TagColonSpacingTight), string(TagColonSpacingPreserve)); err != nil {
+
+	if err := oneOf("tag_colon_spacing", string(cfg.TagColonSpacing), string(TagColonSpacingTight), string(TagColonSpacingPreserve), string(TagColonSpacingCompact)); err != nil {
 		return err
 	}
 	if err := oneOf("multiline_function_params", string(cfg.MultilineFunctionParams), string(MultilineListAuto), string(MultilineListOnePerLine), string(MultilineListBinPack)); err != nil {

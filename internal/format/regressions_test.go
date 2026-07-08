@@ -562,3 +562,51 @@ func TestDirectiveAfterBlankLineStillAlignsWithEnclosingBrace(t *testing.T) {
 		t.Fatalf("output is not idempotent\nfirst:\n%s\nsecond:\n%s", formatted, second)
 	}
 }
+
+func TestTagColonSpacingCompactDropsSpaceAfterColonEverywhere(t *testing.T) {
+	t.Parallel()
+
+	source := []byte(strings.Join([]string{
+		"enum E",
+		"{",
+		"    Float: val1,",
+		"    Float: val2 = 2,",
+		"};",
+		"",
+		"new Float: x = 1.0;",
+		"",
+		"stock F(Float: a, Float: b)",
+		"{",
+		"    return 1;",
+		"}",
+		"",
+	}, "\n"))
+	want := strings.Join([]string{
+		"enum E",
+		"{",
+		"    Float:val1,",
+		"    Float:val2 = 2,",
+		"};",
+		"",
+		"new Float:x = 1.0;",
+		"",
+		"stock F(Float:a, Float:b)",
+		"{",
+		"    return 1;",
+		"}",
+		"",
+	}, "\n")
+
+	cfg := config.Default()
+	cfg.TagColonSpacing = config.TagColonSpacingCompact
+
+	formatted := mustFormat(t, source, cfg)
+	if string(formatted) != want {
+		t.Fatalf("expected compact tag colon spacing everywhere\nexpected:\n%s\nactual:\n%s", want, formatted)
+	}
+
+	second := mustFormat(t, formatted, cfg)
+	if string(second) != string(formatted) {
+		t.Fatalf("output is not idempotent\nfirst:\n%s\nsecond:\n%s", formatted, second)
+	}
+}
