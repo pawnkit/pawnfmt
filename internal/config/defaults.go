@@ -22,6 +22,7 @@ func Default() Config {
 		SingleStatementBraces:          SingleStatementBracesAlways,
 		DirectiveIndent:                DirectiveIndentKeepInBlock,
 		DirectiveSpacing:               true,
+		IndentNestedDirectives:         false,
 		AlignEnumFields:                false,
 		AlignConsecutiveDeclarations:   false,
 		AlignConsecutiveMacros:         false,

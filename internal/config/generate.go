@@ -62,6 +62,8 @@ single_statement_braces = %q
 directive_indent = %q
 # Add a space after '#' in directives.
 directive_spacing = %t
+# Indent a top-level "#if" branch's contents, including nested "#if"s.
+indent_nested_directives = %t
 
 # Align enum values in a column.
 align_enum_fields = %t
@@ -129,6 +131,7 @@ exclude = []
 		string(d.SingleStatementBraces),
 		string(d.DirectiveIndent),
 		d.DirectiveSpacing,
+		d.IndentNestedDirectives,
 		d.AlignEnumFields,
 		d.AlignConsecutiveDeclarations,
 		d.AlignConsecutiveMacros,

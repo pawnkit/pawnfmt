@@ -107,11 +107,16 @@ func isIdentByte(c byte) bool {
 
 func (s *state) formatConditionalRegion(n *parser.Node) doc.Doc {
 	forceTopLevel := s.topLevelContext
+	indentNested := s.config.IndentNestedDirectives && forceTopLevel
 	var parts []doc.Doc
 	for bi, branch := range n.Children {
 		directive := branch.Field("directive")
 		if bi > 0 {
-			parts = append(parts, s.itemSeparatorBefore(directive))
+			if indentNested {
+				parts = append(parts, doc.HardLine())
+			} else {
+				parts = append(parts, s.itemSeparatorBefore(directive))
+			}
 		}
 		parts = append(parts, s.formatNode(directive))
 
@@ -122,23 +127,28 @@ func (s *state) formatConditionalRegion(n *parser.Node) doc.Doc {
 			}
 		}
 
+		var branchParts []doc.Doc
 		var prev *parser.Node
 		for i := 0; i < len(items); i++ {
 			item := items[i]
-			var separator doc.Doc
+
+			var base doc.Doc
 			switch {
 			case prev == nil:
-				separator = s.itemSeparatorBefore(item)
+				base = doc.HardLine()
 			case forceTopLevel:
-				separator = s.separatorForItem(s.topLevelSeparator(prev, item), item)
+				base = s.topLevelSeparator(prev, item)
 			default:
-				blanks := blankLineSeparator(s.blankLinesBefore(item.LeadingTrivia()))
-				separator = s.separatorForItem(blanks, item)
+				base = blankLineSeparator(s.blankLinesBefore(item.LeadingTrivia()))
+			}
+			separator := base
+			if !indentNested {
+				separator = s.directiveAwareSeparator(base, item)
 			}
 			if item.Kind == parser.KindLabelStatement && i+1 < len(items) &&
 				!leadingStartsNewLine(item.TrailingTrivia()) && !leadingStartsNewLine(items[i+1].LeadingTrivia()) {
 				next := items[i+1]
-				parts = append(parts, separator, s.formatNode(item), doc.Text(" "), s.formatNode(next))
+				branchParts = append(branchParts, separator, s.formatNode(item), doc.Text(" "), s.formatNode(next))
 				prev = next
 				i++
 				continue
@@ -146,8 +156,15 @@ func (s *state) formatConditionalRegion(n *parser.Node) doc.Doc {
 			if i == len(items)-1 && item.Kind == parser.KindIfStatement && branch.Field("shared_alternative") != nil {
 				s.hint.suppressIfAlternative = true
 			}
-			parts = append(parts, separator, s.formatNode(item))
+
+			branchParts = append(branchParts, separator, s.formatNode(item))
 			prev = item
+		}
+
+		if indentNested && len(branchParts) > 0 {
+			parts = append(parts, doc.Indent(doc.Concat(branchParts...)))
+		} else {
+			parts = append(parts, branchParts...)
 		}
 	}
 	if alt := n.Field("alternative"); alt != nil {

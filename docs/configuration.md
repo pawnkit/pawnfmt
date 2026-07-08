@@ -55,6 +55,7 @@ exclude = ["vendor/*", "generated/*"]
 | `semicolons` | `"preserve"` | `"preserve"`, `"always"` | Applies to optional enum declaration semicolons. |
 | `directive_indent` | `"keep_in_block"` | `"none"`, `"keep_in_block"` | Controls whether preprocessor lines keep block indentation. |
 | `directive_spacing` | `true` | boolean | Adds a space after `#` before directive text. |
+| `indent_nested_directives` | `false` | boolean | Indents a top-level `#if` branch's contents, including nested `#if`s. |
 | `align_enum_fields` | `false` | boolean | Aligns enum entry values. |
 | `align_consecutive_declarations` | `false` | boolean | Aligns initialized declarations in contiguous runs. |
 | `align_consecutive_macros` | `false` | boolean | Aligns macro values in contiguous `#define` runs. |

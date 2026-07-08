@@ -95,6 +95,7 @@ type Config struct {
 	SingleStatementBraces          SingleStatementBraces `json:"single_statement_braces" yaml:"single_statement_braces" toml:"single_statement_braces"`
 	DirectiveIndent                DirectiveIndent       `json:"directive_indent" yaml:"directive_indent" toml:"directive_indent"`
 	DirectiveSpacing               bool                  `json:"directive_spacing" yaml:"directive_spacing" toml:"directive_spacing"`
+	IndentNestedDirectives         bool                  `json:"indent_nested_directives" yaml:"indent_nested_directives" toml:"indent_nested_directives"`
 	AlignEnumFields                bool                  `json:"align_enum_fields" yaml:"align_enum_fields" toml:"align_enum_fields"`
 	AlignConsecutiveDeclarations   bool                  `json:"align_consecutive_declarations" yaml:"align_consecutive_declarations" toml:"align_consecutive_declarations"`
 	AlignConsecutiveMacros         bool                  `json:"align_consecutive_macros" yaml:"align_consecutive_macros" toml:"align_consecutive_macros"`

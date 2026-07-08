@@ -458,6 +458,91 @@ func TestEmitDirectiveKeepsStatementIndentInsteadOfAligningWithBrace(t *testing.
 	}
 }
 
+func TestIndentNestedDirectivesIndentsTopLevelBranchContents(t *testing.T) {
+	t.Parallel()
+
+	source := []byte(strings.Join([]string{
+		"#if defined _INC_y_va",
+		"#if defined _INC_open_mp",
+		"stock F() {}",
+		"#else",
+		"stock F() {}",
+		"#endif",
+		"#else",
+		"stock F() {}",
+		"#endif",
+		"",
+	}, "\n"))
+	want := strings.Join([]string{
+		"#if defined _INC_y_va",
+		"    #if defined _INC_open_mp",
+		"        stock F()",
+		"        { }",
+		"    #else",
+		"        stock F()",
+		"        { }",
+		"    #endif",
+		"#else",
+		"    stock F()",
+		"    { }",
+		"#endif",
+		"",
+	}, "\n")
+
+	cfg := config.Default()
+	cfg.IndentNestedDirectives = true
+
+	formatted := mustFormat(t, source, cfg)
+	if string(formatted) != want {
+		t.Fatalf("expected nested top-level directive branches to be indented\nexpected:\n%s\nactual:\n%s", want, formatted)
+	}
+
+	second := mustFormat(t, formatted, cfg)
+	if string(second) != string(formatted) {
+		t.Fatalf("output is not idempotent\nfirst:\n%s\nsecond:\n%s", formatted, second)
+	}
+
+	defaultFormatted := mustFormat(t, source, config.Default())
+
+	defaultWant := strings.Join([]string{
+		"#if defined _INC_y_va",
+		"#if defined _INC_open_mp",
+		"stock F()",
+		"{ }",
+		"#else",
+		"stock F()",
+		"{ }",
+		"#endif",
+		"#else",
+		"stock F()",
+		"{ }",
+		"#endif",
+		"",
+	}, "\n")
+	if string(defaultFormatted) != defaultWant {
+		t.Fatalf("expected default config (IndentNestedDirectives off) to keep top-level directives flat\nexpected:\n%s\nactual:\n%s", defaultWant, defaultFormatted)
+	}
+}
+
+func TestIndentNestedDirectivesDoesNotDoubleIndentInsideABlock(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("stock F()\n{\n    if (cond)\n    {\n    #if OUTER\n        new x;\n    #if INNER\n        new y;\n    #endif\n    #endif\n    }\n}\n")
+
+	cfg := config.Default()
+	cfg.IndentNestedDirectives = true
+
+	formatted := mustFormat(t, source, cfg)
+	if string(formatted) != string(source) {
+		t.Fatalf("expected in-block directive alignment to be unaffected\nexpected:\n%s\nactual:\n%s", source, formatted)
+	}
+
+	second := mustFormat(t, formatted, cfg)
+	if string(second) != string(formatted) {
+		t.Fatalf("output is not idempotent\nfirst:\n%s\nsecond:\n%s", formatted, second)
+	}
+}
+
 func TestDirectiveAfterBlankLineStillAlignsWithEnclosingBrace(t *testing.T) {
 	t.Parallel()
 
