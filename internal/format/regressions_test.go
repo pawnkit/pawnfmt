@@ -441,3 +441,19 @@ func TestTrailingLineCommentInGroupForcesABreakInsteadOfSwallowingCode(t *testin
 		t.Fatalf("output is not idempotent\nfirst:\n%s\nsecond:\n%s", text, second)
 	}
 }
+
+func TestEmitDirectiveKeepsStatementIndentInsteadOfAligningWithBrace(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("stock F()\n{\n    while (1)\n    {\n        #emit LCTRL 5\n        #emit LOAD.alt 1\n    }\n}\n")
+
+	formatted := mustFormat(t, source, config.Default())
+	if string(formatted) != string(source) {
+		t.Fatalf("expected #emit to keep its statement indent\nexpected:\n%s\nactual:\n%s", source, formatted)
+	}
+
+	second := mustFormat(t, formatted, config.Default())
+	if string(second) != string(formatted) {
+		t.Fatalf("output is not idempotent\nfirst:\n%s\nsecond:\n%s", formatted, second)
+	}
+}

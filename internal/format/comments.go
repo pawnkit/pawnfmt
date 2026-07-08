@@ -212,7 +212,8 @@ func (s *state) directiveAwareSeparator(separator doc.Doc, item *parser.Node) do
 func alignsWithEnclosingBrace(item *parser.Node) bool {
 	switch item.Kind {
 	case parser.KindSharedConditional, parser.KindSharedConditionalPrefix,
-		parser.KindConditionalSplice, parser.KindConditionalFunction:
+		parser.KindConditionalSplice, parser.KindConditionalFunction,
+		parser.KindDirectiveEmit:
 		return false
 	default:
 		return true
