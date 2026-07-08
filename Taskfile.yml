@@ -12,6 +12,10 @@ tasks:
     cmds:
       - go vet ./...
 
+  lint:
+    cmds:
+      - golangci-lint run ./...
+
   bench:
     cmds:
       - go test ./internal/bench/... -bench=. -benchmem -run=^$
