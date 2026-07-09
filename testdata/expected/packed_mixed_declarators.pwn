@@ -1,4 +1,4 @@
-new names[2][16 char] = {!"One", !"Two"}, bool: ready = true;
+new names[2][16 char] = {!"One", !"Two"}, bool:ready = true;
 
 stock PackedMixed()
 {

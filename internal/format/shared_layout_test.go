@@ -230,9 +230,12 @@ func TestSharedConditionalRespectsSpacingOptions(t *testing.T) {
 	source := []byte("stock F() {\n#if A\nif(Float :value, other) {\n#else\nif(bool :value, other) {\n#endif\nreturn 1;\n}\n}\n")
 	requireSharedConditionalPath(t, source)
 
-	tight := mustFormat(t, source, config.Default())
+	tightCfg := config.Default()
+	tightCfg.TagColonSpacing = config.TagColonSpacingTight
+
+	tight := mustFormat(t, source, tightCfg)
 	if !strings.Contains(string(tight), "if (Float: value, other)") {
-		t.Fatalf("shared conditional did not apply default tag/comma spacing:\n%s", tight)
+		t.Fatalf("shared conditional did not apply tight tag/comma spacing:\n%s", tight)
 	}
 
 	cfg := config.Default()
@@ -252,7 +255,7 @@ func TestSharedConditionalDistinguishesPrefixAndBinaryOperators(t *testing.T) {
 	formatted := mustFormat(t, source, config.Default())
 
 	text := string(formatted)
-	for _, want := range []string{"&Float: value", "&other", "value == -1", "!other", "value & other", ": +other"} {
+	for _, want := range []string{"&Float:value", "&other", "value == -1", "!other", "value & other", ": +other"} {
 		if !strings.Contains(text, want) {
 			t.Fatalf("shared conditional operator formatting missing %q:\n%s", want, text)
 		}

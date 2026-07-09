@@ -295,9 +295,9 @@ func TestAlignConsecutiveDeclarationsAlignsWithinARun(t *testing.T) {
 		"",
 		"stock F()",
 		"{",
-		"    new x              = 1;",
-		"    static Float: yyyy = 2.0;",
-		"    new zz             = 3;",
+		"    new x             = 1;",
+		"    static Float:yyyy = 2.0;",
+		"    new zz            = 3;",
 		"    Call();",
 		"    new after = 4;",
 		"}",
@@ -483,7 +483,7 @@ func TestStateStatementKeepsTagQualifiedTarget(t *testing.T) {
 	t.Parallel()
 
 	source := []byte("public F()\n{\n    state _ALS : _ALS_go;\n    return 1;\n}\n")
-	want := "public F()\n{\n    state _ALS: _ALS_go;\n    return 1;\n}\n"
+	want := "public F()\n{\n    state _ALS:_ALS_go;\n    return 1;\n}\n"
 
 	formatted := mustFormat(t, source, config.Default())
 	if string(formatted) != want {

@@ -11,7 +11,7 @@ stock OnThing(playerid) <connected, idle>
     return 1;
 }
 
-stock static Float: GetScale()
+stock static Float:GetScale()
 {
     return Float:(1.0);
 }

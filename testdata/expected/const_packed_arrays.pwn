@@ -1,5 +1,5 @@
 const names[2][8 char] = {!"A", !"BC"};
-static const bool: flags[2] = {true, false};
+static const bool:flags[2] = {true, false};
 
 stock ConstPacked()
 {

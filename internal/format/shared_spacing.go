@@ -238,8 +238,11 @@ func normalizeSharedTagColon(line string, cfg config.Config, tokens []token.Toke
 	declarationTag := cur.Kind == token.Colon && sharedDeclarationTagColon(tokens, i)
 	castTag := isSharedCastTagColon(line, tokens, i)
 
+	tight := cfg.TagColonSpacing == config.TagColonSpacingTight
+	compact := cfg.TagColonSpacing == config.TagColonSpacingCompact
+
 	if cur.Kind != token.Colon || next.Kind == token.Colon || i == 0 ||
-		!declarationTag && !castTag || cfg.TagColonSpacing != config.TagColonSpacingTight {
+		!declarationTag && !castTag || !tight && !compact {
 		return false
 	}
 
@@ -250,7 +253,7 @@ func normalizeSharedTagColon(line string, cfg config.Config, tokens []token.Toke
 
 	if horizontalGap(line[cur.End.Offset:next.Start.Offset]) {
 		after := ""
-		if declarationTag {
+		if declarationTag && tight {
 			after = " "
 		}
 

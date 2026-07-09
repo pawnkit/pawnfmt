@@ -8,17 +8,17 @@ stock EvaluateExpressions(value, a, b, c, offset)
     return flags + packed + mixed + status + nested;
 }
 
-stock Float: Clamp(Float: value)
+stock Float:Clamp(Float:value)
 {
     return Float:(value < Float:(0.0) ? Float:(0.0) : value);
 }
 
-stock Float: Invoke()
+stock Float:Invoke()
 {
     return Float:foo();
 }
 
-stock _: AsCell(Float: x)
+stock _:AsCell(Float:x)
 {
     return _:x;
 }

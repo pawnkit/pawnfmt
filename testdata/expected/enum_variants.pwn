@@ -1,7 +1,7 @@
 enum
 {
     STATE_NONE,
-    Float: STATE_VALUES[4],
+    Float:STATE_VALUES[4],
     STATE_LAST = 8,
 };
 

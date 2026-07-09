@@ -29,7 +29,7 @@ func Default() Config {
 		AlignConsecutiveMacros:         false,
 		AlignTrailingComments:          false,
 		EnumTrailingComma:              EnumTrailingCommaAlways,
-		TagColonSpacing:                TagColonSpacingTight,
+		TagColonSpacing:                TagColonSpacingCompact,
 		SpaceBeforeArrayBrackets:       false,
 		MultilineFunctionParams:        MultilineListAuto,
 		MultilineCallArgs:              MultilineListAuto,

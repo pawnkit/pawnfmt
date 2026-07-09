@@ -1,9 +1,9 @@
 enum WeaponData
 {
-    _: WEAPON_SLOT,
-    Float: WEAPON_DAMAGE,
+    _:WEAPON_SLOT,
+    Float:WEAPON_DAMAGE,
     weaponName[32 char],
-    bool: WEAPON_ENABLED = true,
+    bool:WEAPON_ENABLED = true,
 };
 
 stock ShowMessage(const message[144 char])

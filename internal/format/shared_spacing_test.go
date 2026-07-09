@@ -280,7 +280,7 @@ func TestSharedRegionDistinguishesTagCastAndTernaryColons(t *testing.T) {
 	formatted := mustFormat(t, source, config.Default())
 
 	text := string(formatted)
-	for _, want := range []string{"custom: value", "condition ? YES : NO", "first ? second ? A : B : C", "Float:1.0"} {
+	for _, want := range []string{"custom:value", "condition ? YES : NO", "first ? second ? A : B : C", "Float:1.0"} {
 		if !strings.Contains(text, want) {
 			t.Fatalf("shared colon role formatting missing %q:\n%s", want, text)
 		}

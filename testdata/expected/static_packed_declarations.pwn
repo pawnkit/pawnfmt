@@ -1,5 +1,5 @@
 static labels[2][16 char] = {!"Alpha", !"Beta"};
-static bool: readyStates[2];
+static bool:readyStates[2];
 
 stock StaticPacked()
 {

@@ -1,6 +1,6 @@
 enum WeaponData
 {
-    Float: damage,
+    Float:damage,
     weaponName[32 char],
     enabled = true,
 };
