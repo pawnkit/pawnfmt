@@ -34,18 +34,6 @@ func (s *state) formatVariableDeclarationCore(n *parser.Node) doc.Doc {
 	}
 
 	if hasConditionalItem(declarators) {
-		if len(declarators) > 0 && declarators[0].Kind != parser.KindConditionalRegion {
-			first := s.formatListItem(declarators[0], len(declarators) > 1)
-			if len(declarators) == 1 {
-				return doc.Concat(doc.Concat(parts...), first)
-			}
-
-			return doc.Concat(
-				doc.Concat(parts...), first,
-				doc.Indent(doc.Concat(s.itemSeparatorBefore(declarators[1]), s.formatListItemsWithDirectives(declarators[1:], false))),
-			)
-		}
-
 		return doc.Concat(
 			doc.Concat(parts...),
 			doc.Indent(doc.Concat(s.itemSeparatorBefore(declarators[0]), s.formatListItemsWithDirectives(declarators, false))),

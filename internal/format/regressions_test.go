@@ -62,6 +62,19 @@ func TestVariableDeclaratorRendersCapacitySuffix(t *testing.T) {
 	}
 }
 
+func TestMultiDeclaratorListWithDirectiveBreaksAfterKeyword(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("static\n\ta[1],\n\tb[1],\n\t#if C\n\t\tc[1],\n\t#endif\n\td[1];\n")
+
+	formatted := formatAndAssertIdempotent(t, source, config.Default(),
+		"static\n    a[1],", "keyword should break onto its own line when the list contains a directive")
+
+	if strings.Contains(string(formatted), "static a[1]") {
+		t.Fatalf("first declarator should not be joined onto the keyword line:\n%s", formatted)
+	}
+}
+
 func TestFunctionRendersCallingConventionDimension(t *testing.T) {
 	t.Parallel()
 
