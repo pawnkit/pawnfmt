@@ -126,7 +126,12 @@ func (s *state) formatUnaryExpression(n *parser.Node) doc.Doc {
 
 	op := s.binaryOperatorText(n)
 
-	return doc.Concat(doc.Text(op), s.formatNode(n.Field("expression")))
+	sep := doc.Text("")
+	if s.config.SpaceAfterUnaryOperator {
+		sep = doc.Text(" ")
+	}
+
+	return doc.Concat(doc.Text(op), sep, s.formatNode(n.Field("expression")))
 }
 
 func (s *state) formatUpdateExpression(n *parser.Node) doc.Doc {

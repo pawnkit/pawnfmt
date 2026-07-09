@@ -66,7 +66,11 @@ func (s *state) applySingleStatementBraces(body *parser.Node) *parser.Node {
 
 func (s *state) formatBlock(n *parser.Node) doc.Doc {
 	if len(n.Children) == 0 {
-		return doc.Text("{ }")
+		if s.config.SpaceInsideBraces {
+			return doc.Text("{ }")
+		}
+
+		return doc.Text("{}")
 	}
 
 	wasTopLevel := s.topLevelContext

@@ -207,6 +207,10 @@ func (s *state) formatParameter(n *parser.Node) doc.Doc {
 
 	if byRefBeforeName(n, s.source) {
 		parts = append(parts, doc.Text("&"))
+
+		if s.config.SpaceAfterUnaryOperator {
+			parts = append(parts, doc.Text(" "))
+		}
 	}
 
 	if tag != nil {

@@ -85,5 +85,10 @@ func (s *state) formatCaseValueList(n *parser.Node) doc.Doc {
 }
 
 func (s *state) formatCaseRange(n *parser.Node) doc.Doc {
-	return doc.Concat(s.formatNode(n.Field("start")), doc.Text(" .. "), s.formatNode(n.Field("end")))
+	sep := ".."
+	if s.config.SpaceAroundOperators {
+		sep = " .. "
+	}
+
+	return doc.Concat(s.formatNode(n.Field("start")), doc.Text(sep), s.formatNode(n.Field("end")))
 }

@@ -14,6 +14,7 @@ func Default() Config {
 		IndentCaseContents:             true,
 		EmptyLineBetweenTopLevelDecls:  true,
 		SpaceAroundOperators:           true,
+		SpaceAfterUnaryOperator:        false,
 		SpaceAfterComma:                true,
 		SpaceInsideParens:              false,
 		SpaceInsideBrackets:            false,

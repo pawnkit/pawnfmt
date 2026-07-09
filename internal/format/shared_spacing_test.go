@@ -165,8 +165,8 @@ func TestSharedRegionNormalizesRangeOperatorSpacing(t *testing.T) {
 	compact.SpaceAroundOperators = false
 
 	compactFormatted := mustFormat(t, source, compact)
-	if !strings.Contains(string(compactFormatted), "14 .. 16") {
-		t.Fatalf("range spacing must remain consistent when other operators are compact:\n%s", compactFormatted)
+	if !strings.Contains(string(compactFormatted), "14..16") {
+		t.Fatalf("range spacing must follow space_around_operators like other operators:\n%s", compactFormatted)
 	}
 }
 

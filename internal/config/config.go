@@ -120,6 +120,7 @@ type Config struct {
 	IndentCaseContents             bool                  `json:"indent_case_contents" yaml:"indent_case_contents" toml:"indent_case_contents"`
 	EmptyLineBetweenTopLevelDecls  bool                  `json:"empty_line_between_top_level_declarations" yaml:"empty_line_between_top_level_declarations" toml:"empty_line_between_top_level_declarations"`
 	SpaceAroundOperators           bool                  `json:"space_around_operators" yaml:"space_around_operators" toml:"space_around_operators"`
+	SpaceAfterUnaryOperator        bool                  `json:"space_after_unary_operator" yaml:"space_after_unary_operator" toml:"space_after_unary_operator"`
 	SpaceAfterComma                bool                  `json:"space_after_comma" yaml:"space_after_comma" toml:"space_after_comma"`
 	SpaceInsideParens              bool                  `json:"space_inside_parens" yaml:"space_inside_parens" toml:"space_inside_parens"`
 	SpaceInsideBrackets            bool                  `json:"space_inside_brackets" yaml:"space_inside_brackets" toml:"space_inside_brackets"`

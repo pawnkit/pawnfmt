@@ -560,14 +560,14 @@ func TestIndentNestedDirectivesIndentsTopLevelBranchContents(t *testing.T) {
 		"#if defined _INC_y_va",
 		"    #if defined _INC_open_mp",
 		"        stock F()",
-		"        { }",
+		"        {}",
 		elseDirectiveIndented,
 		"        stock F()",
-		"        { }",
+		"        {}",
 		"    #endif",
 		elseDirective,
 		"    stock F()",
-		"    { }",
+		"    {}",
 		"#endif",
 		"",
 	}, "\n")
@@ -752,5 +752,95 @@ func TestNumericLiteralCaseAppliesInsideConditionalRegions(t *testing.T) {
 	second := mustFormat(t, formatted, config.Default())
 	if string(second) != text {
 		t.Fatalf("numeric literal case normalization is not idempotent\nfirst:\n%s\nsecond:\n%s", text, second)
+	}
+}
+
+func TestEmptyBlockRespectsSpaceInsideBraces(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("stock F() {}\n")
+
+	tight := mustFormat(t, source, config.Default())
+	if !strings.Contains(string(tight), "{}") {
+		t.Fatalf("expected empty block to stay tight by default:\n%s", tight)
+	}
+
+	spaced := config.Default()
+	spaced.SpaceInsideBraces = true
+
+	spacedFormatted := mustFormat(t, source, spaced)
+	if !strings.Contains(string(spacedFormatted), "{ }") {
+		t.Fatalf("expected empty block to gain a space when space_inside_braces is true:\n%s", spacedFormatted)
+	}
+}
+
+func TestCaseRangeSpacingFollowsSpaceAroundOperators(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("stock F(x) {\n    switch (x) {\n        case 2..5: return 1;\n    }\n}\n")
+
+	spaced := mustFormat(t, source, config.Default())
+	if !strings.Contains(string(spaced), "case 2 .. 5:") {
+		t.Fatalf("expected spaced case range by default:\n%s", spaced)
+	}
+
+	compact := config.Default()
+	compact.SpaceAroundOperators = false
+
+	compactFormatted := mustFormat(t, source, compact)
+	if !strings.Contains(string(compactFormatted), "case 2..5:") {
+		t.Fatalf("expected tight case range when space_around_operators is false:\n%s", compactFormatted)
+	}
+}
+
+func TestUnaryOperatorSpacingIsOptIn(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("stock F(&Float:x) {\n    new a = !x;\n    new b = -x;\n    new c = ++x;\n    return a + b + c;\n}\n")
+
+	tight := mustFormat(t, source, config.Default())
+	for _, want := range []string{"!x", "-x", "++x", "(&Float:x)"} {
+		if !strings.Contains(string(tight), want) {
+			t.Fatalf("expected tight unary/by-ref spacing by default, missing %q:\n%s", want, tight)
+		}
+	}
+
+	spaced := config.Default()
+	spaced.SpaceAfterUnaryOperator = true
+
+	spacedFormatted := mustFormat(t, source, spaced)
+	for _, want := range []string{"! x", "- x", "++ x", "(& Float:x)"} {
+		if !strings.Contains(string(spacedFormatted), want) {
+			t.Fatalf("expected spaced unary/by-ref output, missing %q:\n%s", want, spacedFormatted)
+		}
+	}
+
+	second := mustFormat(t, spacedFormatted, spaced)
+	if string(second) != string(spacedFormatted) {
+		t.Fatalf("unary operator spacing is not idempotent\nfirst:\n%s\nsecond:\n%s", spacedFormatted, second)
+	}
+}
+
+func TestUnaryOperatorSpacingAppliesInsideConditionalRegions(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("stock F() {\n#if A\nif (first) {\nnew a = !x; new b = ++y;\n#else\nif (second) {\n#endif\nreturn 1;\n}\n}\n")
+	requireSharedConditionalPath(t, source)
+
+	spaced := config.Default()
+	spaced.SpaceAfterUnaryOperator = true
+
+	formatted := mustFormat(t, source, spaced)
+
+	text := string(formatted)
+	for _, want := range []string{"! x", "++ y"} {
+		if !strings.Contains(text, want) {
+			t.Fatalf("shared conditional region did not apply unary operator spacing %q:\n%s", want, text)
+		}
+	}
+
+	second := mustFormat(t, formatted, spaced)
+	if string(second) != text {
+		t.Fatalf("shared unary operator spacing is not idempotent\nfirst:\n%s\nsecond:\n%s", text, second)
 	}
 }

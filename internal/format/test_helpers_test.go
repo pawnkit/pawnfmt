@@ -15,7 +15,7 @@ import (
 const (
 	elseDirective         = "#else"
 	elseDirectiveIndented = "    #else"
-	emptyBraceBody        = "{ }"
+	emptyBraceBody        = "{}"
 	closingBraceIndented  = "    }"
 )
 

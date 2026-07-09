@@ -45,6 +45,8 @@ empty_line_between_top_level_declarations = %t
 
 # Add spaces around operators, like "a + b".
 space_around_operators = %t
+# Add a space after a unary operator, like "! x" instead of "!x".
+space_after_unary_operator = %t
 # Add a space after commas.
 space_after_comma = %t
 # Add spaces just inside parentheses.
@@ -73,6 +75,7 @@ space_before_array_brackets = %t
 		d.IndentGotoLabels,
 		d.EmptyLineBetweenTopLevelDecls,
 		d.SpaceAroundOperators,
+		d.SpaceAfterUnaryOperator,
 		d.SpaceAfterComma,
 		d.SpaceInsideParens,
 		d.SpaceInsideBrackets,

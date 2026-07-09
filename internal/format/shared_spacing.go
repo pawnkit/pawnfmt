@@ -68,7 +68,7 @@ func normalizeSharedNumericLiteralCase(line string, cfg config.Config, tok token
 
 func normalizeSharedPunctuation(line string, cfg config.Config, tokens []token.Token, declarationLike bool, i int, edits *[]textEdit) bool {
 	return normalizeSharedTernaryAndCaseColon(line, tokens, i, edits) ||
-		normalizeSharedRangeAndAccess(line, tokens, i, edits) ||
+		normalizeSharedRangeAndAccess(line, cfg, tokens, i, edits) ||
 		normalizeSharedPunctuationAdjacency(line, tokens, i, edits) ||
 		normalizeSharedLiteralAndKeywordAdjacency(line, cfg, tokens, declarationLike, i, edits)
 }
@@ -132,26 +132,31 @@ func normalizeSharedCaseOrLabelColon(line string, tokens []token.Token, i int, e
 	return true
 }
 
-func normalizeSharedRangeAndAccess(line string, tokens []token.Token, i int, edits *[]textEdit) bool {
-	return normalizeSharedDotDotRange(line, tokens, i, edits) ||
+func normalizeSharedRangeAndAccess(line string, cfg config.Config, tokens []token.Token, i int, edits *[]textEdit) bool {
+	return normalizeSharedDotDotRange(line, cfg, tokens, i, edits) ||
 		normalizeSharedMemberAccess(line, tokens, i, edits)
 }
 
-func normalizeSharedDotDotRange(line string, tokens []token.Token, i int, edits *[]textEdit) bool {
+func normalizeSharedDotDotRange(line string, cfg config.Config, tokens []token.Token, i int, edits *[]textEdit) bool {
 	cur, next := tokens[i], tokens[i+1]
 	if cur.Kind != token.DotDot {
 		return false
 	}
 
+	sep := ""
+	if cfg.SpaceAroundOperators {
+		sep = " "
+	}
+
 	if i > 0 {
 		prev := tokens[i-1]
 		if prev.End.Offset <= cur.Start.Offset && horizontalGap(line[prev.End.Offset:cur.Start.Offset]) {
-			*edits = append(*edits, textEdit{start: prev.End.Offset, end: cur.Start.Offset, text: " "})
+			*edits = append(*edits, textEdit{start: prev.End.Offset, end: cur.Start.Offset, text: sep})
 		}
 	}
 
 	if cur.End.Offset <= next.Start.Offset && horizontalGap(line[cur.End.Offset:next.Start.Offset]) {
-		*edits = append(*edits, textEdit{start: cur.End.Offset, end: next.Start.Offset, text: " "})
+		*edits = append(*edits, textEdit{start: cur.End.Offset, end: next.Start.Offset, text: sep})
 	}
 
 	return true
@@ -473,7 +478,13 @@ func normalizeSharedOperatorAdjacency(line string, cfg config.Config, tokens []t
 
 	if sharedPrefixOperator(tokens, i) &&
 		horizontalGap(line[cur.End.Offset:next.Start.Offset]) {
-		*edits = append(*edits, textEdit{start: cur.End.Offset, end: next.Start.Offset})
+		sep := ""
+		if cfg.SpaceAfterUnaryOperator {
+			sep = " "
+		}
+
+		*edits = append(*edits, textEdit{start: cur.End.Offset, end: next.Start.Offset, text: sep})
+
 		return true
 	}
 

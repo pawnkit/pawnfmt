@@ -46,6 +46,7 @@ exclude = ["vendor/*", "generated/*"]
 | `indent_goto_labels` | `true` | boolean | Keeps goto labels at the current statement indent. |
 | `empty_line_between_top_level_declarations` | `true` | boolean | Adds breathing room between top-level declaration groups. |
 | `space_around_operators` | `true` | boolean | Formats `a + b` instead of `a+b`. |
+| `space_after_unary_operator` | `false` | boolean | Formats `! x` instead of `!x` for unary/by-ref prefixes (`!`, `~`, unary `+`/`-`, prefix `++`/`--`, `&`). |
 | `space_after_comma` | `true` | boolean | Formats `a, b` instead of `a,b`. |
 | `space_inside_parens` | `false` | boolean | Adds spaces inside `( ... )`. |
 | `space_inside_brackets` | `false` | boolean | Adds spaces inside `[ ... ]`. |
