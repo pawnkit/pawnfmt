@@ -32,6 +32,48 @@ func resolveConfig(opts *options, startDir string) (config.Config, error) {
 	return config.LoadFile(found)
 }
 
+func resolveConfigsForFiles(opts *options, files []string) ([]config.Config, error) {
+	configs := make([]config.Config, len(files))
+	if opts.Config != "" || opts.NoConfig {
+		cfg, err := resolveConfig(opts, startDirFor(opts))
+		if err != nil {
+			return nil, err
+		}
+
+		for i := range configs {
+			configs[i] = cfg
+		}
+
+		return configs, nil
+	}
+
+	loaded := make(map[string]config.Config)
+	for i, path := range files {
+		found, err := config.Discover(filepath.Dir(path))
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", path, err)
+		}
+
+		if found == "" {
+			configs[i] = config.Default()
+			continue
+		}
+
+		cfg, ok := loaded[found]
+		if !ok {
+			cfg, err = config.LoadFile(found)
+			if err != nil {
+				return nil, fmt.Errorf("%s: %w", found, err)
+			}
+			loaded[found] = cfg
+		}
+
+		configs[i] = cfg
+	}
+
+	return configs, nil
+}
+
 func startDirFor(opts *options) string {
 	if len(opts.Paths) > 0 {
 		abs, err := filepath.Abs(opts.Paths[0])

@@ -40,11 +40,17 @@ func runFiles(opts *options, stdout, stderr io.Writer) int {
 		return exitConfigError
 	}
 
-	if opts.DebugTokens || opts.DebugCST || opts.DebugFormatDoc {
-		return runFileDebugMode(opts, files, cfg, stdout, stderr)
+	configs, err := resolveConfigsForFiles(opts, files)
+	if err != nil {
+		writeErrorf(stderr, errColors, "%v", err)
+		return exitConfigError
 	}
 
-	return reportFileResults(opts, files, formatFilesParallel(files, cfg), stdout, stderr)
+	if opts.DebugTokens || opts.DebugCST || opts.DebugFormatDoc {
+		return runFileDebugMode(opts, files, configs[0], stdout, stderr)
+	}
+
+	return reportFileResults(opts, files, formatFilesParallel(files, configs), stdout, stderr)
 }
 
 func runFileDebugMode(opts *options, files []string, cfg config.Config, stdout, stderr io.Writer) int {
@@ -119,7 +125,7 @@ func reportFileResults(opts *options, files []string, results []fileResult, stdo
 	return exitOK
 }
 
-func formatFilesParallel(files []string, cfg config.Config) []fileResult {
+func formatFilesParallel(files []string, configs []config.Config) []fileResult {
 	results := make([]fileResult, len(files))
 	sem := make(chan struct{}, runtime.NumCPU())
 
@@ -129,12 +135,12 @@ func formatFilesParallel(files []string, cfg config.Config) []fileResult {
 
 		sem <- struct{}{}
 
-		go func(i int, path string) {
+		go func(i int, path string, cfg config.Config) {
 			defer wg.Done()
 			defer func() { <-sem }()
 
 			results[i] = formatOneFile(path, cfg)
-		}(i, path)
+		}(i, path, configs[i])
 	}
 
 	wg.Wait()

@@ -2,7 +2,7 @@
 
 `pawnfmt` looks for config files named `pawnfmt.toml`, `pawnfmt.yaml`, or `pawnfmt.yml`.
 
-By default it starts from the first input path, walks upward, and stops at the first config it finds. If it reaches a Git root without finding one, it uses the built-in defaults.
+By default it resolves configuration independently for each input file, walking upward from that file and stopping at the nearest config. If it reaches a Git root without finding one, it uses the built-in defaults. Explicit `--config` and `--no-config` choices apply uniformly to every input file.
 
 Useful flags:
 
