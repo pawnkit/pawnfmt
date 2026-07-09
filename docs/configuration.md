@@ -1,6 +1,6 @@
 # Configuration
 
-`pawnfmt` looks for config files named `pawnfmt.toml`, `pawnfmt.yaml`, or `pawnfmt.yml`.
+`pawnfmt` looks for config files named `pawnfmt.toml`, `pawnfmt.yaml`, `pawnfmt.yml`, or `pawnfmt.json`.
 
 By default it resolves configuration independently for each input file, walking upward from that file and stopping at the nearest config. If it reaches a Git root without finding one, it uses the built-in defaults. Explicit `--config` and `--no-config` choices apply uniformly to every input file.
 
@@ -13,6 +13,8 @@ Useful flags:
 - `--stdin-filename path/to/file.pwn` gives `--stdin` a location to use for config discovery.
 
 Config files are strict. Unknown keys fail fast instead of being ignored.
+
+TOML takes discovery precedence when more than one supported config file exists in the same directory, followed by YAML and then JSON.
 
 ## Example
 

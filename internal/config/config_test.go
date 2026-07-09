@@ -183,6 +183,26 @@ func TestLoadFileYAML(t *testing.T) {
 	}
 }
 
+func TestLoadFileJSON(t *testing.T) {
+	t.Parallel()
+	path := writeFile(t, "pawnfmt.json", "{\n  \"line_width\": 88,\n  \"indent_width\": 3\n}\n")
+
+	cfg, err := config.LoadFile(path)
+	if err != nil {
+		t.Fatalf("LoadFile: %v", err)
+	}
+
+	if cfg.LineWidth != 88 {
+		t.Errorf("LineWidth = %d, want 88", cfg.LineWidth)
+	}
+	if cfg.IndentWidth != 3 {
+		t.Errorf("IndentWidth = %d, want 3", cfg.IndentWidth)
+	}
+	if cfg.SpaceAfterComma != config.Default().SpaceAfterComma {
+		t.Errorf("SpaceAfterComma should keep its default when unset in the file")
+	}
+}
+
 func TestLoadFileMaxBlankLinesZeroSurvivesRoundTrip(t *testing.T) {
 	t.Parallel()
 	path := writeFile(t, "pawnfmt.toml", "max_blank_lines = 0\n")
@@ -247,6 +267,24 @@ func TestLoadFileYAMLRejectsUnknownKey(t *testing.T) {
 	}
 }
 
+func TestLoadFileJSONRejectsUnknownKey(t *testing.T) {
+	t.Parallel()
+
+	path := writeFile(t, "pawnfmt.json", "{\"lin_width\": 80}\n")
+	if _, err := config.LoadFile(path); err == nil {
+		t.Fatal("expected LoadFile to reject an unknown JSON key (typo of line_width)")
+	}
+}
+
+func TestLoadFileJSONRejectsMultipleValues(t *testing.T) {
+	t.Parallel()
+
+	path := writeFile(t, "pawnfmt.json", "{\"line_width\": 80} {\"line_width\": 90}\n")
+	if _, err := config.LoadFile(path); err == nil {
+		t.Fatal("expected LoadFile to reject multiple JSON values")
+	}
+}
+
 func TestLoadFileInvalidAfterDefaults(t *testing.T) {
 	t.Parallel()
 
@@ -282,6 +320,28 @@ func TestDiscoverFindsNearestConfig(t *testing.T) {
 
 	if found != nearest {
 		t.Errorf("Discover found %q, want %q", found, nearest)
+	}
+}
+
+func TestDiscoverFindsJSONConfig(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	sub := filepath.Join(root, "nested")
+	if err := os.MkdirAll(sub, 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	want := filepath.Join(root, "pawnfmt.json")
+	if err := os.WriteFile(want, []byte("{\"line_width\": 80}\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	found, err := config.Discover(sub)
+	if err != nil {
+		t.Fatalf("Discover: %v", err)
+	}
+	if found != want {
+		t.Errorf("Discover found %q, want %q", found, want)
 	}
 }
 

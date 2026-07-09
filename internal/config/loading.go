@@ -2,6 +2,7 @@ package config
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -41,8 +42,14 @@ func decodeFile(path string, data []byte, out *Config) error {
 		return decodeTOMLStrict(data, out)
 	case ".yaml", ".yml":
 		return decodeYAMLStrict(data, out)
+	case ".json":
+		return decodeJSONStrict(data, out)
 	default:
 		if err := decodeTOMLStrict(data, out); err == nil {
+			return nil
+		}
+
+		if err := decodeJSONStrict(data, out); err == nil {
 			return nil
 		}
 
@@ -52,6 +59,25 @@ func decodeFile(path string, data []byte, out *Config) error {
 
 		return fmt.Errorf("unsupported config file extension %q", ext)
 	}
+}
+
+func decodeJSONStrict(data []byte, out *Config) error {
+	dec := json.NewDecoder(bytes.NewReader(data))
+	dec.DisallowUnknownFields()
+
+	if err := dec.Decode(out); err != nil {
+		return fmt.Errorf("decode json config: %w", err)
+	}
+
+	if err := dec.Decode(&struct{}{}); !errors.Is(err, io.EOF) {
+		if err == nil {
+			return errors.New("decode json config: multiple JSON values are not allowed")
+		}
+
+		return fmt.Errorf("decode json config: %w", err)
+	}
+
+	return nil
 }
 
 func decodeTOMLStrict(data []byte, out *Config) error {
@@ -83,7 +109,7 @@ func decodeYAMLStrict(data []byte, out *Config) error {
 }
 
 // ConfigFileNames lists the config file names pawnfmt looks for.
-var ConfigFileNames = []string{"pawnfmt.toml", "pawnfmt.yaml", "pawnfmt.yml"}
+var ConfigFileNames = []string{"pawnfmt.toml", "pawnfmt.yaml", "pawnfmt.yml", "pawnfmt.json"}
 
 // Discover walks upward from startDir looking for a config file.
 func Discover(startDir string) (string, error) {

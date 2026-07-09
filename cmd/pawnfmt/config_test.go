@@ -73,6 +73,22 @@ func TestRunDiscoversNearestConfigFileAutomatically(t *testing.T) {
 	}
 }
 
+func TestRunDiscoversJSONConfigFileAutomatically(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	writeCLIFixture(t, filepath.Join(dir, "pawnfmt.json"), "{\"indent_width\": 2}\n")
+	srcPath := filepath.Join(dir, "a.pwn")
+	writeCLIFixture(t, srcPath, "stock F() {\n\tnew x;\n}\n")
+
+	code, stdout, stderr := runCLI([]string{srcPath}, "")
+	if code != exitOK {
+		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitOK, stderr)
+	}
+	if !strings.Contains(stdout, "  new x;") || strings.Contains(stdout, "    new x;") {
+		t.Fatalf("automatically discovered pawnfmt.json was not applied:\n%s", stdout)
+	}
+}
+
 func TestRunDiscoversConfigIndependentlyForEachFile(t *testing.T) {
 	t.Parallel()
 	root := t.TempDir()

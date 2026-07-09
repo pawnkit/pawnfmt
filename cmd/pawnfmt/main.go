@@ -23,7 +23,7 @@ type options struct {
 	Stdin          bool             `xor:"mode" help:"read source from stdin, write formatted output to stdout"`
 	Color          string           `default:"auto" enum:"auto,always,never" help:"when to use colour in output"`
 	StdinFilename  string           `help:"filename to use for config discovery when reading from stdin"`
-	Config         string           `help:"path to a pawnfmt config file (.toml/.yaml)"`
+	Config         string           `help:"path to a pawnfmt config file (.toml/.yaml/.json)"`
 	NoConfig       bool             `help:"ignore any discovered config file and use built-in defaults"`
 	NoGitignore    bool             `help:"do not respect .gitignore/.pawnfmtignore files when walking directories"`
 	PrintConfig    bool             `help:"print the resolved configuration and exit"`
