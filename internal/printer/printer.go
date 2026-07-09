@@ -142,8 +142,8 @@ func (r *renderer) stepGroup(current command, node doc.GroupDoc) {
 func pushRenderChildren(commands []command, current command, node doc.Doc) []command {
 	switch node := node.(type) {
 	case doc.ConcatDoc:
-		for index := len(node.Parts) - 1; index >= 0; index-- {
-			commands = append(commands, command{indent: current.indent, mode: current.mode, doc: node.Parts[index]})
+		for _, part := range slices.Backward(node.Parts) {
+			commands = append(commands, command{indent: current.indent, mode: current.mode, doc: part})
 		}
 	case doc.IndentDoc:
 		commands = append(commands, command{indent: current.indent + 1, mode: current.mode, doc: node.Contents})

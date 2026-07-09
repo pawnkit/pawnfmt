@@ -1,6 +1,7 @@
 package printer
 
 import (
+	"slices"
 	"unicode/utf8"
 
 	"github.com/pawnkit/pawnfmt/internal/doc"
@@ -91,8 +92,8 @@ func fits(width int, next command, rest []command, mustBeFlat bool, _ Options) b
 func pushFitsChildren(local []command, current command, node doc.Doc) []command {
 	switch node := node.(type) {
 	case doc.ConcatDoc:
-		for index := len(node.Parts) - 1; index >= 0; index-- {
-			local = append(local, command{indent: current.indent, mode: current.mode, doc: node.Parts[index]})
+		for _, part := range slices.Backward(node.Parts) {
+			local = append(local, command{indent: current.indent, mode: current.mode, doc: part})
 		}
 	case doc.IndentDoc:
 		local = append(local, command{indent: current.indent + 1, mode: current.mode, doc: node.Contents})
@@ -110,8 +111,8 @@ func pushFitsChildren(local []command, current command, node doc.Doc) []command 
 			local = append(local, command{indent: current.indent, mode: current.mode, doc: node.Broken})
 		}
 	case doc.FillDoc:
-		for index := len(node.Parts) - 1; index >= 0; index-- {
-			local = append(local, command{indent: current.indent, mode: current.mode, doc: node.Parts[index]})
+		for _, part := range slices.Backward(node.Parts) {
+			local = append(local, command{indent: current.indent, mode: current.mode, doc: part})
 		}
 	}
 
