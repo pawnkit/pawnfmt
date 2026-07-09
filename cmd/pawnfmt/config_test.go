@@ -56,6 +56,39 @@ func TestRunNoConfigFlagIgnoresADiscoverableConfigFile(t *testing.T) {
 	}
 }
 
+func TestRunAppliesEditorConfigBeforePawnConfig(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	writeCLIFixture(t, filepath.Join(dir, ".editorconfig"), "root = true\n\n[*.pwn]\nindent_size = 2\nmax_line_length = 120\n")
+	writeCLIFixture(t, filepath.Join(dir, "pawnfmt.toml"), "indent_width = 6\n")
+	srcPath := filepath.Join(dir, "a.pwn")
+	writeCLIFixture(t, srcPath, "stock F() {\n\tnew x;\n}\n")
+
+	code, stdout, stderr := runCLI([]string{srcPath}, "")
+	if code != exitOK {
+		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitOK, stderr)
+	}
+	if !strings.Contains(stdout, "\n      new x;") {
+		t.Fatalf("pawn config should override EditorConfig indentation:\n%s", stdout)
+	}
+}
+
+func TestRunNoConfigIgnoresEditorConfig(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	writeCLIFixture(t, filepath.Join(dir, ".editorconfig"), "root = true\n[*]\nindent_size = 2\n")
+	srcPath := filepath.Join(dir, "a.pwn")
+	writeCLIFixture(t, srcPath, "stock F() {\n\tnew x;\n}\n")
+
+	code, stdout, stderr := runCLI([]string{"--no-config", srcPath}, "")
+	if code != exitOK {
+		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitOK, stderr)
+	}
+	if !strings.Contains(stdout, "\n    new x;") {
+		t.Fatalf("--no-config should retain the default indent width:\n%s", stdout)
+	}
+}
+
 func TestRunDiscoversNearestConfigFileAutomatically(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()
@@ -177,6 +210,21 @@ func TestRunStdinFilenameDrivesConfigDiscoveryForStdinMode(t *testing.T) {
 
 	if !strings.Contains(stdout, "  new x;") || strings.Contains(stdout, "    new x;") {
 		t.Fatalf("-stdin-filename should drive config discovery to the sibling pawnfmt.toml (indent_width=2):\n%s", stdout)
+	}
+}
+
+func TestRunStdinFilenameAppliesEditorConfig(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	writeCLIFixture(t, filepath.Join(dir, ".editorconfig"), "root = true\n[*.pwn]\nindent_size = 2\n")
+	stdinFilename := filepath.Join(dir, "virtual.pwn")
+
+	code, stdout, stderr := runCLI([]string{"--stdin", "--stdin-filename", stdinFilename}, "stock F() {\n\tnew x;\n}\n")
+	if code != exitOK {
+		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitOK, stderr)
+	}
+	if !strings.Contains(stdout, "\n  new x;") {
+		t.Fatalf("--stdin-filename should apply matching EditorConfig properties:\n%s", stdout)
 	}
 }
 

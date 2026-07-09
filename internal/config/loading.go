@@ -16,10 +16,16 @@ import (
 
 // LoadFile reads, decodes, defaults, and validates a config file.
 func LoadFile(path string) (Config, error) {
-	return loadFile(path, nil, make(map[string]int))
+	return LoadFileWithBase(path, Default())
 }
 
-func loadFile(path string, chain []string, visiting map[string]int) (Config, error) {
+// LoadFileWithBase loads path over base, including any inherited configs.
+// Values explicitly provided by config files override the base values.
+func LoadFileWithBase(path string, base Config) (Config, error) {
+	return loadFile(path, base, nil, make(map[string]int))
+}
+
+func loadFile(path string, base Config, chain []string, visiting map[string]int) (Config, error) {
 	canonical, err := canonicalConfigPath(path)
 	if err != nil {
 		return Config{}, err
@@ -43,14 +49,14 @@ func loadFile(path string, chain []string, visiting map[string]int) (Config, err
 		return Config{}, err
 	}
 
-	cfg := Default()
+	cfg := base
 	if child.Extends != "" {
 		parentPath := child.Extends
 		if !filepath.IsAbs(parentPath) {
 			parentPath = filepath.Join(filepath.Dir(canonical), parentPath)
 		}
 
-		cfg, err = loadFile(parentPath, chain, visiting)
+		cfg, err = loadFile(parentPath, base, chain, visiting)
 		if err != nil {
 			return Config{}, fmt.Errorf("extend %s: %w", canonical, err)
 		}

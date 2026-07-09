@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/BurntSushi/toml"
+	editorconfig "github.com/editorconfig/editorconfig-core-go/v2"
 
 	"github.com/pawnkit/pawnfmt/internal/config"
 )
@@ -32,14 +33,39 @@ func resolveConfig(opts *options, startDir string) (config.Config, error) {
 	return config.LoadFile(found)
 }
 
+func resolveConfigForFile(opts *options, filename string) (config.Config, error) {
+	if opts.NoConfig {
+		return config.Default(), nil
+	}
+
+	base := config.Default()
+	if err := config.ApplyEditorConfig(filename, &base, editorconfig.NewCachedParser()); err != nil {
+		return config.Config{}, err
+	}
+
+	if opts.Config != "" {
+		return config.LoadFileWithBase(opts.Config, base)
+	}
+
+	startDir := startDirFor(opts)
+	if filename != "" {
+		startDir = filepath.Dir(filename)
+	}
+	found, err := config.Discover(startDir)
+	if err != nil {
+		return config.Config{}, err
+	}
+	if found == "" {
+		return base, nil
+	}
+
+	return config.LoadFileWithBase(found, base)
+}
+
 func resolveConfigsForFiles(opts *options, files []string) ([]config.Config, error) {
 	configs := make([]config.Config, len(files))
-	if opts.Config != "" || opts.NoConfig {
-		cfg, err := resolveConfig(opts, startDirFor(opts))
-		if err != nil {
-			return nil, err
-		}
-
+	if opts.NoConfig {
+		cfg := config.Default()
 		for i := range configs {
 			configs[i] = cfg
 		}
@@ -47,27 +73,52 @@ func resolveConfigsForFiles(opts *options, files []string) ([]config.Config, err
 		return configs, nil
 	}
 
-	loaded := make(map[string]config.Config)
+	parser := editorconfig.NewCachedParser()
+	type cacheKey struct {
+		path           string
+		lineWidth      int
+		indentStyle    config.IndentStyle
+		indentWidth    int
+		newlineStyle   config.NewlineStyle
+		insertFinal    bool
+		trimWhitespace bool
+	}
+	loaded := make(map[cacheKey]config.Config)
 	for i, path := range files {
-		found, err := config.Discover(filepath.Dir(path))
-		if err != nil {
-			return nil, fmt.Errorf("%s: %w", path, err)
+		base := config.Default()
+		if err := config.ApplyEditorConfig(path, &base, parser); err != nil {
+			return nil, err
+		}
+
+		found := opts.Config
+		if found == "" {
+			var err error
+			found, err = config.Discover(filepath.Dir(path))
+			if err != nil {
+				return nil, fmt.Errorf("%s: %w", path, err)
+			}
 		}
 
 		if found == "" {
-			configs[i] = config.Default()
+			configs[i] = base
 			continue
 		}
 
-		cfg, ok := loaded[found]
-		if !ok {
-			cfg, err = config.LoadFile(found)
-			if err != nil {
-				return nil, fmt.Errorf("%s: %w", found, err)
-			}
-			loaded[found] = cfg
+		key := cacheKey{
+			path: found, lineWidth: base.LineWidth, indentStyle: base.IndentStyle,
+			indentWidth: base.IndentWidth, newlineStyle: base.NewlineStyle,
+			insertFinal: base.InsertFinalNewline, trimWhitespace: base.TrimTrailingWhitespace,
+		}
+		if cfg, ok := loaded[key]; ok {
+			configs[i] = cfg
+			continue
 		}
 
+		cfg, err := config.LoadFileWithBase(found, base)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", found, err)
+		}
+		loaded[key] = cfg
 		configs[i] = cfg
 	}
 

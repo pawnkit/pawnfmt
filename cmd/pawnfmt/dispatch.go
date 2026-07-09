@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"os"
 
 	"github.com/pawnkit/pawnfmt/internal/config"
 	formatter "github.com/pawnkit/pawnfmt/internal/format"
@@ -16,7 +17,15 @@ func dispatch(opts *options, stdin io.Reader, stdout, stderr io.Writer) int {
 	}
 
 	if opts.PrintConfig {
-		cfg, err := resolveConfig(opts, startDirFor(opts))
+		filename := opts.StdinFilename
+		if filename == "" && len(opts.Paths) > 0 {
+			filename = opts.Paths[0]
+		}
+		if info, err := os.Stat(filename); err == nil && info.IsDir() {
+			filename = ""
+		}
+
+		cfg, err := resolveConfigForFile(opts, filename)
 		if err != nil {
 			writeErrorf(stderr, errColors, "%v", err)
 			return exitConfigError
@@ -55,7 +64,7 @@ func runStdin(opts *options, stdin io.Reader, stdout, stderr io.Writer) int {
 		return exitFormatError
 	}
 
-	cfg, err := resolveConfig(opts, startDirFor(opts))
+	cfg, err := resolveConfigForFile(opts, opts.StdinFilename)
 	if err != nil {
 		writeErrorf(stderr, errColors, "%v", err)
 		return exitConfigError

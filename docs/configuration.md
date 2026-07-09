@@ -4,6 +4,10 @@
 
 By default it resolves configuration independently for each input file, walking upward from that file and stopping at the nearest config. If it reaches a Git root without finding one, it uses the built-in defaults. Explicit `--config` and `--no-config` choices apply uniformly to every input file.
 
+EditorConfig is applied for each input file before pawnfmt configuration. Supported properties are `indent_style`, `indent_size`, `end_of_line` (`lf` or `crlf`), `insert_final_newline`, `trim_trailing_whitespace`, and `max_line_length`. Pawnfmt configuration overrides EditorConfig. `--no-config` disables both EditorConfig and pawnfmt configuration discovery.
+
+Precedence, from lowest to highest, is: built-in defaults, matching `.editorconfig` files, inherited pawnfmt configs, the nearest pawnfmt config, and explicit CLI policy.
+
 Useful flags:
 
 - `--config path/to/pawnfmt.toml` uses a specific config file.
