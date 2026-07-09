@@ -107,6 +107,47 @@ func TestSortIncludesKeepsFileHeaderAtTop(t *testing.T) {
 	}
 }
 
+func TestSortIncludesPreservesBlankLineGroups(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("#include <zeta>\n#include <beta>\n\n// local group\n#include \"z.inc\"\n#include \"a.inc\"\n")
+	cfg := config.Default()
+	cfg.SortIncludes = true
+	formatted := mustFormat(t, source, cfg)
+
+	want := "#include <beta>\n#include <zeta>\n\n// local group\n#include \"a.inc\"\n#include \"z.inc\"\n"
+	if string(formatted) != want {
+		t.Fatalf("include sorting crossed a blank-line group boundary\nexpected:\n%s\nactual:\n%s", want, formatted)
+	}
+}
+
+func TestSortIncludesPreservesRunsContainingDuplicatePaths(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("#include <zeta>\n#include <alpha>\n#include <zeta>\n")
+	cfg := config.Default()
+	cfg.SortIncludes = true
+	formatted := mustFormat(t, source, cfg)
+
+	if string(formatted) != string(source) {
+		t.Fatalf("include sorting reordered a run containing duplicates\nexpected:\n%s\nactual:\n%s", source, formatted)
+	}
+}
+
+func TestSortIncludesDoesNotCrossPreprocessorBoundary(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("#include <zeta>\n#include <beta>\n#define FEATURE 1\n#include <delta>\n#include <alpha>\n")
+	cfg := config.Default()
+	cfg.SortIncludes = true
+	formatted := mustFormat(t, source, cfg)
+
+	want := "#include <beta>\n#include <zeta>\n\n#define FEATURE 1\n#include <alpha>\n#include <delta>\n"
+	if string(formatted) != want {
+		t.Fatalf("include sorting crossed a preprocessor boundary\nexpected:\n%s\nactual:\n%s", want, formatted)
+	}
+}
+
 func TestDisabledRegionIsNotSortedOrSeparated(t *testing.T) {
 	t.Parallel()
 

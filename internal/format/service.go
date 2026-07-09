@@ -61,13 +61,17 @@ func (formatter *Formatter) formatOnce(source []byte) ([]byte, error) {
 		return nil, parseDiagnostic([]byte(formatted), verified, "formatted output")
 	}
 
-	if !formatter.config.SortIncludes {
+	if formatter.config.SortIncludes {
+		if err := verifySemanticTokensWithSortedIncludes(source, []byte(formatted), parsed, verified); err != nil {
+			return nil, fmt.Errorf("formatted output changed source semantics: %w", err)
+		}
+	} else {
 		if err := verifySemanticTokens(source, []byte(formatted)); err != nil {
 			return nil, fmt.Errorf("formatted output changed source semantics: %w", err)
 		}
-		if err := verifySemanticStructure(parsed, verified); err != nil {
-			return nil, fmt.Errorf("formatted output changed source structure: %w", err)
-		}
+	}
+	if err := verifySemanticStructure(parsed, verified); err != nil {
+		return nil, fmt.Errorf("formatted output changed source structure: %w", err)
 	}
 
 	return []byte(formatted), nil

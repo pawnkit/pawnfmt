@@ -78,3 +78,20 @@ func TestVerifySemanticTokensRejectsMeaningfulChanges(t *testing.T) {
 		})
 	}
 }
+
+func TestVerifySemanticTokensWithSortedIncludesAllowsOnlyIncludeReordering(t *testing.T) {
+	t.Parallel()
+
+	beforeSource := []byte("#include <zeta>\n#tryinclude <alpha>\nnew value = 1;\n")
+	afterSource := []byte("#tryinclude <alpha>\n#include <zeta>\nnew value = 1;\n")
+	if err := verifySemanticTokensWithSortedIncludes(beforeSource, afterSource,
+		parser.Parse(beforeSource), parser.Parse(afterSource)); err != nil {
+		t.Fatalf("include-only reordering should be allowed: %v", err)
+	}
+
+	changedSource := []byte("#tryinclude <alpha>\n#include <zeta>\nnew replacement = 1;\n")
+	if err := verifySemanticTokensWithSortedIncludes(beforeSource, changedSource,
+		parser.Parse(beforeSource), parser.Parse(changedSource)); err == nil {
+		t.Fatal("a non-include semantic change must be rejected")
+	}
+}

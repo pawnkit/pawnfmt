@@ -12,7 +12,8 @@ import (
 func (s *state) formatSourceFile(n *parser.Node) doc.Doc {
 	items := n.Children
 	if s.config.SortIncludes {
-		items = sortIncludeRuns(items, s.config.GroupIncludesByBrackets, func(item *parser.Node) bool { return !s.isDisabled(item) })
+		items = sortIncludeRuns(s.source, items, s.config.GroupIncludesByBrackets,
+			func(item *parser.Node) bool { return !s.isDisabled(item) })
 	}
 
 	s.topLevelContext = true
@@ -130,7 +131,7 @@ func isTopLevelGroupBoundary(prev, cur parser.Kind) bool {
 		prev == parser.KindConditionalRegion || cur == parser.KindConditionalRegion
 }
 
-func sortIncludeRuns(items []*parser.Node, groupByBrackets bool, eligible func(*parser.Node) bool) []*parser.Node {
+func sortIncludeRuns(source []byte, items []*parser.Node, groupByBrackets bool, eligible func(*parser.Node) bool) []*parser.Node {
 	out := make([]*parser.Node, len(items))
 	copy(out, items)
 
@@ -141,20 +142,27 @@ func sortIncludeRuns(items []*parser.Node, groupByBrackets bool, eligible func(*
 			continue
 		}
 
-		j := i
-		for j < len(out) && isIncludeLike(out[j].Kind) && eligible(out[j]) {
+		j := i + 1
+		for j < len(out) && isIncludeLike(out[j].Kind) && eligible(out[j]) &&
+			!hasBlankLineBetween(source, out[j-1], out[j]) {
 			j++
 		}
 
 		run := out[i:j]
+		if includeRunHasDuplicatePath(run) {
+			i = j
+			continue
+		}
 
 		var (
-			fileHeader    []token.Trivia
+			runHeader     []token.Trivia
 			originalFirst *parser.Node
 		)
 
-		if i == 0 && hasCommentTrivia(run[0].Leading) {
-			fileHeader = append([]token.Trivia(nil), run[0].Leading...)
+		startsAfterBlankIncludeGroup := i > 0 && isIncludeLike(items[i-1].Kind) &&
+			hasBlankLineBetween(source, items[i-1], items[i])
+		if i == 0 && hasCommentTrivia(run[0].Leading) || startsAfterBlankIncludeGroup {
+			runHeader = append([]token.Trivia(nil), run[0].Leading...)
 			originalFirst = run[0]
 			clone := *originalFirst
 			clone.Leading = nil
@@ -172,9 +180,9 @@ func sortIncludeRuns(items []*parser.Node, groupByBrackets bool, eligible func(*
 			return includeSortKey(run[a]) < includeSortKey(run[b])
 		})
 
-		if len(fileHeader) > 0 {
+		if len(runHeader) > 0 {
 			clone := *run[0]
-			clone.Leading = append(fileHeader, clone.Leading...)
+			clone.Leading = append(runHeader, clone.Leading...)
 			run[0] = &clone
 		}
 
@@ -182,6 +190,35 @@ func sortIncludeRuns(items []*parser.Node, groupByBrackets bool, eligible func(*
 	}
 
 	return out
+}
+
+func hasBlankLineBetween(source []byte, before, after *parser.Node) bool {
+	if before == nil || after == nil || before.End < 0 || after.Start > len(source) || before.End > after.Start {
+		return true
+	}
+
+	between := strings.ReplaceAll(string(source[before.End:after.Start]), "\r\n", "\n")
+	lines := strings.Split(between, "\n")
+	for i := 1; i < len(lines)-1; i++ {
+		if strings.TrimSpace(lines[i]) == "" {
+			return true
+		}
+	}
+
+	return false
+}
+
+func includeRunHasDuplicatePath(run []*parser.Node) bool {
+	seen := make(map[string]struct{}, len(run))
+	for _, item := range run {
+		key := includeSortKey(item)
+		if _, exists := seen[key]; exists {
+			return true
+		}
+		seen[key] = struct{}{}
+	}
+
+	return false
 }
 
 func hasCommentTrivia(items []token.Trivia) bool {

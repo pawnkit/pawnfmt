@@ -72,7 +72,7 @@ exclude = ["vendor/*", "generated/*"]
 | `format_disabled_regions` | `false` | boolean | Formats code inside `// pawnfmt off` and `// pawnfmt on` regions anyway. |
 | `blank_lines_after_include_block` | `true` | boolean | Keeps one blank line after the top include block. |
 | `blank_lines_between_publics` | `true` | boolean | Keeps adjacent `public` functions separated. |
-| `sort_includes` | `false` | boolean | Sorts contiguous top-level include runs by path. |
+| `sort_includes` | `false` | boolean | Sorts safe contiguous top-level include runs by path. Runs stop at blank lines, non-include directives, conditional regions, and disabled regions; runs containing duplicate paths are preserved. |
 | `group_includes_by_brackets` | `false` | boolean | With `sort_includes`, puts angle-bracket includes before quoted includes. |
 | `collapse_blank_lines` | `true` | boolean | Caps long blank-line runs. |
 | `max_blank_lines` | `2` | integer, at least `0` | Maximum blank lines kept when collapsing is enabled. |
