@@ -114,13 +114,13 @@ func hasCommaBetween(source []byte, from, to int) bool {
 }
 
 func (s *state) formatParenList(nodes []*parser.Node, style config.MultilineListStyle) doc.Doc {
-	open, close := "(", ")"
+	open, closeStr := "(", ")"
 	if s.config.SpaceInsideParens {
-		open, close = "( ", " )"
+		open, closeStr = "( ", " )"
 	}
 
 	if style == config.MultilineListOnePerLine {
-		return s.formatExplodedList(nodes, open, close)
+		return s.formatExplodedList(nodes, open, closeStr)
 	}
 
 	sepLine := doc.SoftLine()
@@ -148,7 +148,7 @@ func (s *state) formatParenList(nodes []*parser.Node, style config.MultilineList
 			doc.Text(open),
 			doc.Indent(doc.Concat(doc.SoftLine(), doc.Fill(fillParts...))),
 			doc.SoftLine(),
-			doc.Text(close),
+			doc.Text(closeStr),
 		))
 	}
 
@@ -163,7 +163,7 @@ func (s *state) formatParenList(nodes []*parser.Node, style config.MultilineList
 		doc.Text(open),
 		doc.Indent(doc.Concat(doc.SoftLine(), joined)),
 		doc.SoftLine(),
-		doc.Text(close),
+		doc.Text(closeStr),
 	))
 }
 

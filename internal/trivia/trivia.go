@@ -1,3 +1,4 @@
+// Package trivia scans source lines for blank/comment/directive/disabled-region info.
 package trivia
 
 import (
@@ -11,6 +12,7 @@ var (
 	pawnfmtOnPattern  = regexp.MustCompile(`(?i)\bpawnfmt\s+on\b`)
 )
 
+// Line describes one line of source text and its classification.
 type Line struct {
 	Number        int
 	StartByte     int
@@ -24,6 +26,7 @@ type Line struct {
 	TurnsOn       bool
 }
 
+// Region is a byte/line range covered by a "pawnfmt off"/"pawnfmt on" pair.
 type Region struct {
 	StartLine int
 	EndLine   int
@@ -31,12 +34,14 @@ type Region struct {
 	EndByte   int
 }
 
+// Index holds a scanned source's lines and disabled regions.
 type Index struct {
 	Lines           []Line
 	Disabled        []Region
 	DetectedNewline string
 }
 
+// Scan classifies every line of source and locates disabled regions.
 func Scan(source []byte) Index {
 	detected := detectNewline(source)
 
@@ -88,6 +93,7 @@ func lineEndingLength(source []byte, end int) int {
 	return 1
 }
 
+// OverlapsDisabled reports whether [startByte, endByte) overlaps a disabled region.
 func (index Index) OverlapsDisabled(startByte, endByte uint32) bool {
 	for _, region := range index.Disabled {
 		if int(endByte) <= region.StartByte {

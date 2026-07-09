@@ -35,51 +35,67 @@ func wrapSharedLine(line string, width, indentWidth, continuationWidth int, useT
 	return wrapSharedAtCandidates(line, candidates, width, continuationColumns, continuation)
 }
 
+// wrapCandidateScan carries the mutable state threaded through sharedWrapCandidates.
+type wrapCandidateScan struct {
+	candidates    []int
+	parenDepth    int
+	ternaryDepth  int
+	controlHeader bool
+	controlEnd    int
+}
+
 func sharedWrapCandidates(line string, tokens []token.Token) ([]int, int) {
-	var candidates []int
-
-	parenDepth := 0
-	ternaryDepth := 0
-	controlHeader := strings.HasPrefix(strings.TrimSpace(line), "if (") || strings.HasPrefix(strings.TrimSpace(line), "else if (")
-	controlEnd := -1
-
-	for i, tok := range tokens {
-		switch tok.Kind {
-		case token.Comma:
-			candidates = append(candidates, tok.End.Offset)
-		case token.Assign, token.PlusAssign, token.MinusAssign, token.StarAssign, token.SlashAssign,
-			token.PercentAssign:
-			candidates = append(candidates, tok.End.Offset)
-		case token.AndAnd, token.OrOr, token.Plus, token.Minus,
-			token.Star, token.Slash, token.Percent,
-			token.Eq, token.NotEq, token.Lt, token.Gt, token.LtEq, token.GtEq:
-			candidates = append(candidates, tok.Start.Offset)
-		case token.Question:
-			ternaryDepth++
-
-			candidates = append(candidates, tok.Start.Offset)
-		case token.Colon:
-			if ternaryDepth > 0 {
-				ternaryDepth--
-
-				candidates = append(candidates, tok.Start.Offset)
-			}
-		case token.LParen:
-			parenDepth++
-		case token.RParen:
-			parenDepth--
-			if controlHeader && parenDepth == 0 && tok.End.Offset < len(line) {
-				candidates = append(candidates, tok.End.Offset)
-				controlEnd = tok.End.Offset
-				controlHeader = false
-			} else if i+1 < len(tokens) && tokens[i+1].Kind != token.EOF &&
-				tok.End.Offset < tokens[i+1].Start.Offset {
-				candidates = append(candidates, tok.End.Offset)
-			}
-		}
+	scan := &wrapCandidateScan{
+		controlHeader: strings.HasPrefix(strings.TrimSpace(line), "if (") || strings.HasPrefix(strings.TrimSpace(line), "else if ("),
+		controlEnd:    -1,
 	}
 
-	return candidates, controlEnd
+	for i, tok := range tokens {
+		scan.visit(line, tokens, i, tok)
+	}
+
+	return scan.candidates, scan.controlEnd
+}
+
+//nolint:exhaustive // only wrap-candidate token kinds matter here
+func (scan *wrapCandidateScan) visit(line string, tokens []token.Token, i int, tok token.Token) {
+	switch tok.Kind {
+	case token.Comma:
+		scan.candidates = append(scan.candidates, tok.End.Offset)
+	case token.Assign, token.PlusAssign, token.MinusAssign, token.StarAssign, token.SlashAssign,
+		token.PercentAssign:
+		scan.candidates = append(scan.candidates, tok.End.Offset)
+	case token.AndAnd, token.OrOr, token.Plus, token.Minus,
+		token.Star, token.Slash, token.Percent,
+		token.Eq, token.NotEq, token.Lt, token.Gt, token.LtEq, token.GtEq:
+		scan.candidates = append(scan.candidates, tok.Start.Offset)
+	case token.Question:
+		scan.ternaryDepth++
+
+		scan.candidates = append(scan.candidates, tok.Start.Offset)
+	case token.Colon:
+		if scan.ternaryDepth > 0 {
+			scan.ternaryDepth--
+
+			scan.candidates = append(scan.candidates, tok.Start.Offset)
+		}
+	case token.LParen:
+		scan.parenDepth++
+	case token.RParen:
+		scan.visitRParen(line, tokens, i, tok)
+	}
+}
+
+func (scan *wrapCandidateScan) visitRParen(line string, tokens []token.Token, i int, tok token.Token) {
+	scan.parenDepth--
+	if scan.controlHeader && scan.parenDepth == 0 && tok.End.Offset < len(line) {
+		scan.candidates = append(scan.candidates, tok.End.Offset)
+		scan.controlEnd = tok.End.Offset
+		scan.controlHeader = false
+	} else if i+1 < len(tokens) && tokens[i+1].Kind != token.EOF &&
+		tok.End.Offset < tokens[i+1].Start.Offset {
+		scan.candidates = append(scan.candidates, tok.End.Offset)
+	}
 }
 
 func sharedContinuationIndent(indentWidth int, useTabs bool) (string, int) {
@@ -89,6 +105,31 @@ func sharedContinuationIndent(indentWidth int, useTabs bool) (string, int) {
 	}
 
 	return continuation, len(continuation)
+}
+
+// bestWrapChoice picks the furthest candidate offset after start that still
+// fits contentWidth, or the first over-width candidate if none fit.
+func bestWrapChoice(line string, candidates []int, start, contentWidth int) int {
+	choice := -1
+
+	for _, candidate := range candidates {
+		if candidate <= start {
+			continue
+		}
+
+		if utf8.RuneCountInString(line[start:candidate]) <= contentWidth {
+			choice = candidate
+			continue
+		}
+
+		if choice < 0 {
+			choice = candidate
+		}
+
+		break
+	}
+
+	return choice
 }
 
 func wrapSharedAtCandidates(line string, candidates []int, width, continuationColumns int, continuation string) []string {
@@ -101,25 +142,7 @@ func wrapSharedAtCandidates(line string, candidates []int, width, continuationCo
 
 	start := 0
 	for utf8.RuneCountInString(line[start:]) > contentWidth {
-		choice := -1
-
-		for _, candidate := range candidates {
-			if candidate <= start {
-				continue
-			}
-
-			if utf8.RuneCountInString(line[start:candidate]) <= contentWidth {
-				choice = candidate
-				continue
-			}
-
-			if choice < 0 {
-				choice = candidate
-			}
-
-			break
-		}
-
+		choice := bestWrapChoice(line, candidates, start, contentWidth)
 		if choice <= start || choice >= len(line) {
 			break
 		}

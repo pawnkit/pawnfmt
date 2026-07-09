@@ -2,9 +2,13 @@ package config
 
 import "fmt"
 
+// DefaultTOML renders the default config as a fully commented TOML file.
 func DefaultTOML() string {
 	d := Default()
+	return defaultTOMLHeader(d) + defaultTOMLDirectivesAndAlignment(d) + defaultTOMLMiscAndFooter(d)
+}
 
+func defaultTOMLHeader(d Config) string {
 	return fmt.Sprintf(`# pawnfmt configuration.
 # Every key is shown with its default value. Change the options you care
 # about, or delete a line to keep using its default.
@@ -54,7 +58,32 @@ space_before_function_paren = %t
 # Add a space before array brackets.
 space_before_array_brackets = %t
 
-# Enum trailing semicolons: "preserve" or "always".
+`,
+		d.LineWidth,
+		string(d.IndentStyle),
+		d.IndentWidth,
+		d.ContinuationIndentWidth,
+		string(d.NewlineStyle),
+		d.InsertFinalNewline,
+		d.TrimTrailingWhitespace,
+		string(d.BraceStyle),
+		d.KeepSimpleStatementsSingleLine,
+		d.IndentCaseContents,
+		d.IndentCaseLabels,
+		d.IndentGotoLabels,
+		d.EmptyLineBetweenTopLevelDecls,
+		d.SpaceAroundOperators,
+		d.SpaceAfterComma,
+		d.SpaceInsideParens,
+		d.SpaceInsideBrackets,
+		d.SpaceInsideBraces,
+		d.SpaceBeforeFunctionParen,
+		d.SpaceBeforeArrayBrackets,
+	)
+}
+
+func defaultTOMLDirectivesAndAlignment(d Config) string {
+	return fmt.Sprintf(`# Enum trailing semicolons: "preserve" or "always".
 semicolons = %q
 # Single-statement if/while/for/else braces: "preserve", "always", or "never".
 single_statement_braces = %q
@@ -80,7 +109,23 @@ enum_trailing_comma = %q
 # "Float:x", "preserve" keeps input.
 tag_colon_spacing = %q
 
-# Function parameter wrapping: "auto", "one_per_line", or "bin_pack".
+`,
+		string(d.Semicolons),
+		string(d.SingleStatementBraces),
+		string(d.DirectiveIndent),
+		d.DirectiveSpacing,
+		d.IndentNestedDirectives,
+		d.AlignEnumFields,
+		d.AlignConsecutiveDeclarations,
+		d.AlignConsecutiveMacros,
+		d.AlignTrailingComments,
+		string(d.EnumTrailingComma),
+		string(d.TagColonSpacing),
+	)
+}
+
+func defaultTOMLMiscAndFooter(d Config) string {
+	return fmt.Sprintf(`# Function parameter wrapping: "auto", "one_per_line", or "bin_pack".
 multiline_function_params = %q
 # Call argument wrapping: "auto", "one_per_line", or "bin_pack".
 multiline_call_args = %q
@@ -109,37 +154,6 @@ max_blank_lines = %d
 include = []
 exclude = []
 `,
-		d.LineWidth,
-		string(d.IndentStyle),
-		d.IndentWidth,
-		d.ContinuationIndentWidth,
-		string(d.NewlineStyle),
-		d.InsertFinalNewline,
-		d.TrimTrailingWhitespace,
-		string(d.BraceStyle),
-		d.KeepSimpleStatementsSingleLine,
-		d.IndentCaseContents,
-		d.IndentCaseLabels,
-		d.IndentGotoLabels,
-		d.EmptyLineBetweenTopLevelDecls,
-		d.SpaceAroundOperators,
-		d.SpaceAfterComma,
-		d.SpaceInsideParens,
-		d.SpaceInsideBrackets,
-		d.SpaceInsideBraces,
-		d.SpaceBeforeFunctionParen,
-		d.SpaceBeforeArrayBrackets,
-		string(d.Semicolons),
-		string(d.SingleStatementBraces),
-		string(d.DirectiveIndent),
-		d.DirectiveSpacing,
-		d.IndentNestedDirectives,
-		d.AlignEnumFields,
-		d.AlignConsecutiveDeclarations,
-		d.AlignConsecutiveMacros,
-		d.AlignTrailingComments,
-		string(d.EnumTrailingComma),
-		string(d.TagColonSpacing),
 		string(d.MultilineFunctionParams),
 		string(d.MultilineCallArgs),
 		string(d.BreakBinaryOperator),

@@ -1,3 +1,4 @@
+// Command pawnfmt is a Pawn (SA-MP/open.mp) source code formatter.
 package main
 
 import (

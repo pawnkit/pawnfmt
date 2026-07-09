@@ -11,10 +11,12 @@ import (
 	"github.com/pawnkit/pawnfmt/internal/trivia"
 )
 
+// Formatter formats Pawn source using a fixed configuration.
 type Formatter struct {
 	config config.Config
 }
 
+// New builds a Formatter after defaulting and validating cfg.
 func New(cfg config.Config) (*Formatter, error) {
 	cfg.ApplyDefaults()
 
@@ -25,6 +27,7 @@ func New(cfg config.Config) (*Formatter, error) {
 	return &Formatter{config: cfg}, nil
 }
 
+// FormatSource formats source, reformatting up to 4 times until it converges.
 func (formatter *Formatter) FormatSource(source []byte) ([]byte, error) {
 	current := source
 	for range 4 {
@@ -67,7 +70,8 @@ func (formatter *Formatter) formatOnce(source []byte) ([]byte, error) {
 	return []byte(formatted), nil
 }
 
-func FormatSource(source []byte, cfg config.Config) ([]byte, error) {
+// Source formats source using cfg. It is a convenience wrapper around New.
+func Source(source []byte, cfg config.Config) ([]byte, error) {
 	formatter, err := New(cfg)
 	if err != nil {
 		return nil, err

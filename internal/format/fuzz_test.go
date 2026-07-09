@@ -100,12 +100,12 @@ func FuzzFormatConverges(f *testing.F) {
 	f.Fuzz(func(t *testing.T, source string, variant uint8) {
 		cfg := configFromVariant(variant)
 
-		first, err := formatter.FormatSource([]byte(source), cfg)
+		first, err := formatter.Source([]byte(source), cfg)
 		if err != nil {
 			return
 		}
 
-		second, err := formatter.FormatSource(first, cfg)
+		second, err := formatter.Source(first, cfg)
 		if err != nil {
 			t.Fatalf("second format failed after a successful first pass: %v\noutput:\n%s", err, first)
 		}

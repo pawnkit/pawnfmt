@@ -10,12 +10,16 @@ import (
 )
 
 func TestDefaultIsValid(t *testing.T) {
+	t.Parallel()
+
 	if err := config.Default().Validate(); err != nil {
 		t.Fatalf("Default() must validate cleanly: %v", err)
 	}
 }
 
 func TestApplyDefaultsBackfillsStringAndWidthFields(t *testing.T) {
+	t.Parallel()
+
 	cfg := config.Config{}
 	cfg.ApplyDefaults()
 
@@ -70,6 +74,8 @@ func TestApplyDefaultsBackfillsStringAndWidthFields(t *testing.T) {
 }
 
 func TestApplyDefaultsLeavesBoolAndMaxBlankLinesAlone(t *testing.T) {
+	t.Parallel()
+
 	cfg := config.Config{}
 	cfg.ApplyDefaults()
 
@@ -83,6 +89,8 @@ func TestApplyDefaultsLeavesBoolAndMaxBlankLinesAlone(t *testing.T) {
 }
 
 func TestValidateRejectsInvalidValues(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		name   string
 		mutate func(*config.Config)
@@ -106,6 +114,8 @@ func TestValidateRejectsInvalidValues(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			cfg := config.Default()
 			tc.mutate(&cfg)
 
@@ -117,6 +127,8 @@ func TestValidateRejectsInvalidValues(t *testing.T) {
 }
 
 func TestValidateAcceptsMaxBlankLinesZero(t *testing.T) {
+	t.Parallel()
+
 	cfg := config.Default()
 
 	cfg.MaxBlankLines = 0
@@ -126,6 +138,7 @@ func TestValidateAcceptsMaxBlankLinesZero(t *testing.T) {
 }
 
 func TestLoadFileTOML(t *testing.T) {
+	t.Parallel()
 	path := writeFile(t, "pawnfmt.toml", "line_width = 80\nindent_style = \"tab\"\n")
 
 	cfg, err := config.LoadFile(path)
@@ -147,8 +160,11 @@ func TestLoadFileTOML(t *testing.T) {
 }
 
 func TestLoadFileYAML(t *testing.T) {
+	t.Parallel()
+
 	for _, ext := range []string{"pawnfmt.yaml", "pawnfmt.yml"} {
 		t.Run(ext, func(t *testing.T) {
+			t.Parallel()
 			path := writeFile(t, ext, "line_width: 72\nindent_width: 2\n")
 
 			cfg, err := config.LoadFile(path)
@@ -168,6 +184,7 @@ func TestLoadFileYAML(t *testing.T) {
 }
 
 func TestLoadFileMaxBlankLinesZeroSurvivesRoundTrip(t *testing.T) {
+	t.Parallel()
 	path := writeFile(t, "pawnfmt.toml", "max_blank_lines = 0\n")
 
 	cfg, err := config.LoadFile(path)
@@ -181,6 +198,7 @@ func TestLoadFileMaxBlankLinesZeroSurvivesRoundTrip(t *testing.T) {
 }
 
 func TestLoadFileUnknownExtensionSniffsFormat(t *testing.T) {
+	t.Parallel()
 	path := writeFile(t, "pawnfmt.conf", "line_width = 90\n")
 
 	cfg, err := config.LoadFile(path)
@@ -194,6 +212,8 @@ func TestLoadFileUnknownExtensionSniffsFormat(t *testing.T) {
 }
 
 func TestLoadFileMissing(t *testing.T) {
+	t.Parallel()
+
 	_, err := config.LoadFile(filepath.Join(t.TempDir(), "does-not-exist.toml"))
 	if err == nil {
 		t.Fatal("expected an error for a missing config file")
@@ -201,6 +221,8 @@ func TestLoadFileMissing(t *testing.T) {
 }
 
 func TestLoadFileMalformed(t *testing.T) {
+	t.Parallel()
+
 	path := writeFile(t, "pawnfmt.toml", "this is not [ valid toml\n")
 	if _, err := config.LoadFile(path); err == nil {
 		t.Fatal("expected an error for malformed TOML")
@@ -208,6 +230,8 @@ func TestLoadFileMalformed(t *testing.T) {
 }
 
 func TestLoadFileTOMLRejectsUnknownKey(t *testing.T) {
+	t.Parallel()
+
 	path := writeFile(t, "pawnfmt.toml", "lin_width = 80\n")
 	if _, err := config.LoadFile(path); err == nil {
 		t.Fatal("expected LoadFile to reject an unknown TOML key (typo of line_width)")
@@ -215,6 +239,8 @@ func TestLoadFileTOMLRejectsUnknownKey(t *testing.T) {
 }
 
 func TestLoadFileYAMLRejectsUnknownKey(t *testing.T) {
+	t.Parallel()
+
 	path := writeFile(t, "pawnfmt.yaml", "lin_width: 80\n")
 	if _, err := config.LoadFile(path); err == nil {
 		t.Fatal("expected LoadFile to reject an unknown YAML key (typo of line_width)")
@@ -222,6 +248,8 @@ func TestLoadFileYAMLRejectsUnknownKey(t *testing.T) {
 }
 
 func TestLoadFileInvalidAfterDefaults(t *testing.T) {
+	t.Parallel()
+
 	path := writeFile(t, "pawnfmt.toml", "line_width = 5\n")
 	if _, err := config.LoadFile(path); err == nil {
 		t.Fatal("expected LoadFile to reject a config that fails Validate")
@@ -229,6 +257,7 @@ func TestLoadFileInvalidAfterDefaults(t *testing.T) {
 }
 
 func TestDiscoverFindsNearestConfig(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 
 	sub := filepath.Join(root, "a", "b", "c")
@@ -257,6 +286,7 @@ func TestDiscoverFindsNearestConfig(t *testing.T) {
 }
 
 func TestDiscoverStopsAtGit(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 
 	sub := filepath.Join(root, "a", "b")
@@ -283,6 +313,8 @@ func TestDiscoverStopsAtGit(t *testing.T) {
 }
 
 func TestDiscoverConfigInSameDirAsGitStillWins(t *testing.T) {
+	t.Parallel()
+
 	root := t.TempDir()
 	if err := os.Mkdir(filepath.Join(root, ".git"), 0o755); err != nil {
 		t.Fatal(err)
@@ -304,6 +336,7 @@ func TestDiscoverConfigInSameDirAsGitStillWins(t *testing.T) {
 }
 
 func TestDiscoverNoneFound(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 
 	sub := filepath.Join(root, "a", "b")
@@ -322,6 +355,8 @@ func TestDiscoverNoneFound(t *testing.T) {
 }
 
 func TestDiscoverNamePriority(t *testing.T) {
+	t.Parallel()
+
 	root := t.TempDir()
 	if err := os.WriteFile(filepath.Join(root, "pawnfmt.yaml"), []byte("line_width: 60\n"), 0o644); err != nil {
 		t.Fatal(err)
@@ -343,6 +378,8 @@ func TestDiscoverNamePriority(t *testing.T) {
 }
 
 func TestResolveNewline(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		style    config.NewlineStyle
 		detected string
@@ -363,6 +400,7 @@ func TestResolveNewline(t *testing.T) {
 }
 
 func TestDefaultTOMLRoundTrips(t *testing.T) {
+	t.Parallel()
 	path := writeFile(t, "pawnfmt.toml", config.DefaultTOML())
 
 	cfg, err := config.LoadFile(path)

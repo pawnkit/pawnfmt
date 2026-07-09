@@ -7,7 +7,16 @@ import (
 	"strings"
 )
 
+// Validate checks that cfg's fields hold legal values.
 func (cfg Config) Validate() error {
+	if err := cfg.validateNumbers(); err != nil {
+		return err
+	}
+
+	return cfg.validateEnums()
+}
+
+func (cfg Config) validateNumbers() error {
 	if cfg.LineWidth < 20 {
 		return errors.New("line_width must be at least 20")
 	}
@@ -24,6 +33,10 @@ func (cfg Config) Validate() error {
 		return errors.New("continuation_indent_width must be at least 0 (0 means match indent_width)")
 	}
 
+	return nil
+}
+
+func (cfg Config) validateEnums() error {
 	if err := oneOf("indent_style", string(cfg.IndentStyle), string(IndentStyleSpace), string(IndentStyleTab)); err != nil {
 		return err
 	}
@@ -64,11 +77,7 @@ func (cfg Config) Validate() error {
 		return err
 	}
 
-	if err := oneOf("break_binary_operator", string(cfg.BreakBinaryOperator), string(BinaryOperatorBreakAfter), string(BinaryOperatorBreakBefore)); err != nil {
-		return err
-	}
-
-	return nil
+	return oneOf("break_binary_operator", string(cfg.BreakBinaryOperator), string(BinaryOperatorBreakAfter), string(BinaryOperatorBreakBefore))
 }
 
 func oneOf(name, value string, options ...string) error {

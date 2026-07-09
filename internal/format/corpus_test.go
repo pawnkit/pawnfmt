@@ -9,6 +9,8 @@ import (
 )
 
 func TestCorpusReport(t *testing.T) {
+	t.Parallel()
+
 	root := filepath.Join(testdataDir(), "real-world")
 
 	files, err := check.CollectPawnFiles(root)

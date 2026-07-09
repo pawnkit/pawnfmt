@@ -6,12 +6,16 @@ import (
 )
 
 func TestUnifiedDiffReturnsEmptyStringWhenNothingChanged(t *testing.T) {
+	t.Parallel()
+
 	if got := unifiedDiff("a.pwn", []byte("same\n"), []byte("same\n")); got != "" {
 		t.Fatalf("unifiedDiff(unchanged) = %q, want empty", got)
 	}
 }
 
 func TestUnifiedDiffIncludesFileHeaderAndHunkMarkers(t *testing.T) {
+	t.Parallel()
+
 	got := unifiedDiff("a.pwn", []byte("old\n"), []byte("new\n"))
 	if !strings.Contains(got, "--- a.pwn\n") || !strings.Contains(got, "+++ a.pwn\n") {
 		t.Fatalf("unifiedDiff should include ---/+++ headers naming the file:\n%s", got)
@@ -27,6 +31,8 @@ func TestUnifiedDiffIncludesFileHeaderAndHunkMarkers(t *testing.T) {
 }
 
 func TestUnifiedDiffKeepsUnchangedContextLinesAroundAChange(t *testing.T) {
+	t.Parallel()
+
 	before := "line1\nline2\nold\nline4\nline5\n"
 	after := "line1\nline2\nnew\nline4\nline5\n"
 
@@ -39,6 +45,7 @@ func TestUnifiedDiffKeepsUnchangedContextLinesAroundAChange(t *testing.T) {
 }
 
 func TestUnifiedDiffNormalizesCRLFBeforeComparing(t *testing.T) {
+	t.Parallel()
 	// A pure CRLF vs LF difference in otherwise-identical content should
 	// not be treated as a content change.
 	if got := unifiedDiff("a.pwn", []byte("a\r\nb\r\n"), []byte("a\nb\n")); got != "" {
@@ -47,6 +54,8 @@ func TestUnifiedDiffNormalizesCRLFBeforeComparing(t *testing.T) {
 }
 
 func TestUnifiedDiffHandlesAppendedAndRemovedLinesAtTheEnd(t *testing.T) {
+	t.Parallel()
+
 	appended := unifiedDiff("a.pwn", []byte("a\nb\n"), []byte("a\nb\nc\n"))
 	if !strings.Contains(appended, "+c") {
 		t.Fatalf("unifiedDiff(append) should show +c:\n%s", appended)
@@ -59,6 +68,8 @@ func TestUnifiedDiffHandlesAppendedAndRemovedLinesAtTheEnd(t *testing.T) {
 }
 
 func TestSplitLinesDropsTrailingEmptyLineFromFinalNewline(t *testing.T) {
+	t.Parallel()
+
 	lines := splitLines("a\nb\n")
 
 	want := []string{"a", "b"}
@@ -74,6 +85,8 @@ func TestSplitLinesDropsTrailingEmptyLineFromFinalNewline(t *testing.T) {
 }
 
 func TestSplitLinesEmptyStringReturnsNil(t *testing.T) {
+	t.Parallel()
+
 	if lines := splitLines(""); lines != nil {
 		t.Fatalf("splitLines(\"\") = %v, want nil", lines)
 	}

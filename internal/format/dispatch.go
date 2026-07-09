@@ -121,6 +121,7 @@ func (s *state) dispatch(n *parser.Node) doc.Doc {
 }
 
 func (s *state) dispatchTopLevel(n *parser.Node) (doc.Doc, bool) {
+	//nolint:exhaustive // only the top-level kinds this dispatcher handles are listed
 	switch n.Kind {
 	case parser.KindSourceFile:
 		return s.formatSourceFile(n), true
@@ -147,6 +148,7 @@ func (s *state) dispatchTopLevel(n *parser.Node) (doc.Doc, bool) {
 }
 
 func (s *state) dispatchDeclaration(n *parser.Node) (doc.Doc, bool) {
+	//nolint:exhaustive // only the declaration kinds this dispatcher handles are listed
 	switch n.Kind {
 	case parser.KindFunctionDefinition, parser.KindFunctionDeclaration:
 		return s.formatFunction(n), true
@@ -166,6 +168,15 @@ func (s *state) dispatchDeclaration(n *parser.Node) (doc.Doc, bool) {
 }
 
 func (s *state) dispatchStatement(n *parser.Node) (doc.Doc, bool) {
+	if formatted, ok := s.dispatchControlStatement(n); ok {
+		return formatted, true
+	}
+
+	return s.dispatchSimpleStatement(n)
+}
+
+func (s *state) dispatchControlStatement(n *parser.Node) (doc.Doc, bool) {
+	//nolint:exhaustive // only the control-flow statement kinds this dispatcher handles are listed
 	switch n.Kind {
 	case parser.KindBlock:
 		return s.formatBlock(n), true
@@ -185,6 +196,14 @@ func (s *state) dispatchStatement(n *parser.Node) (doc.Doc, bool) {
 		return s.formatCaseValueList(n), true
 	case parser.KindCaseRange:
 		return s.formatCaseRange(n), true
+	default:
+		return nil, false
+	}
+}
+
+func (s *state) dispatchSimpleStatement(n *parser.Node) (doc.Doc, bool) {
+	//nolint:exhaustive // only the simple statement kinds this dispatcher handles are listed
+	switch n.Kind {
 	case parser.KindGotoStatement:
 		return s.formatSimpleTrailingSemi(n, "goto ", "label"), true
 	case parser.KindLabelStatement:
@@ -209,9 +228,16 @@ func (s *state) dispatchStatement(n *parser.Node) (doc.Doc, bool) {
 }
 
 func (s *state) dispatchExpression(n *parser.Node) (doc.Doc, bool) {
+	if formatted, ok := s.dispatchOperatorExpression(n); ok {
+		return formatted, true
+	}
+
+	return s.dispatchLeafExpression(n)
+}
+
+func (s *state) dispatchOperatorExpression(n *parser.Node) (doc.Doc, bool) {
+	//nolint:exhaustive // only the operator expression kinds this dispatcher handles are listed
 	switch n.Kind {
-	case parser.KindIdentifier, parser.KindLiteral, parser.KindArgumentName, parser.KindIteratorArgument:
-		return doc.Text(n.Text(s.source)), true
 	case parser.KindCallExpression:
 		return s.formatCallExpression(n), true
 	case parser.KindSubscriptExpression:
@@ -230,6 +256,16 @@ func (s *state) dispatchExpression(n *parser.Node) (doc.Doc, bool) {
 		return s.formatSizeofLikeExpression(n, "sizeof"), true
 	case parser.KindTagofExpression:
 		return s.formatSizeofLikeExpression(n, "tagof"), true
+	default:
+		return nil, false
+	}
+}
+
+func (s *state) dispatchLeafExpression(n *parser.Node) (doc.Doc, bool) {
+	//nolint:exhaustive // only the leaf/literal expression kinds this dispatcher handles are listed
+	switch n.Kind {
+	case parser.KindIdentifier, parser.KindLiteral, parser.KindArgumentName, parser.KindIteratorArgument:
+		return doc.Text(n.Text(s.source)), true
 	case parser.KindDefinedExpression:
 		return s.formatDefinedExpression(n), true
 	case parser.KindTaggedExpression:

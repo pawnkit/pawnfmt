@@ -65,7 +65,7 @@ func benchFormat(b *testing.B, source []byte) {
 	b.ResetTimer()
 
 	for range b.N {
-		if _, err := formatter.FormatSource(source, cfg); err != nil {
+		if _, err := formatter.Source(source, cfg); err != nil {
 			b.Fatal(err)
 		}
 	}

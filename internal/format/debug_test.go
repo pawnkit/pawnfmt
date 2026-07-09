@@ -9,6 +9,8 @@ import (
 )
 
 func TestDebugDocTreeCoversEveryDocKindUsedByTheFormatter(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("stock F(a, b) {\n    if (a) {\n        return b;\n    }\n}\n")
 
 	got, err := formatter.DebugDocTree(source, config.Default())
@@ -28,6 +30,8 @@ func TestDebugDocTreeCoversEveryDocKindUsedByTheFormatter(t *testing.T) {
 }
 
 func TestDebugDocTreeCoversResetIndentAndOutdent(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("stock F() {\n    if (x) {\n        #if A\n        new y;\n        #endif\n    }\n}\n")
 
 	got, err := formatter.DebugDocTree(source, config.Default())
@@ -53,6 +57,8 @@ func TestDebugDocTreeCoversResetIndentAndOutdent(t *testing.T) {
 }
 
 func TestDebugDocTreeCoversFill(t *testing.T) {
+	t.Parallel()
+
 	cfg := config.Default()
 	cfg.MultilineCallArgs = config.MultilineListBinPack
 	cfg.LineWidth = 20
@@ -69,6 +75,8 @@ func TestDebugDocTreeCoversFill(t *testing.T) {
 }
 
 func TestDebugDocTreeRejectsUnparseableSource(t *testing.T) {
+	t.Parallel()
+
 	_, err := formatter.DebugDocTree([]byte("}"), config.Default())
 	if err == nil {
 		t.Fatal("DebugDocTree should return an error for source that does not parse cleanly")
@@ -76,6 +84,8 @@ func TestDebugDocTreeRejectsUnparseableSource(t *testing.T) {
 }
 
 func TestDebugDocTreeRejectsInvalidConfig(t *testing.T) {
+	t.Parallel()
+
 	cfg := config.Default()
 	cfg.DirectiveIndent = "not-a-real-value"
 
@@ -86,6 +96,8 @@ func TestDebugDocTreeRejectsInvalidConfig(t *testing.T) {
 }
 
 func TestDebugCSTReportsNodeKindsPositionsAndErrorMarkers(t *testing.T) {
+	t.Parallel()
+
 	got := formatter.DebugCST([]byte("new x = 1;\n"))
 	for _, want := range []string{"source_file", "variable_declaration", "[0:"} {
 		if !strings.Contains(got, want) {
@@ -99,6 +111,8 @@ func TestDebugCSTReportsNodeKindsPositionsAndErrorMarkers(t *testing.T) {
 }
 
 func TestDebugCSTMarksBrokenNodes(t *testing.T) {
+	t.Parallel()
+
 	got := formatter.DebugCST([]byte("stock F( {{{ ) {"))
 	if !strings.Contains(got, "[raw/error]") && !strings.Contains(got, "broken") {
 		t.Fatalf("DebugCST should surface broken/error nodes for unparseable source:\n%s", got)

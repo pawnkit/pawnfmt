@@ -10,6 +10,8 @@ import (
 )
 
 func TestNarrowWidthMultilineLists(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("forward VeryLongCallbackName(playerid, const playerName[], Float:spawnX, Float:spawnY, Float:spawnZ);\n")
 	cfg := config.Default()
 	cfg.LineWidth = 40
@@ -26,6 +28,8 @@ func TestNarrowWidthMultilineLists(t *testing.T) {
 }
 
 func TestTopLevelSemanticGrouping(t *testing.T) {
+	t.Parallel()
+
 	source := []byte(strings.Join([]string{
 		"#define FEATURE 1",
 		"new first;",
@@ -63,6 +67,8 @@ func TestTopLevelSemanticGrouping(t *testing.T) {
 }
 
 func TestElseIfRemainsChainedWhenSimpleStatementsBreak(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("stock F(x) { if (x == 1) return 1; else if (x == 2) return 2; else return 0; }\n")
 	cfg := config.Default()
 	cfg.KeepSimpleStatementsSingleLine = false
@@ -75,6 +81,8 @@ func TestElseIfRemainsChainedWhenSimpleStatementsBreak(t *testing.T) {
 }
 
 func TestNeverBracesPreservesDanglingElseSemantics(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("stock F(a, b) { if (a) { if (b) return 1; } else return 2; return 0; }\n")
 	cfg := config.Default()
 	cfg.SingleStatementBraces = config.SingleStatementBracesNever
@@ -86,6 +94,8 @@ func TestNeverBracesPreservesDanglingElseSemantics(t *testing.T) {
 }
 
 func TestSortIncludesKeepsFileHeaderAtTop(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("// file header\n#include <zeta>\n// alpha note\n#include <alpha>\n#include <middle>\n")
 	cfg := config.Default()
 	cfg.SortIncludes = true
@@ -98,6 +108,8 @@ func TestSortIncludesKeepsFileHeaderAtTop(t *testing.T) {
 }
 
 func TestDisabledRegionIsNotSortedOrSeparated(t *testing.T) {
+	t.Parallel()
+
 	source := []byte(strings.Join([]string{
 		"// pawnfmt off",
 		"#include <zeta>",
@@ -117,6 +129,8 @@ func TestDisabledRegionIsNotSortedOrSeparated(t *testing.T) {
 }
 
 func TestGroupIncludesByBracketsPutsAngleBracketsFirst(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("#include \"local.inc\"\n#include <a_samp>\n")
 	cfg := config.Default()
 	cfg.SortIncludes = true
@@ -130,6 +144,8 @@ func TestGroupIncludesByBracketsPutsAngleBracketsFirst(t *testing.T) {
 }
 
 func TestAlignConsecutiveMacrosPadsValues(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("#define SHORT 1\n#define MUCH_LONGER 2\n")
 	cfg := config.Default()
 	cfg.AlignConsecutiveMacros = true
@@ -142,6 +158,8 @@ func TestAlignConsecutiveMacrosPadsValues(t *testing.T) {
 }
 
 func TestAlignConsecutiveMacrosBreaksRunOnBlankLine(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("#define SHORT 1\n\n#define MUCH_LONGER 2\n")
 	cfg := config.Default()
 	cfg.AlignConsecutiveMacros = true
@@ -154,6 +172,8 @@ func TestAlignConsecutiveMacrosBreaksRunOnBlankLine(t *testing.T) {
 }
 
 func TestAlignTrailingCommentsPadsComments(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("stock F() {\n    new x = 1; // a\n    new muchLongerName = 2; // b\n}\n")
 	cfg := config.Default()
 	cfg.AlignTrailingComments = true
@@ -166,6 +186,8 @@ func TestAlignTrailingCommentsPadsComments(t *testing.T) {
 }
 
 func TestAlignTrailingCommentsSkipsItemsWithoutTrailingComments(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("stock F() {\n    new x = 1; // a\n    new muchLongerName = 2;\n    new y = 1; // c\n}\n")
 	cfg := config.Default()
 	cfg.AlignTrailingComments = true
@@ -178,6 +200,8 @@ func TestAlignTrailingCommentsSkipsItemsWithoutTrailingComments(t *testing.T) {
 }
 
 func TestBreakBinaryOperatorBeforePlacesOperatorOnContinuationLine(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("stock F() {\n    return aaaaaaaaaa + bbbbbbbbbb + cccccccccc;\n}\n")
 	cfg := config.Default()
 	cfg.LineWidth = 30
@@ -194,6 +218,8 @@ func TestBreakBinaryOperatorBeforePlacesOperatorOnContinuationLine(t *testing.T)
 }
 
 func TestIndentCaseLabelsFalseKeepsLabelsFlushWithSwitch(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("stock F(x) {\n    switch (x) {\n        case 1: return 1;\n        default: return 0;\n    }\n}\n")
 	cfg := config.Default()
 	cfg.IndentCaseLabels = false
@@ -206,6 +232,8 @@ func TestIndentCaseLabelsFalseKeepsLabelsFlushWithSwitch(t *testing.T) {
 }
 
 func TestIndentGotoLabelsFalseOutdentsLabel(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("stock F() {\n    goto Skip;\n    new x = 1;\n    Skip:\n    return x;\n}\n")
 	cfg := config.Default()
 	cfg.IndentGotoLabels = false
@@ -217,6 +245,8 @@ func TestIndentGotoLabelsFalseOutdentsLabel(t *testing.T) {
 }
 
 func TestOperatorSpacingAppliesToDeclarations(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("new value = 1;\nforward F(arg = 2);\nnative N() = Alias;\nenum E { Field = 3 };\n")
 	cfg := config.Default()
 	cfg.SpaceAroundOperators = false
@@ -230,6 +260,8 @@ func TestOperatorSpacingAppliesToDeclarations(t *testing.T) {
 }
 
 func TestCommaSpacingAppliesToArrayAndCaseLists(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("new values[] = {1, 2, 3};\nstock F(x) { switch (x) { case 1, 2, 3: return 1; } }\n")
 	cfg := config.Default()
 	cfg.SpaceAfterComma = false
@@ -243,6 +275,7 @@ func TestCommaSpacingAppliesToArrayAndCaseLists(t *testing.T) {
 }
 
 func TestDirectiveIndentNone(t *testing.T) {
+	t.Parallel()
 	source := readFile(t, filepath.Join(testdataDir(), "input", "wrapped_inline_labels.pwn"))
 	cfg := config.Default()
 	cfg.DirectiveIndent = config.DirectiveIndentNone
@@ -271,6 +304,8 @@ func TestDirectiveIndentNone(t *testing.T) {
 }
 
 func TestDirectiveIndentNoneAcrossNestedContainers(t *testing.T) {
+	t.Parallel()
+
 	source := []byte(strings.Join([]string{
 		"stock F(value) {",
 		"    switch (value) {",
@@ -301,6 +336,7 @@ func TestDirectiveIndentNoneAcrossNestedContainers(t *testing.T) {
 }
 
 func TestDirectiveIndentKeepInBlock(t *testing.T) {
+	t.Parallel()
 	source := readFile(t, filepath.Join(testdataDir(), "input", "wrapped_inline_labels.pwn"))
 	cfg := config.Default()
 	cfg.DirectiveIndent = config.DirectiveIndentKeepInBlock
@@ -312,13 +348,18 @@ func TestDirectiveIndentKeepInBlock(t *testing.T) {
 	}
 }
 
-func TestConfigOptionsChangeOutput(t *testing.T) {
-	cases := []struct {
-		name      string
-		source    string
-		reference func(*config.Config)
-		mutate    func(*config.Config)
-	}{
+// configOptionCase is one case in TestConfigOptionsChangeOutput's table:
+// formatting source with reference (or the default config, if nil) must
+// differ from formatting it with mutate applied.
+type configOptionCase struct {
+	name      string
+	source    string
+	reference func(*config.Config)
+	mutate    func(*config.Config)
+}
+
+func configOptionCases() []configOptionCase {
+	return []configOptionCase{
 		{name: "indent_style_tab", source: "stock F() {\n\tnew x = 1;\n}\n", mutate: func(c *config.Config) { c.IndentStyle = config.IndentStyleTab }},
 		{name: "newline_style_crlf", source: "new x;\nnew y;\n", mutate: func(c *config.Config) { c.NewlineStyle = config.NewlineStyleCRLF }},
 		{name: "insert_final_newline_false", source: "new x;\n", mutate: func(c *config.Config) { c.InsertFinalNewline = false }},
@@ -436,9 +477,15 @@ func TestConfigOptionsChangeOutput(t *testing.T) {
 			},
 		},
 	}
+}
 
-	for _, tc := range cases {
+func TestConfigOptionsChangeOutput(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range configOptionCases() {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			baseCfg := config.Default()
 			if tc.reference != nil {
 				tc.reference(&baseCfg)
@@ -457,6 +504,8 @@ func TestConfigOptionsChangeOutput(t *testing.T) {
 }
 
 func TestWhitesmithsBracesMatch(t *testing.T) {
+	t.Parallel()
+
 	cfg := config.Default()
 	cfg.BraceStyle = config.BraceStyleWhitesmiths
 	source := []byte("stock F(x) {\n    if (x) {\n        return 1;\n    }\n}\n")
@@ -492,6 +541,8 @@ func TestWhitesmithsBracesMatch(t *testing.T) {
 }
 
 func TestConditionalSplitHeaderNoBodyIsIdempotent(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("stock F()\n{\n" +
 		"#if defined foreach\n" +
 		"foreach(new i : Player)\n" +
@@ -514,6 +565,8 @@ func TestConditionalSplitHeaderNoBodyIsIdempotent(t *testing.T) {
 }
 
 func TestCRLFLineCommentIsIdempotent(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("// note\r\nnew x;\r\n")
 	first := mustFormat(t, source, config.Default())
 
@@ -528,6 +581,8 @@ func TestCRLFLineCommentIsIdempotent(t *testing.T) {
 }
 
 func TestBraceStyleAppliesToEveryConstruct(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		name   string
 		source string
@@ -539,6 +594,8 @@ func TestBraceStyleAppliesToEveryConstruct(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			cfg := config.Default() // Allman by default
 
 			formatted := mustFormat(t, []byte(tc.source), cfg)
@@ -559,9 +616,11 @@ func TestBraceStyleAppliesToEveryConstruct(t *testing.T) {
 }
 
 func TestRejectsParseInvalidInput(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("}\n")
 
-	_, err := formatter.FormatSource(source, config.Default())
+	_, err := formatter.Source(source, config.Default())
 	if err == nil {
 		t.Fatal("expected parse-invalid input to be rejected")
 	}

@@ -12,6 +12,7 @@ import (
 	formatter "github.com/pawnkit/pawnfmt/internal/format"
 )
 
+// CollectPawnFiles finds all .pwn and .inc files under root, sorted by path.
 func CollectPawnFiles(root string) ([]string, error) {
 	var files []string
 
@@ -37,8 +38,10 @@ func CollectPawnFiles(root string) ([]string, error) {
 	return files, err
 }
 
+// CorpusStatus classifies how well a corpus file formatted.
 type CorpusStatus string
 
+// Values for CorpusStatus.
 const (
 	CorpusStatusFull     CorpusStatus = "full"
 	CorpusStatusSafe     CorpusStatus = "safe"
@@ -55,6 +58,7 @@ type CorpusResult struct {
 	Detail     string
 }
 
+// AnalyzeCorpusFile formats path and reports parse, format, and idempotency results.
 func AnalyzeCorpusFile(path string, cfg config.Config) (r CorpusResult) {
 	r.Path = path
 
@@ -86,7 +90,7 @@ func AnalyzeCorpusFile(path string, cfg config.Config) (r CorpusResult) {
 		r.RawPercent = 100 * float64(raw) / float64(total)
 	}
 
-	formatted, ferr := formatter.FormatSource(source, cfg)
+	formatted, ferr := formatter.Source(source, cfg)
 	if ferr != nil {
 		r.Status = CorpusStatusFail
 		r.Detail = "format: " + ferr.Error()
@@ -95,7 +99,7 @@ func AnalyzeCorpusFile(path string, cfg config.Config) (r CorpusResult) {
 	}
 
 	idempotent, ferr2 := Idempotent(formatted, func(b []byte) ([]byte, error) {
-		return formatter.FormatSource(b, cfg)
+		return formatter.Source(b, cfg)
 	})
 	if ferr2 != nil {
 		r.Status = CorpusStatusFail

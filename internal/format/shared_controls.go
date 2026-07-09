@@ -36,6 +36,7 @@ func expandSharedSimpleControl(line string, cfg config.Config) []string {
 }
 
 func sharedControlHeaderEnd(line string, tokens []token.Token) int {
+	//nolint:exhaustive // only control-keyword token kinds matter here
 	switch tokens[0].Kind {
 	case token.KwIf, token.KwFor, token.KwWhile, token.KwSwitch:
 	case token.KwElse:
@@ -66,6 +67,7 @@ func sharedControlHeaderEnd(line string, tokens []token.Token) int {
 	depth := 0
 
 	for _, tok := range tokens[open:] {
+		//nolint:exhaustive // only paren depth tokens matter here
 		switch tok.Kind {
 		case token.LParen:
 			depth++
@@ -125,6 +127,8 @@ func sharedBracedControl(header, body string, cfg config.Config) []string {
 		return []string{header + " {", unit + body, "}"}
 	case config.BraceStyleWhitesmiths:
 		return []string{header, unit + "{", unit + unit + body, unit + "}"}
+	case config.BraceStyleAllman:
+		return []string{header, "{", unit + body, "}"}
 	default:
 		return []string{header, "{", unit + body, "}"}
 	}
@@ -153,6 +157,7 @@ func sharedLineEndsContinuation(line string) bool {
 }
 
 func sharedContinuationOperator(kind token.Kind) bool {
+	//nolint:exhaustive // only operator token kinds that continue a line matter here
 	switch kind {
 	case token.Assign, token.PlusAssign, token.MinusAssign, token.StarAssign, token.SlashAssign,
 		token.PercentAssign, token.ShlAssign, token.ShrAssign, token.UshrAssign,

@@ -6,6 +6,8 @@ import (
 )
 
 func TestSharedContinuationIndentUsesGivenWidth(t *testing.T) {
+	t.Parallel()
+
 	continuation, columns := sharedContinuationIndent(8, false)
 	if continuation != strings.Repeat(" ", 8) || columns != 8 {
 		t.Fatalf("sharedContinuationIndent(8, false) = (%q, %d), want (8 spaces, 8)", continuation, columns)
@@ -13,6 +15,8 @@ func TestSharedContinuationIndentUsesGivenWidth(t *testing.T) {
 }
 
 func TestWrapSharedLineUsesContinuationWidthDistinctFromIndentWidth(t *testing.T) {
+	t.Parallel()
+
 	line := "aaaaaaaaaa + bbbbbbbbbb + cccccccccc + dddddddddd + eeeeeeeeee;"
 
 	out := wrapSharedLine(line, 30, 4, 8, false)

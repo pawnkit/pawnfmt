@@ -148,7 +148,7 @@ func formatOneFile(path string, cfg config.Config) fileResult {
 		return fileResult{path: path, err: err}
 	}
 
-	formatted, err := formatter.FormatSource(source, cfg)
+	formatted, err := formatter.Source(source, cfg)
 	if err != nil {
 		return fileResult{path: path, source: source, err: fmt.Errorf("format: %w", err)}
 	}

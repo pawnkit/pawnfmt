@@ -7,6 +7,8 @@ import (
 )
 
 func TestConcatFiltersNilAndCollapsesSingle(t *testing.T) {
+	t.Parallel()
+
 	if got := doc.Concat(); got != (doc.TextDoc{Value: ""}) {
 		t.Fatalf("Concat() = %#v, want empty TextDoc", got)
 	}
@@ -25,6 +27,8 @@ func TestConcatFiltersNilAndCollapsesSingle(t *testing.T) {
 }
 
 func TestIndentResetIndentOutdentNilCollapseToEmptyText(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		name string
 		fn   func(doc.Doc) doc.Doc
@@ -36,6 +40,8 @@ func TestIndentResetIndentOutdentNilCollapseToEmptyText(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			if got := tc.fn(nil); got != (doc.TextDoc{Value: ""}) {
 				t.Fatalf("%s(nil) = %#v, want empty TextDoc", tc.name, got)
 			}
@@ -44,6 +50,8 @@ func TestIndentResetIndentOutdentNilCollapseToEmptyText(t *testing.T) {
 }
 
 func TestJoinInsertsSeparatorAndFiltersNil(t *testing.T) {
+	t.Parallel()
+
 	got := doc.Join(doc.Text(","), doc.Text("a"), nil, doc.Text("b"))
 
 	concat, ok := got.(doc.ConcatDoc)
@@ -64,12 +72,16 @@ func TestJoinInsertsSeparatorAndFiltersNil(t *testing.T) {
 }
 
 func TestJoinAllNilReturnsEmptyText(t *testing.T) {
+	t.Parallel()
+
 	if got := doc.Join(doc.Text(",")); got != (doc.TextDoc{Value: ""}) {
 		t.Fatalf("Join() with no parts = %#v, want empty TextDoc", got)
 	}
 }
 
 func TestFillFiltersNilAndCollapsesSingle(t *testing.T) {
+	t.Parallel()
+
 	only := doc.Text("a")
 	if got := doc.Fill(nil, only, nil); got != only {
 		t.Fatalf("Fill(nil, only, nil) = %#v, want the single non-nil part unwrapped", got)
@@ -84,12 +96,16 @@ func TestFillFiltersNilAndCollapsesSingle(t *testing.T) {
 }
 
 func TestRawTextBlockEmptyIsEmptyText(t *testing.T) {
+	t.Parallel()
+
 	if got := doc.RawTextBlock(""); got != (doc.TextDoc{Value: ""}) {
 		t.Fatalf("RawTextBlock(\"\") = %#v, want empty TextDoc", got)
 	}
 }
 
 func TestRawTextBlockSingleLineStaysUnwrapped(t *testing.T) {
+	t.Parallel()
+
 	got := doc.RawTextBlock("no newline here")
 	if got != (doc.TextDoc{Value: "no newline here"}) {
 		t.Fatalf("RawTextBlock with no \\n = %#v, want a bare TextDoc (no ResetIndent wrapper)", got)
@@ -97,6 +113,8 @@ func TestRawTextBlockSingleLineStaysUnwrapped(t *testing.T) {
 }
 
 func TestRawTextBlockMultiLineWrapsInResetIndent(t *testing.T) {
+	t.Parallel()
+
 	got := doc.RawTextBlock("a\nb")
 
 	reset, ok := got.(doc.ResetIndentDoc)
@@ -115,6 +133,8 @@ func TestRawTextBlockMultiLineWrapsInResetIndent(t *testing.T) {
 }
 
 func TestRawTextBlockStripsTrailingCROnEachLine(t *testing.T) {
+	t.Parallel()
+
 	got := doc.RawTextBlock("a\r\nb")
 
 	reset, ok := got.(doc.ResetIndentDoc)
@@ -133,6 +153,8 @@ func TestRawTextBlockStripsTrailingCROnEachLine(t *testing.T) {
 }
 
 func TestRawTextBlockTrailingNewlineProducesNoDanglingEmptyText(t *testing.T) {
+	t.Parallel()
+
 	got := doc.RawTextBlock("a\n")
 
 	reset, ok := got.(doc.ResetIndentDoc)

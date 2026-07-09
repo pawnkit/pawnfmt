@@ -12,6 +12,8 @@ func (s *state) joinBraceStyle(blockDoc doc.Doc) doc.Doc {
 		return doc.Concat(doc.HardLine(), blockDoc)
 	case config.BraceStyleWhitesmiths:
 		return doc.Indent(doc.Concat(doc.HardLine(), blockDoc))
+	case config.BraceStyle1TBS:
+		return doc.Concat(doc.Text(" "), blockDoc)
 	default:
 		return doc.Concat(doc.Text(" "), blockDoc)
 	}
@@ -56,6 +58,7 @@ func (s *state) applySingleStatementBraces(body *parser.Node) *parser.Node {
 		if body.Kind == parser.KindBlock && len(body.Children) == 1 {
 			return body.Children[0]
 		}
+	case config.SingleStatementBracesPreserve:
 	}
 
 	return body

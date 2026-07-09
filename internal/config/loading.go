@@ -13,6 +13,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// LoadFile reads, decodes, defaults, and validates a config file.
 func LoadFile(path string) (Config, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -81,8 +82,10 @@ func decodeYAMLStrict(data []byte, out *Config) error {
 	return nil
 }
 
+// ConfigFileNames lists the config file names pawnfmt looks for.
 var ConfigFileNames = []string{"pawnfmt.toml", "pawnfmt.yaml", "pawnfmt.yml"}
 
+// Discover walks upward from startDir looking for a config file.
 func Discover(startDir string) (string, error) {
 	dir, err := filepath.Abs(startDir)
 	if err != nil {

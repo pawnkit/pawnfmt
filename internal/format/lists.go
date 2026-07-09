@@ -15,12 +15,12 @@ func hasConditionalItem(items []*parser.Node) bool {
 	return false
 }
 
-func (s *state) formatDirectiveList(items []*parser.Node, open, close string, trailingComma bool) doc.Doc {
+func (s *state) formatDirectiveList(items []*parser.Node, open, closeStr string, trailingComma bool) doc.Doc {
 	return doc.Concat(
 		doc.Text(open),
 		doc.Indent(doc.Concat(s.itemSeparatorBefore(items[0]), s.formatListItemsWithDirectives(items, trailingComma))),
 		doc.HardLine(),
-		doc.Text(close),
+		doc.Text(closeStr),
 	)
 }
 

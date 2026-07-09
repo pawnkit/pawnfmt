@@ -45,6 +45,7 @@ func sharedKeywordNeedsSpace(current, next token.Kind) bool {
 		return false
 	}
 
+	//nolint:exhaustive // only the relevant token kinds matter here
 	switch current {
 	case token.KwPublic, token.KwStock, token.KwStatic, token.KwNative,
 		token.KwForward, token.KwConst, token.KwNew, token.KwDecl,
@@ -73,6 +74,7 @@ func sharedForClosingParen(tokens []token.Token, i int) bool {
 	depth := 0
 
 	for j := i; j >= 0; j-- {
+		//nolint:exhaustive // only the relevant token kinds matter here
 		switch tokens[j].Kind {
 		case token.RParen:
 			depth++
@@ -92,6 +94,7 @@ func sharedTightKeywordOpeningParen(tokens []token.Token, i int) bool {
 		return false
 	}
 
+	//nolint:exhaustive // only the relevant token kinds matter here
 	switch tokens[i-1].Kind {
 	case token.KwSizeof, token.KwTagof, token.KwDefined:
 		return true
@@ -108,6 +111,7 @@ func sharedTightKeywordClosingParen(tokens []token.Token, i int) bool {
 	depth := 0
 
 	for j := i; j >= 0; j-- {
+		//nolint:exhaustive // only the relevant token kinds matter here
 		switch tokens[j].Kind {
 		case token.RParen:
 			depth++
@@ -137,6 +141,7 @@ func sharedDeclarationTagColon(tokens []token.Token, i int) bool {
 		return false
 	}
 
+	//nolint:exhaustive // only the relevant token kinds matter here
 	switch tokens[i-2].Kind {
 	case token.KwPublic, token.KwStock, token.KwStatic, token.KwNative,
 		token.KwForward, token.KwConst, token.KwNew,
@@ -151,6 +156,7 @@ func sharedTernaryColon(tokens []token.Token, i int) bool {
 	depth := 0
 
 	for j := 0; j <= i && j < len(tokens); j++ {
+		//nolint:exhaustive // only the relevant token kinds matter here
 		switch tokens[j].Kind {
 		case token.Question:
 			depth++
@@ -195,6 +201,7 @@ func sharedDeclarationLine(tokens []token.Token) bool {
 			return false
 		}
 
+		//nolint:exhaustive // only the relevant token kinds matter here
 		switch tok.Kind {
 		case token.KwPublic, token.KwStock, token.KwStatic, token.KwNative,
 			token.KwForward, token.KwConst, token.KwNew:
@@ -214,6 +221,7 @@ func sharedBeforeInitializer(tokens []token.Token, i int) bool {
 	initializerDepth := -1
 
 	for j := 0; j < i && j < len(tokens); j++ {
+		//nolint:exhaustive // only the relevant token kinds matter here
 		switch tokens[j].Kind {
 		case token.RParen, token.RBracket, token.RBrace:
 			if depth > 0 {
@@ -250,11 +258,13 @@ func sharedArrayBraceTokens(tokens []token.Token) map[int]bool {
 	result := make(map[int]bool)
 
 	for i, tok := range tokens {
+		//nolint:exhaustive // only the relevant token kinds matter here
 		switch tok.Kind {
 		case token.LBrace:
 			array := false
 
 			if i > 0 {
+				//nolint:exhaustive // only the relevant token kinds matter here
 				switch tokens[i-1].Kind {
 				case token.Assign, token.Comma, token.LParen:
 					array = true
@@ -287,6 +297,7 @@ func sharedBinaryOperator(tokens []token.Token, i int) bool {
 		return false
 	}
 
+	//nolint:exhaustive // only the relevant token kinds matter here
 	switch tokens[i].Kind {
 	case token.Assign, token.PlusAssign, token.MinusAssign, token.StarAssign, token.SlashAssign,
 		token.PercentAssign, token.ShlAssign, token.ShrAssign, token.UshrAssign,
@@ -307,6 +318,7 @@ func sharedPrefixOperator(tokens []token.Token, i int) bool {
 		return false
 	}
 
+	//nolint:exhaustive // only the relevant token kinds matter here
 	switch tokens[i].Kind {
 	case token.Bang, token.Tilde:
 		return true
@@ -329,6 +341,7 @@ func sharedPostfixOperator(tokens []token.Token, i int) bool {
 }
 
 func sharedTokenEndsOperand(kind token.Kind) bool {
+	//nolint:exhaustive // only the relevant token kinds matter here
 	switch kind {
 	case token.Identifier,
 		token.IntLiteral, token.FloatLiteral, token.CharLiteral, token.StringLiteral,

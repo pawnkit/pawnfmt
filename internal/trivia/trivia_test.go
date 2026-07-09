@@ -8,6 +8,8 @@ import (
 )
 
 func TestScanEmptySourceProducesOneEmptyLine(t *testing.T) {
+	t.Parallel()
+
 	index := trivia.Scan([]byte(""))
 	if len(index.Lines) != 1 {
 		t.Fatalf("Scan(\"\") produced %d lines, want 1", len(index.Lines))
@@ -20,6 +22,8 @@ func TestScanEmptySourceProducesOneEmptyLine(t *testing.T) {
 }
 
 func TestScanSplitsLinesAndTracksByteOffsetsAndNumbers(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("first\nsecond\nthird")
 
 	index := trivia.Scan(source)
@@ -45,6 +49,8 @@ func TestScanSplitsLinesAndTracksByteOffsetsAndNumbers(t *testing.T) {
 }
 
 func TestScanHandlesCRLFLineEndings(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("first\r\nsecond")
 
 	index := trivia.Scan(source)
@@ -58,6 +64,8 @@ func TestScanHandlesCRLFLineEndings(t *testing.T) {
 }
 
 func TestScanDetectsPlainLFWhenNoCRLFPresent(t *testing.T) {
+	t.Parallel()
+
 	index := trivia.Scan([]byte("a\nb\n"))
 	if index.DetectedNewline != "\n" {
 		t.Fatalf("DetectedNewline = %q, want \\n", index.DetectedNewline)
@@ -65,6 +73,8 @@ func TestScanDetectsPlainLFWhenNoCRLFPresent(t *testing.T) {
 }
 
 func TestScanTrailingNewlineDoesNotProduceADanglingEmptyLine(t *testing.T) {
+	t.Parallel()
+
 	index := trivia.Scan([]byte("a\n"))
 	if len(index.Lines) != 2 {
 		t.Fatalf("Scan(\"a\\n\") produced %d lines, want 2 (\"a\" plus the trailing empty line)", len(index.Lines))
@@ -76,6 +86,8 @@ func TestScanTrailingNewlineDoesNotProduceADanglingEmptyLine(t *testing.T) {
 }
 
 func TestLineIsBlankForWhitespaceOnlyLines(t *testing.T) {
+	t.Parallel()
+
 	index := trivia.Scan([]byte("   \t  \nreal"))
 	if !index.Lines[0].IsBlank {
 		t.Fatalf("whitespace-only line IsBlank = false, want true: %#v", index.Lines[0])
@@ -87,6 +99,8 @@ func TestLineIsBlankForWhitespaceOnlyLines(t *testing.T) {
 }
 
 func TestLineIsDirectiveDetectsLeadingHashIgnoringIndentation(t *testing.T) {
+	t.Parallel()
+
 	index := trivia.Scan([]byte("#if A\n    #endif\nnew x;"))
 	if !index.Lines[0].IsDirective {
 		t.Fatalf("\"#if A\" IsDirective = false, want true")
@@ -102,6 +116,8 @@ func TestLineIsDirectiveDetectsLeadingHashIgnoringIndentation(t *testing.T) {
 }
 
 func TestLineIsCommentOnlyForLineBlockAndContinuationComments(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("// line comment\n/* block start\n * continuation\n */\nnew x;")
 
 	index := trivia.Scan(source)
@@ -113,6 +129,8 @@ func TestLineIsCommentOnlyForLineBlockAndContinuationComments(t *testing.T) {
 }
 
 func TestTurnsOffAndOnRequireCommentOnlyLines(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		name        string
 		text        string
@@ -128,6 +146,8 @@ func TestTurnsOffAndOnRequireCommentOnlyLines(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			index := trivia.Scan([]byte(tc.text))
 
 			line := index.Lines[0]
@@ -147,6 +167,8 @@ func TestTurnsOffAndOnRequireCommentOnlyLines(t *testing.T) {
 }
 
 func TestDisabledRegionCoversOffToOnMarkerInclusive(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("new a;\n// pawnfmt off\nnew   b;\n// pawnfmt on\nnew c;\n")
 
 	index := trivia.Scan(source)
@@ -171,6 +193,8 @@ func TestDisabledRegionCoversOffToOnMarkerInclusive(t *testing.T) {
 }
 
 func TestDisabledRegionWithNoMatchingOnExtendsToEndOfFile(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("new a;\n// pawnfmt off\nnew b;\n")
 
 	index := trivia.Scan(source)
@@ -185,6 +209,8 @@ func TestDisabledRegionWithNoMatchingOnExtendsToEndOfFile(t *testing.T) {
 }
 
 func TestRepeatedOffMarkersDoNotStackOrResetTheRegion(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("// pawnfmt off\nnew a;\n// pawnfmt off\nnew b;\n// pawnfmt on\nnew c;\n")
 
 	index := trivia.Scan(source)
@@ -198,6 +224,8 @@ func TestRepeatedOffMarkersDoNotStackOrResetTheRegion(t *testing.T) {
 }
 
 func TestMultipleDisabledRegionsAreIndependent(t *testing.T) {
+	t.Parallel()
+
 	source := []byte(
 		"new a;\n// pawnfmt off\nnew b;\n// pawnfmt on\nnew c;\n// pawnfmt off\nnew d;\n// pawnfmt on\nnew e;\n",
 	)
@@ -209,6 +237,8 @@ func TestMultipleDisabledRegionsAreIndependent(t *testing.T) {
 }
 
 func TestOverlapsDisabledIsFalseOutsideAnyRegion(t *testing.T) {
+	t.Parallel()
+
 	index := trivia.Scan([]byte("new a;\n"))
 	if index.OverlapsDisabled(0, 6) {
 		t.Fatal("OverlapsDisabled should be false when there are no disabled regions at all")
@@ -216,6 +246,8 @@ func TestOverlapsDisabledIsFalseOutsideAnyRegion(t *testing.T) {
 }
 
 func TestOverlapsDisabledIsFalseStrictlyBeforeARegion(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("new a;\n// pawnfmt off\nnew b;\n// pawnfmt on\nnew c;\n")
 	index := trivia.Scan(source)
 	before := []byte("new a;")

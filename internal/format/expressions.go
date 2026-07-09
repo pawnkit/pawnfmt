@@ -181,12 +181,12 @@ func (s *state) formatTaggedExpression(n *parser.Node) doc.Doc {
 func (s *state) formatParenthesizedExpression(n *parser.Node) doc.Doc {
 	inner := n.Field("expression")
 
-	open, close := "(", ")"
+	open, closeStr := "(", ")"
 	if s.config.SpaceInsideParens {
-		open, close = "( ", " )"
+		open, closeStr = "( ", " )"
 	}
 
-	return doc.Concat(doc.Text(open), doc.Indent(s.formatNode(inner)), doc.Text(close))
+	return doc.Concat(doc.Text(open), doc.Indent(s.formatNode(inner)), doc.Text(closeStr))
 }
 
 func (s *state) formatCallExpression(n *parser.Node) doc.Doc {
@@ -211,13 +211,13 @@ func (s *state) formatArgumentList(n *parser.Node) doc.Doc {
 func (s *state) formatSubscriptExpression(n *parser.Node) doc.Doc {
 	target := n.Field("array")
 	index := n.Field("index")
-	open, close := "[", "]"
+	open, closeStr := "[", "]"
 
 	switch {
 	case target != nil && subscriptOpensWithBrace(s.source, target.End):
-		open, close = "{", "}"
+		open, closeStr = "{", "}"
 	case s.config.SpaceInsideBrackets:
-		open, close = "[ ", " ]"
+		open, closeStr = "[ ", " ]"
 	}
 
 	idxDoc := doc.Text("")
@@ -225,7 +225,7 @@ func (s *state) formatSubscriptExpression(n *parser.Node) doc.Doc {
 		idxDoc = s.formatNode(index)
 	}
 
-	return doc.Concat(s.formatNode(target), doc.Text(open), idxDoc, doc.Text(close))
+	return doc.Concat(s.formatNode(target), doc.Text(open), idxDoc, doc.Text(closeStr))
 }
 
 func subscriptOpensWithBrace(source []byte, from int) bool {
@@ -283,9 +283,9 @@ func (s *state) formatArrayLiteral(n *parser.Node) doc.Doc {
 		return s.formatDirectiveList(n.Children, "{", "}", false)
 	}
 
-	open, close := "{", "}"
+	open, closeStr := "{", "}"
 	if s.config.SpaceInsideBraces {
-		open, close = "{ ", " }"
+		open, closeStr = "{ ", " }"
 	}
 
 	items := make([]doc.Doc, len(n.Children))
@@ -304,6 +304,6 @@ func (s *state) formatArrayLiteral(n *parser.Node) doc.Doc {
 		doc.Text(open),
 		doc.Indent(doc.Concat(doc.SoftLine(), joined)),
 		doc.SoftLine(),
-		doc.Text(close),
+		doc.Text(closeStr),
 	))
 }

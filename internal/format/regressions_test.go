@@ -9,6 +9,8 @@ import (
 )
 
 func TestMacroBodyFallbackPreservesOwnBackslashes(t *testing.T) {
+	t.Parallel()
+
 	source := []byte(strings.Join([]string{
 		`#define CHAIN_FORWARD:%0_%2(%1)=%3; \`,
 		"\tforward %0_%2(%1); \\",
@@ -29,6 +31,8 @@ func TestMacroBodyFallbackPreservesOwnBackslashes(t *testing.T) {
 }
 
 func TestSubscriptPreservesWildcardBraceDelimiter(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("stock F(playerid) { if (!items[playerid][i]{0}) Call(); }\n")
 
 	formatted := mustFormat(t, source, config.Default())
@@ -43,6 +47,8 @@ func TestSubscriptPreservesWildcardBraceDelimiter(t *testing.T) {
 }
 
 func TestVariableDeclaratorRendersCapacitySuffix(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("#if defined foreach\nnew\n\tIterator:FCNPC<MAX_PLAYERS>;\n#endif\n")
 
 	formatted := mustFormat(t, source, config.Default())
@@ -57,6 +63,8 @@ func TestVariableDeclaratorRendersCapacitySuffix(t *testing.T) {
 }
 
 func TestFunctionRendersCallingConventionDimension(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("native ArgTag:[2]pawn_arg_pack(AnyTag:value, tag_id = tagof value);\n")
 
 	formatted := mustFormat(t, source, config.Default())
@@ -71,6 +79,7 @@ func TestFunctionRendersCallingConventionDimension(t *testing.T) {
 }
 
 func TestConditionalSpliceGetsLineNormalization(t *testing.T) {
+	t.Parallel()
 	source := readFile(t, filepath.Join(testdataDir(), "regressions", "conditional_splice_creator", "source.pwn"))
 	requireSharedConditionalPath(t, source)
 	formatted := mustFormat(t, source, config.Default())
@@ -91,6 +100,8 @@ func TestConditionalSpliceGetsLineNormalization(t *testing.T) {
 }
 
 func TestLongConditionDirectiveWrapsWithContinuation(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("stock F() {\n\t#if defined IsValidDynamicObject && defined IsDynamicObjectMaterialTextUsed && defined GetDynamicObjectMaterialText && defined SetDynamicObjectMaterialText\n\tnew x;\n\t#endif\n}\n")
 	formatted := mustFormat(t, source, config.Default())
 
@@ -116,6 +127,8 @@ func TestLongConditionDirectiveWrapsWithContinuation(t *testing.T) {
 }
 
 func TestNestedConditionalDirectivesAlignWithEnclosingBrace(t *testing.T) {
+	t.Parallel()
+
 	topLevel := []byte(strings.Join([]string{
 		"#if OUTER",
 		"#if INNER",
@@ -228,6 +241,8 @@ func TestOnlyEnumsGetTrailingCommas(t *testing.T) {
 }
 
 func TestNoTrailingCommaStillCollapsesToOneLine(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("stock F() {\n    Call(a, b);\n}\n")
 	want := "stock F()\n{\n    Call(a, b);\n}\n"
 
@@ -238,6 +253,8 @@ func TestNoTrailingCommaStillCollapsesToOneLine(t *testing.T) {
 }
 
 func TestAlignConsecutiveDeclarationsAlignsWithinARun(t *testing.T) {
+	t.Parallel()
+
 	cfg := config.Default()
 	cfg.AlignConsecutiveDeclarations = true
 	source := []byte(strings.Join([]string{
@@ -286,6 +303,8 @@ func TestAlignConsecutiveDeclarationsAlignsWithinARun(t *testing.T) {
 }
 
 func TestAlignConsecutiveDeclarationsDisabledByDefault(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("new gShort = 1;\nnew gVeryLongName = 2;\n")
 	want := "new gShort = 1;\nnew gVeryLongName = 2;\n"
 
@@ -296,6 +315,8 @@ func TestAlignConsecutiveDeclarationsDisabledByDefault(t *testing.T) {
 }
 
 func TestAlignConsecutiveDeclarationsBreaksOnLeadingComment(t *testing.T) {
+	t.Parallel()
+
 	cfg := config.Default()
 	cfg.AlignConsecutiveDeclarations = true
 	source := []byte("new gShort = 1;\n// a comment\nnew gVeryLongName = 2;\n")
@@ -308,6 +329,8 @@ func TestAlignConsecutiveDeclarationsBreaksOnLeadingComment(t *testing.T) {
 }
 
 func TestAlignConsecutiveDeclarationsSkipsMultiDeclaratorStatements(t *testing.T) {
+	t.Parallel()
+
 	cfg := config.Default()
 	cfg.AlignConsecutiveDeclarations = true
 	source := []byte(strings.Join([]string{
@@ -340,6 +363,8 @@ func TestAlignConsecutiveDeclarationsSkipsMultiDeclaratorStatements(t *testing.T
 }
 
 func TestAssignmentChainStaysOnOneLineWhenItFits(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("stock F() {\n    a = b = c = 1;\n}\n")
 	want := "stock F()\n{\n    a = b = c = 1;\n}\n"
 
@@ -355,6 +380,8 @@ func TestAssignmentChainStaysOnOneLineWhenItFits(t *testing.T) {
 }
 
 func TestAssignmentChainWrapsOneAssignmentPerLineWhenTooLong(t *testing.T) {
+	t.Parallel()
+
 	cfg := config.Default()
 	cfg.LineWidth = 40
 	source := []byte("stock F() {\n    firstVariable = secondVariable = thirdVariable = 1;\n}\n")
@@ -380,6 +407,8 @@ func TestAssignmentChainWrapsOneAssignmentPerLineWhenTooLong(t *testing.T) {
 }
 
 func TestAssignmentChainRespectsSpaceAroundOperatorsFalse(t *testing.T) {
+	t.Parallel()
+
 	cfg := config.Default()
 	cfg.SpaceAroundOperators = false
 	source := []byte("stock F() {\n    a = b = c = 1;\n}\n")
@@ -392,6 +421,8 @@ func TestAssignmentChainRespectsSpaceAroundOperatorsFalse(t *testing.T) {
 }
 
 func TestStringConcatJoinsAdjacentLiteralsWithASpace(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("new s[64] = \"a\" \"b\" \"c\";\n")
 	want := "new s[64] = \"a\" \"b\" \"c\";\n"
 
@@ -407,6 +438,8 @@ func TestStringConcatJoinsAdjacentLiteralsWithASpace(t *testing.T) {
 }
 
 func TestStringConcatNormalizesExtraWhitespaceBetweenPieces(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("new s[64] = \"a\"    \"b\";\n")
 	want := "new s[64] = \"a\" \"b\";\n"
 

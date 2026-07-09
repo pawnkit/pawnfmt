@@ -1,3 +1,4 @@
+// Package bench generates synthetic Pawn sources for benchmarking.
 package bench
 
 import "strings"
@@ -29,6 +30,7 @@ stock ProcessPlayer%d(playerid, Float:x, Float:y, Float:z)
 }
 `
 
+// GenerateSource builds n repeated function definitions for benchmarking.
 func GenerateSource(n int) []byte {
 	var b strings.Builder
 	b.WriteString("#include <a_samp>\n#include <core>\n\n")
@@ -40,6 +42,7 @@ func GenerateSource(n int) []byte {
 	return []byte(b.String())
 }
 
+// GenerateMacroHeavy builds n repeated groups of #define macros for benchmarking.
 func GenerateMacroHeavy(n int) []byte {
 	var b strings.Builder
 
@@ -53,6 +56,7 @@ func GenerateMacroHeavy(n int) []byte {
 	return []byte(b.String())
 }
 
+// GeneratePreprocessorHeavy builds n repeated #if/#endif blocks for benchmarking.
 func GeneratePreprocessorHeavy(n int) []byte {
 	var b strings.Builder
 

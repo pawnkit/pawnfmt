@@ -29,6 +29,7 @@ func runCLI(args []string, stdin string) (code int, stdout, stderr string) {
 }
 
 func TestRunDefaultModePrintsFormattedOutputForOneFile(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	path := filepath.Join(dir, "a.pwn")
 	writeCLIFixture(t, path, "new   x=1;\n")
@@ -44,6 +45,7 @@ func TestRunDefaultModePrintsFormattedOutputForOneFile(t *testing.T) {
 }
 
 func TestRunWriteFlagWritesTheFileInPlace(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	path := filepath.Join(dir, "a.pwn")
 	writeCLIFixture(t, path, "new   x=1;\n")
@@ -68,6 +70,7 @@ func TestRunWriteFlagWritesTheFileInPlace(t *testing.T) {
 }
 
 func TestRunCheckFlagReportsChangesWithoutWriting(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	path := filepath.Join(dir, "a.pwn")
 	writeCLIFixture(t, path, "new   x=1;\n")
@@ -92,6 +95,7 @@ func TestRunCheckFlagReportsChangesWithoutWriting(t *testing.T) {
 }
 
 func TestRunCheckFlagExitsZeroWhenAlreadyFormatted(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	path := filepath.Join(dir, "a.pwn")
 	writeCLIFixture(t, path, "new x = 1;\n")
@@ -103,6 +107,7 @@ func TestRunCheckFlagExitsZeroWhenAlreadyFormatted(t *testing.T) {
 }
 
 func TestRunDiffFlagPrintsAUnifiedDiff(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	path := filepath.Join(dir, "a.pwn")
 	writeCLIFixture(t, path, "new   x=1;\n")
@@ -118,6 +123,7 @@ func TestRunDiffFlagPrintsAUnifiedDiff(t *testing.T) {
 }
 
 func TestRunDiffFlagCanForceColour(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	path := filepath.Join(dir, "a.pwn")
 	writeCLIFixture(t, path, "new   x=1;\n")
@@ -133,6 +139,7 @@ func TestRunDiffFlagCanForceColour(t *testing.T) {
 }
 
 func TestRunMultipleFilesWithoutWriteCheckOrDiffIsAnError(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	a := filepath.Join(dir, "a.pwn")
 	b := filepath.Join(dir, "b.pwn")
@@ -151,6 +158,8 @@ func TestRunMultipleFilesWithoutWriteCheckOrDiffIsAnError(t *testing.T) {
 }
 
 func TestRunWriteAndCheckTogetherIsRejected(t *testing.T) {
+	t.Parallel()
+
 	code, _, stderr := runCLI([]string{"-w", "--check", "whatever.pwn"}, "")
 	if code != exitConfigError {
 		t.Fatalf("exit code = %d, want %d (exitConfigError)", code, exitConfigError)
@@ -162,6 +171,8 @@ func TestRunWriteAndCheckTogetherIsRejected(t *testing.T) {
 }
 
 func TestRunStdinModeFormatsAndWritesToStdout(t *testing.T) {
+	t.Parallel()
+
 	code, stdout, stderr := runCLI([]string{"--stdin"}, "new   x=1;\n")
 	if code != exitOK {
 		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitOK, stderr)
@@ -173,6 +184,8 @@ func TestRunStdinModeFormatsAndWritesToStdout(t *testing.T) {
 }
 
 func TestRunStdinCombinedWithPathsIsRejected(t *testing.T) {
+	t.Parallel()
+
 	code, _, stderr := runCLI([]string{"--stdin", "a.pwn"}, "")
 	if code != exitConfigError {
 		t.Fatalf("exit code = %d, want %d (exitConfigError)", code, exitConfigError)
@@ -184,6 +197,8 @@ func TestRunStdinCombinedWithPathsIsRejected(t *testing.T) {
 }
 
 func TestRunNoInputAtAllIsAnError(t *testing.T) {
+	t.Parallel()
+
 	code, _, stderr := runCLI(nil, "")
 	if code != exitConfigError {
 		t.Fatalf("exit code = %d, want %d (exitConfigError)", code, exitConfigError)
@@ -195,6 +210,8 @@ func TestRunNoInputAtAllIsAnError(t *testing.T) {
 }
 
 func TestRunUnknownFlagIsAConfigError(t *testing.T) {
+	t.Parallel()
+
 	code, _, stderr := runCLI([]string{"--not-a-real-flag"}, "")
 	if code != exitConfigError {
 		t.Fatalf("exit code = %d, want %d (exitConfigError)", code, exitConfigError)
@@ -206,6 +223,8 @@ func TestRunUnknownFlagIsAConfigError(t *testing.T) {
 }
 
 func TestRunHelpFlagExitsOK(t *testing.T) {
+	t.Parallel()
+
 	code, _, _ := runCLI([]string{"--help"}, "")
 	if code != exitOK {
 		t.Fatalf("exit code = %d, want %d for -help", code, exitOK)
@@ -213,6 +232,8 @@ func TestRunHelpFlagExitsOK(t *testing.T) {
 }
 
 func TestRunNoSuchFileIsAFormatError(t *testing.T) {
+	t.Parallel()
+
 	code, _, stderr := runCLI([]string{filepath.Join(t.TempDir(), "missing.pwn")}, "")
 	if code != exitFormatError {
 		t.Fatalf("exit code = %d, want %d (exitFormatError)", code, exitFormatError)
@@ -224,6 +245,8 @@ func TestRunNoSuchFileIsAFormatError(t *testing.T) {
 }
 
 func TestRunPrintConfigPrintsResolvedTOML(t *testing.T) {
+	t.Parallel()
+
 	code, stdout, stderr := runCLI([]string{"--print-config", "--no-config"}, "")
 	if code != exitOK {
 		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitOK, stderr)
@@ -235,6 +258,7 @@ func TestRunPrintConfigPrintsResolvedTOML(t *testing.T) {
 }
 
 func TestRunInitConfigWritesAFileAndRefusesToOverwrite(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	target := filepath.Join(dir, "pawnfmt.toml")
 
@@ -262,6 +286,7 @@ func TestRunInitConfigWritesAFileAndRefusesToOverwrite(t *testing.T) {
 }
 
 func TestRunDebugTokensPrintsTokenStream(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	path := filepath.Join(dir, "a.pwn")
 	writeCLIFixture(t, path, "new x;\n")
@@ -277,6 +302,7 @@ func TestRunDebugTokensPrintsTokenStream(t *testing.T) {
 }
 
 func TestRunDebugCSTOnMultipleFilesIsRejected(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	a := filepath.Join(dir, "a.pwn")
 	b := filepath.Join(dir, "b.pwn")

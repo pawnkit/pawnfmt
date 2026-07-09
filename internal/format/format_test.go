@@ -10,6 +10,8 @@ import (
 )
 
 func TestGolden(t *testing.T) {
+	t.Parallel()
+
 	files, err := filepath.Glob(filepath.Join(testdataDir(), "input", "*.pwn"))
 	if err != nil {
 		t.Fatalf("glob golden inputs: %v", err)
@@ -21,6 +23,7 @@ func TestGolden(t *testing.T) {
 
 	for _, inputPath := range files {
 		t.Run(strings.TrimSuffix(filepath.Base(inputPath), filepath.Ext(inputPath)), func(t *testing.T) {
+			t.Parallel()
 			source := readFile(t, inputPath)
 			formatted := mustFormat(t, source, config.Default())
 			expectedPath := filepath.Join(testdataDir(), "expected", filepath.Base(inputPath))
@@ -34,6 +37,8 @@ func TestGolden(t *testing.T) {
 }
 
 func TestIdempotence(t *testing.T) {
+	t.Parallel()
+
 	files, err := filepath.Glob(filepath.Join(testdataDir(), "idempotence", "*.pwn"))
 	if err != nil {
 		t.Fatalf("glob idempotence inputs: %v", err)
@@ -45,6 +50,7 @@ func TestIdempotence(t *testing.T) {
 
 	for _, inputPath := range files {
 		t.Run(strings.TrimSuffix(filepath.Base(inputPath), filepath.Ext(inputPath)), func(t *testing.T) {
+			t.Parallel()
 			source := readFile(t, inputPath)
 			first := mustFormat(t, source, config.Default())
 
@@ -57,6 +63,8 @@ func TestIdempotence(t *testing.T) {
 }
 
 func TestParseAfterFormat(t *testing.T) {
+	t.Parallel()
+
 	directories := []string{"input", "idempotence"}
 	for _, directory := range directories {
 		files, err := filepath.Glob(filepath.Join(testdataDir(), directory, "*.pwn"))
@@ -66,6 +74,7 @@ func TestParseAfterFormat(t *testing.T) {
 
 		for _, inputPath := range files {
 			t.Run(directory+"/"+strings.TrimSuffix(filepath.Base(inputPath), filepath.Ext(inputPath)), func(t *testing.T) {
+				t.Parallel()
 				formatted := mustFormat(t, readFile(t, inputPath), config.Default())
 
 				parsed := parser.Parse(formatted)

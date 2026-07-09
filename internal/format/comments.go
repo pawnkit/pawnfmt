@@ -1,3 +1,4 @@
+// Package format renders a parsed Pawn source file to formatted output.
 package format
 
 import (
@@ -194,6 +195,7 @@ func (s *state) blankLinesBefore(lead []token.Trivia) int {
 	}
 
 	for _, t := range lead {
+		//nolint:exhaustive // only blank/comment trivia kinds matter here
 		switch t.Kind {
 		case token.Newline:
 			run++
@@ -210,8 +212,8 @@ func (s *state) blankLinesBefore(lead []token.Trivia) int {
 		return count
 	}
 
-	if max := s.config.MaxBlankLines; count > max {
-		return max
+	if limit := s.config.MaxBlankLines; count > limit {
+		return limit
 	}
 
 	return count
@@ -252,6 +254,7 @@ func (s *state) directiveAwareSeparator(separator doc.Doc, item *parser.Node) do
 }
 
 func alignsWithEnclosingBrace(item *parser.Node) bool {
+	//nolint:exhaustive // only kinds that pull back to the enclosing brace matter here
 	switch item.Kind {
 	case parser.KindSharedConditional, parser.KindSharedConditionalPrefix,
 		parser.KindConditionalSplice, parser.KindConditionalFunction,

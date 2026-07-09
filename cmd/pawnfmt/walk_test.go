@@ -8,6 +8,8 @@ import (
 	"testing"
 )
 
+const keepFixtureName = "keep.pwn"
+
 func writeFixture(t *testing.T, path string) {
 	t.Helper()
 
@@ -21,6 +23,7 @@ func writeFixture(t *testing.T, path string) {
 }
 
 func TestCollectFilesExplicitSingleFileIsUsedRegardlessOfExtension(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	path := filepath.Join(dir, "explicit.txt")
 	writeFixture(t, path)
@@ -36,6 +39,7 @@ func TestCollectFilesExplicitSingleFileIsUsedRegardlessOfExtension(t *testing.T)
 }
 
 func TestCollectFilesWalksADirectoryForPwnAndIncOnly(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	writeFixture(t, filepath.Join(dir, "a.pwn"))
 	writeFixture(t, filepath.Join(dir, "b.inc"))
@@ -64,8 +68,9 @@ func TestCollectFilesWalksADirectoryForPwnAndIncOnly(t *testing.T) {
 }
 
 func TestCollectFilesSkipsDefaultIgnoredDirectories(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
-	writeFixture(t, filepath.Join(dir, "keep.pwn"))
+	writeFixture(t, filepath.Join(dir, keepFixtureName))
 	writeFixture(t, filepath.Join(dir, "node_modules", "skip.pwn"))
 	writeFixture(t, filepath.Join(dir, ".git", "skip.pwn"))
 
@@ -82,8 +87,9 @@ func TestCollectFilesSkipsDefaultIgnoredDirectories(t *testing.T) {
 }
 
 func TestCollectFilesExcludePatternFiltersMatchingFiles(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
-	writeFixture(t, filepath.Join(dir, "keep.pwn"))
+	writeFixture(t, filepath.Join(dir, keepFixtureName))
 	writeFixture(t, filepath.Join(dir, "generated.pwn"))
 
 	files, err := collectFiles([]string{dir}, nil, []string{"generated.pwn"}, true)
@@ -95,27 +101,29 @@ func TestCollectFilesExcludePatternFiltersMatchingFiles(t *testing.T) {
 		t.Fatalf("collectFiles(dir, exclude=generated.pwn) = %v, should exclude it", files)
 	}
 
-	if !slices.ContainsFunc(files, func(f string) bool { return filepath.Base(f) == "keep.pwn" }) {
+	if !slices.ContainsFunc(files, func(f string) bool { return filepath.Base(f) == keepFixtureName }) {
 		t.Fatalf("collectFiles(dir, exclude=generated.pwn) = %v, should still include keep.pwn", files)
 	}
 }
 
 func TestCollectFilesIncludePatternRestrictsToMatchingFiles(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
-	writeFixture(t, filepath.Join(dir, "keep.pwn"))
+	writeFixture(t, filepath.Join(dir, keepFixtureName))
 	writeFixture(t, filepath.Join(dir, "other.pwn"))
 
-	files, err := collectFiles([]string{dir}, []string{"keep.pwn"}, nil, true)
+	files, err := collectFiles([]string{dir}, []string{keepFixtureName}, nil, true)
 	if err != nil {
 		t.Fatalf("collectFiles: %v", err)
 	}
 
-	if len(files) != 1 || filepath.Base(files[0]) != "keep.pwn" {
+	if len(files) != 1 || filepath.Base(files[0]) != keepFixtureName {
 		t.Fatalf("collectFiles(dir, include=keep.pwn) = %v, want only keep.pwn", files)
 	}
 }
 
 func TestCollectFilesIncludePatternCanRescueAnIgnoredDirectory(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	writeFixture(t, filepath.Join(dir, "vendor", "wanted.pwn"))
 
@@ -130,6 +138,7 @@ func TestCollectFilesIncludePatternCanRescueAnIgnoredDirectory(t *testing.T) {
 }
 
 func TestCollectFilesDeduplicatesTheSameFileNamedTwice(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	path := filepath.Join(dir, "dup.pwn")
 	writeFixture(t, path)
@@ -145,6 +154,8 @@ func TestCollectFilesDeduplicatesTheSameFileNamedTwice(t *testing.T) {
 }
 
 func TestCollectFilesReturnsErrorForANonexistentPath(t *testing.T) {
+	t.Parallel()
+
 	_, err := collectFiles([]string{filepath.Join(t.TempDir(), "missing")}, nil, nil, true)
 	if err == nil {
 		t.Fatal("collectFiles should return an error for a path that doesn't exist")
@@ -164,9 +175,10 @@ func writeText(t *testing.T, path, contents string) {
 }
 
 func TestCollectFilesRespectsGitignore(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	writeText(t, filepath.Join(dir, ".gitignore"), "*.gen.pwn\nbuild/\n")
-	writeFixture(t, filepath.Join(dir, "keep.pwn"))
+	writeFixture(t, filepath.Join(dir, keepFixtureName))
 	writeFixture(t, filepath.Join(dir, "skip.gen.pwn"))
 	writeFixture(t, filepath.Join(dir, "build", "artifact.pwn"))
 
@@ -175,7 +187,7 @@ func TestCollectFilesRespectsGitignore(t *testing.T) {
 		t.Fatalf("collectFiles: %v", err)
 	}
 
-	if !slices.ContainsFunc(files, func(f string) bool { return filepath.Base(f) == "keep.pwn" }) {
+	if !slices.ContainsFunc(files, func(f string) bool { return filepath.Base(f) == keepFixtureName }) {
 		t.Fatalf("collectFiles(dir) = %v, want keep.pwn included", files)
 	}
 
@@ -189,6 +201,7 @@ func TestCollectFilesRespectsGitignore(t *testing.T) {
 }
 
 func TestCollectFilesNoGitignoreOptOutFormatsEverything(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	writeText(t, filepath.Join(dir, ".gitignore"), "*.gen.pwn\n")
 	writeFixture(t, filepath.Join(dir, "skip.gen.pwn"))
@@ -204,10 +217,11 @@ func TestCollectFilesNoGitignoreOptOutFormatsEverything(t *testing.T) {
 }
 
 func TestCollectFilesPawnfmtignoreLayersOnTopOfGitignore(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	writeText(t, filepath.Join(dir, ".gitignore"), "*.gen.pwn\n")
 	writeText(t, filepath.Join(dir, ".pawnfmtignore"), "extra.pwn\n")
-	writeFixture(t, filepath.Join(dir, "keep.pwn"))
+	writeFixture(t, filepath.Join(dir, keepFixtureName))
 	writeFixture(t, filepath.Join(dir, "skip.gen.pwn"))
 	writeFixture(t, filepath.Join(dir, "extra.pwn"))
 
@@ -222,12 +236,13 @@ func TestCollectFilesPawnfmtignoreLayersOnTopOfGitignore(t *testing.T) {
 		}
 	}
 
-	if !slices.ContainsFunc(files, func(f string) bool { return filepath.Base(f) == "keep.pwn" }) {
+	if !slices.ContainsFunc(files, func(f string) bool { return filepath.Base(f) == keepFixtureName }) {
 		t.Fatalf("collectFiles(dir) = %v, want keep.pwn included", files)
 	}
 }
 
 func TestCollectFilesGitignoreNegationRescuesAFile(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	writeText(t, filepath.Join(dir, ".gitignore"), "*.pwn\n!important.pwn\n")
 	writeFixture(t, filepath.Join(dir, "other.pwn"))
@@ -248,6 +263,7 @@ func TestCollectFilesGitignoreNegationRescuesAFile(t *testing.T) {
 }
 
 func TestCollectFilesGitignoreAnchoredPatternOnlyMatchesAtItsOwnLevel(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	writeText(t, filepath.Join(dir, ".gitignore"), "/root_only.pwn\n")
 	writeFixture(t, filepath.Join(dir, "root_only.pwn"))
@@ -268,11 +284,12 @@ func TestCollectFilesGitignoreAnchoredPatternOnlyMatchesAtItsOwnLevel(t *testing
 }
 
 func TestCollectFilesGitignoreDoubleStarMatchesAnyDepth(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	writeText(t, filepath.Join(dir, ".gitignore"), "**/generated/*.pwn\n")
 	writeFixture(t, filepath.Join(dir, "a", "generated", "x.pwn"))
 	writeFixture(t, filepath.Join(dir, "a", "b", "generated", "y.pwn"))
-	writeFixture(t, filepath.Join(dir, "a", "keep.pwn"))
+	writeFixture(t, filepath.Join(dir, "a", keepFixtureName))
 
 	files, err := collectFiles([]string{dir}, nil, nil, true)
 	if err != nil {
@@ -285,12 +302,13 @@ func TestCollectFilesGitignoreDoubleStarMatchesAnyDepth(t *testing.T) {
 		}
 	}
 
-	if !slices.ContainsFunc(files, func(f string) bool { return filepath.Base(f) == "keep.pwn" }) {
+	if !slices.ContainsFunc(files, func(f string) bool { return filepath.Base(f) == keepFixtureName }) {
 		t.Fatalf("collectFiles(dir) = %v, want keep.pwn included", files)
 	}
 }
 
 func TestCollectFilesNestedGitignoreOverridesParent(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	writeText(t, filepath.Join(dir, ".gitignore"), "*.pwn\n")
 	writeText(t, filepath.Join(dir, "sub", ".gitignore"), "!rescued.pwn\n")
@@ -312,6 +330,8 @@ func TestCollectFilesNestedGitignoreOverridesParent(t *testing.T) {
 }
 
 func TestGitignoreGlobToRegexp(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		glob  string
 		match string
@@ -334,6 +354,8 @@ func TestGitignoreGlobToRegexp(t *testing.T) {
 }
 
 func TestIsFormattableExt(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]bool{
 		"a.pwn": true, "a.inc": true, "a.PWN": true, "a.txt": false, "a": false,
 	}

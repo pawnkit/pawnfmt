@@ -11,6 +11,8 @@ import (
 )
 
 func TestParsesCleanlyAcceptsValidSource(t *testing.T) {
+	t.Parallel()
+
 	ok, err := check.ParsesCleanly([]byte("stock F() { return 1; }\n"))
 	if err != nil {
 		t.Fatalf("ParsesCleanly returned an error for valid source: %v", err)
@@ -22,6 +24,8 @@ func TestParsesCleanlyAcceptsValidSource(t *testing.T) {
 }
 
 func TestParsesCleanlyRejectsGenuinelyBrokenSource(t *testing.T) {
+	t.Parallel()
+
 	ok, err := check.ParsesCleanly([]byte("}"))
 	if err != nil {
 		t.Fatalf("ParsesCleanly returned an error: %v", err)
@@ -33,6 +37,8 @@ func TestParsesCleanlyRejectsGenuinelyBrokenSource(t *testing.T) {
 }
 
 func TestIdempotentReportsTrueWhenReformattingIsAFixedPoint(t *testing.T) {
+	t.Parallel()
+
 	ok, err := check.Idempotent([]byte("stable"), func(b []byte) ([]byte, error) {
 		return b, nil
 	})
@@ -46,6 +52,8 @@ func TestIdempotentReportsTrueWhenReformattingIsAFixedPoint(t *testing.T) {
 }
 
 func TestIdempotentReportsFalseWhenASecondPassChangesOutput(t *testing.T) {
+	t.Parallel()
+
 	ok, err := check.Idempotent([]byte("first"), func(_ []byte) ([]byte, error) {
 		return []byte("second"), nil
 	})
@@ -59,6 +67,8 @@ func TestIdempotentReportsFalseWhenASecondPassChangesOutput(t *testing.T) {
 }
 
 func TestIdempotentPropagatesTheReformatError(t *testing.T) {
+	t.Parallel()
+
 	wantErr := errors.New("boom")
 
 	_, err := check.Idempotent([]byte("x"), func(_ []byte) ([]byte, error) {
@@ -74,6 +84,7 @@ func TestIdempotentPropagatesTheReformatError(t *testing.T) {
 }
 
 func TestAnalyzeCorpusFileClassifiesACleanFileAsFull(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 
 	path := filepath.Join(dir, "clean.pwn")
@@ -96,6 +107,8 @@ func TestAnalyzeCorpusFileClassifiesACleanFileAsFull(t *testing.T) {
 }
 
 func TestAnalyzeCorpusFileFailsForAMissingFile(t *testing.T) {
+	t.Parallel()
+
 	r := check.AnalyzeCorpusFile(filepath.Join(t.TempDir(), "does-not-exist.pwn"), config.Default())
 	if r.Status != check.CorpusStatusFail {
 		t.Fatalf("Status = %q, want %q for a missing file", r.Status, check.CorpusStatusFail)
@@ -107,6 +120,7 @@ func TestAnalyzeCorpusFileFailsForAMissingFile(t *testing.T) {
 }
 
 func TestAnalyzeCorpusFileFailsForBrokenSource(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 
 	path := filepath.Join(dir, "broken.pwn")
@@ -121,6 +135,7 @@ func TestAnalyzeCorpusFileFailsForBrokenSource(t *testing.T) {
 }
 
 func TestAnalyzeCorpusFileFailsWhenTheConfigItselfIsInvalid(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 
 	path := filepath.Join(dir, "valid.pwn")
@@ -142,6 +157,8 @@ func TestAnalyzeCorpusFileFailsWhenTheConfigItselfIsInvalid(t *testing.T) {
 }
 
 func TestCollectPawnFilesFindsOnlyPwnAndIncSortedByPath(t *testing.T) {
+	t.Parallel()
+
 	dir := t.TempDir()
 	for _, name := range []string{"b.pwn", "a.inc", "c.txt", "sub/d.pwn"} {
 		full := filepath.Join(dir, name)

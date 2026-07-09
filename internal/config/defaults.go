@@ -1,5 +1,6 @@
 package config
 
+// Default returns pawnfmt's built-in default configuration.
 func Default() Config {
 	return Config{
 		LineWidth:                      100,
@@ -46,8 +47,14 @@ func Default() Config {
 	}
 }
 
+// ApplyDefaults fills zero-valued fields with their defaults.
 func (cfg *Config) ApplyDefaults() {
 	defaults := Default()
+	cfg.applyLayoutDefaults(defaults)
+	cfg.applyStyleDefaults(defaults)
+}
+
+func (cfg *Config) applyLayoutDefaults(defaults Config) {
 	if cfg.LineWidth == 0 {
 		cfg.LineWidth = defaults.LineWidth
 	}
@@ -68,6 +75,20 @@ func (cfg *Config) ApplyDefaults() {
 		cfg.BraceStyle = defaults.BraceStyle
 	}
 
+	if cfg.MultilineFunctionParams == "" {
+		cfg.MultilineFunctionParams = defaults.MultilineFunctionParams
+	}
+
+	if cfg.MultilineCallArgs == "" {
+		cfg.MultilineCallArgs = defaults.MultilineCallArgs
+	}
+
+	if cfg.BreakBinaryOperator == "" {
+		cfg.BreakBinaryOperator = defaults.BreakBinaryOperator
+	}
+}
+
+func (cfg *Config) applyStyleDefaults(defaults Config) {
 	if cfg.Semicolons == "" {
 		cfg.Semicolons = defaults.Semicolons
 	}
@@ -86,17 +107,5 @@ func (cfg *Config) ApplyDefaults() {
 
 	if cfg.TagColonSpacing == "" {
 		cfg.TagColonSpacing = defaults.TagColonSpacing
-	}
-
-	if cfg.MultilineFunctionParams == "" {
-		cfg.MultilineFunctionParams = defaults.MultilineFunctionParams
-	}
-
-	if cfg.MultilineCallArgs == "" {
-		cfg.MultilineCallArgs = defaults.MultilineCallArgs
-	}
-
-	if cfg.BreakBinaryOperator == "" {
-		cfg.BreakBinaryOperator = defaults.BreakBinaryOperator
 	}
 }

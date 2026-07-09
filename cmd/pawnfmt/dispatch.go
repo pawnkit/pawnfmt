@@ -65,7 +65,7 @@ func runStdin(opts *options, stdin io.Reader, stdout, stderr io.Writer) int {
 		return code
 	}
 
-	formatted, err := formatter.FormatSource(source, cfg)
+	formatted, err := formatter.Source(source, cfg)
 	if err != nil {
 		writeErrorf(stderr, errColors, "%v", err)
 		return exitFormatError

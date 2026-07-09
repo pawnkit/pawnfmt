@@ -48,6 +48,7 @@ func semanticTokens(source []byte) []semanticToken {
 }
 
 func nonSemanticFormattingToken(kind token.Kind) bool {
+	//nolint:exhaustive // only the purely-cosmetic token kinds matter here
 	switch kind {
 	case token.EOF, token.LBrace, token.RBrace, token.Comma, token.Semicolon:
 		return true

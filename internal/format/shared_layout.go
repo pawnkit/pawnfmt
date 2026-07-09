@@ -78,6 +78,7 @@ func bracesBalanced(text string) bool {
 	depth := 0
 
 	for _, tok := range lexer.Tokenize([]byte(text)) {
+		//nolint:exhaustive // only brace depth tokens matter here
 		switch tok.Kind {
 		case token.LBrace:
 			depth++
@@ -89,21 +90,24 @@ func bracesBalanced(text string) bool {
 	return depth <= 0
 }
 
+// sharedLineContinuation tracks the continuation state threaded across lines
+// in formatSharedLines: whether the previous line implies the current one
+// continues it, and at what column continued lines should sit.
+type sharedLineContinuation struct {
+	previousTrimmed string
+	previousColumns int
+	active          bool
+	columns         int
+}
+
 func (s *state) formatSharedLines(lines []string, baseIndent int) doc.Doc {
 	parts := make([]doc.Doc, 0, len(lines)*2)
-	previousTrimmed := ""
-	previousColumns := 0
-	continuationActive := false
-	continuationColumns := 0
+
+	var cont sharedLineContinuation
 
 	for i, line := range lines {
 		if i > 0 {
-			lineBreak := doc.HardLine()
-			if s.config.DirectiveIndent == config.DirectiveIndentNone && strings.HasPrefix(strings.TrimSpace(line), "#") {
-				lineBreak = doc.ResetIndent(lineBreak)
-			}
-
-			parts = append(parts, lineBreak)
+			parts = append(parts, s.sharedLineBreak(line))
 		}
 
 		trimmed := strings.TrimLeft(line, " \t")
@@ -111,85 +115,112 @@ func (s *state) formatSharedLines(lines []string, baseIndent int) doc.Doc {
 			continue
 		}
 
-		columns := sharedIndentColumns(line, s.config.IndentWidth)
-
-		continues := i > 0 && !strings.HasPrefix(trimmed, "#") &&
-			(sharedLineEndsContinuation(previousTrimmed) || sharedLineStartsContinuation(trimmed))
-		if strings.HasPrefix(previousTrimmed, "#") {
-			continues = strings.HasSuffix(previousTrimmed, "\\") && sharedLineStartsContinuation(trimmed)
-		}
-
-		if continues {
-			if !continuationActive {
-				continuationColumns = previousColumns + s.continuationIndentWidth()
-			}
-
-			if columns < continuationColumns {
-				columns = continuationColumns
-			}
-
-			continuationActive = true
-		} else {
-			continuationActive = false
-		}
-
-		if i > 0 {
-			columns -= baseIndent
-		}
-
-		if s.config.DirectiveIndent == config.DirectiveIndentNone && strings.HasPrefix(trimmed, "#") {
-			columns = 0
-		}
-
-		if columns < 0 {
-			columns = 0
-		}
-
-		level := columns / s.config.IndentWidth
-		if columns%s.config.IndentWidth != 0 {
-			level++
-		}
-
-		indent := strings.Repeat(" ", level*s.config.IndentWidth)
-		if s.config.IndentStyle == config.IndentStyleTab {
-			indent = strings.Repeat("\t", level)
-		}
+		level := cont.resolveLevel(s, line, trimmed, i, baseIndent)
 
 		trimmed = normalizeSharedLine(trimmed, s.config)
+		parts = append(parts, s.formatSharedLogicalLines(trimmed, level, baseIndent)...)
 
-		logicalLines := expandSharedSimpleControl(trimmed, s.config)
-		for li, logicalLine := range logicalLines {
-			if li > 0 {
-				parts = append(parts, doc.HardLine())
-			}
+		cont.previousTrimmed = trimmed
 
-			logicalCode := strings.TrimLeft(logicalLine, " \t")
-			logicalIndent := logicalLine[:len(logicalLine)-len(logicalCode)]
-			logicalIndentColumns := sharedIndentColumns(logicalLine, s.config.IndentWidth)
-			indentColumns := level*s.config.IndentWidth + logicalIndentColumns
-
-			wrapped := wrapSharedLine(logicalCode, s.config.LineWidth-baseIndent-indentColumns, s.config.IndentWidth, s.continuationIndentWidth(), s.config.IndentStyle == config.IndentStyleTab)
-			for wi, segment := range wrapped {
-				if wi > 0 {
-					lineBreak := doc.HardLine()
-					if s.config.DirectiveIndent == config.DirectiveIndentNone && strings.HasPrefix(strings.TrimSpace(segment), "#") {
-						lineBreak = doc.ResetIndent(lineBreak)
-					}
-
-					parts = append(parts, lineBreak)
-				}
-
-				parts = append(parts, doc.Text(indent+logicalIndent+segment))
-			}
-		}
-
-		previousTrimmed = trimmed
-
-		previousColumns = level * s.config.IndentWidth
+		cont.previousColumns = level * s.config.IndentWidth
 		if i > 0 {
-			previousColumns += baseIndent
+			cont.previousColumns += baseIndent
 		}
 	}
 
 	return doc.Concat(parts...)
+}
+
+func (s *state) sharedLineBreak(line string) doc.Doc {
+	lineBreak := doc.HardLine()
+	if s.config.DirectiveIndent == config.DirectiveIndentNone && strings.HasPrefix(strings.TrimSpace(line), "#") {
+		lineBreak = doc.ResetIndent(lineBreak)
+	}
+
+	return lineBreak
+}
+
+// resolveColumns computes the raw (pre-baseIndent) column for the current
+// line, updating whether a continuation is active in cont.
+func (cont *sharedLineContinuation) resolveColumns(s *state, line, trimmed string, i int) int {
+	columns := sharedIndentColumns(line, s.config.IndentWidth)
+
+	continues := i > 0 && !strings.HasPrefix(trimmed, "#") &&
+		(sharedLineEndsContinuation(cont.previousTrimmed) || sharedLineStartsContinuation(trimmed))
+	if strings.HasPrefix(cont.previousTrimmed, "#") {
+		continues = strings.HasSuffix(cont.previousTrimmed, "\\") && sharedLineStartsContinuation(trimmed)
+	}
+
+	if !continues {
+		cont.active = false
+		return columns
+	}
+
+	if !cont.active {
+		cont.columns = cont.previousColumns + s.continuationIndentWidth()
+	}
+
+	if columns < cont.columns {
+		columns = cont.columns
+	}
+
+	cont.active = true
+
+	return columns
+}
+
+// resolveLevel computes the indent level for the current line, updating the
+// continuation state in place, and returns the level in indent-width units.
+func (cont *sharedLineContinuation) resolveLevel(s *state, line, trimmed string, i, baseIndent int) int {
+	columns := cont.resolveColumns(s, line, trimmed, i)
+	if i > 0 {
+		columns -= baseIndent
+	}
+
+	if s.config.DirectiveIndent == config.DirectiveIndentNone && strings.HasPrefix(trimmed, "#") {
+		columns = 0
+	}
+
+	if columns < 0 {
+		columns = 0
+	}
+
+	level := columns / s.config.IndentWidth
+	if columns%s.config.IndentWidth != 0 {
+		level++
+	}
+
+	return level
+}
+
+func (s *state) formatSharedLogicalLines(trimmed string, level, baseIndent int) []doc.Doc {
+	indent := strings.Repeat(" ", level*s.config.IndentWidth)
+	if s.config.IndentStyle == config.IndentStyleTab {
+		indent = strings.Repeat("\t", level)
+	}
+
+	var parts []doc.Doc
+
+	logicalLines := expandSharedSimpleControl(trimmed, s.config)
+	for li, logicalLine := range logicalLines {
+		if li > 0 {
+			parts = append(parts, doc.HardLine())
+		}
+
+		logicalCode := strings.TrimLeft(logicalLine, " \t")
+		logicalIndent := logicalLine[:len(logicalLine)-len(logicalCode)]
+		logicalIndentColumns := sharedIndentColumns(logicalLine, s.config.IndentWidth)
+		indentColumns := level*s.config.IndentWidth + logicalIndentColumns
+
+		wrapped := wrapSharedLine(logicalCode, s.config.LineWidth-baseIndent-indentColumns, s.config.IndentWidth, s.continuationIndentWidth(), s.config.IndentStyle == config.IndentStyleTab)
+		for wi, segment := range wrapped {
+			if wi > 0 {
+				parts = append(parts, s.sharedLineBreak(segment))
+			}
+
+			parts = append(parts, doc.Text(indent+logicalIndent+segment))
+		}
+	}
+
+	return parts
 }

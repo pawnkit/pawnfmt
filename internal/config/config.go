@@ -1,80 +1,102 @@
+// Package config defines pawnfmt's configuration schema, defaults, and loading.
 package config
 
+// IndentStyle selects spaces or tabs for indentation.
 type IndentStyle string
 
+// Values for IndentStyle.
 const (
 	IndentStyleSpace IndentStyle = "space"
 	IndentStyleTab   IndentStyle = "tab"
 )
 
+// NewlineStyle selects the output line ending.
 type NewlineStyle string
 
+// Values for NewlineStyle.
 const (
 	NewlineStyleAuto NewlineStyle = "auto"
 	NewlineStyleLF   NewlineStyle = "lf"
 	NewlineStyleCRLF NewlineStyle = "crlf"
 )
 
+// BraceStyle selects where opening braces are placed.
 type BraceStyle string
 
+// Values for BraceStyle.
 const (
 	BraceStyle1TBS        BraceStyle = "1tbs"
 	BraceStyleAllman      BraceStyle = "allman"
 	BraceStyleWhitesmiths BraceStyle = "whitesmiths"
 )
 
+// SemicolonMode controls optional enum trailing semicolons.
 type SemicolonMode string
 
+// Values for SemicolonMode.
 const (
 	SemicolonsPreserve SemicolonMode = "preserve"
 	SemicolonsAlways   SemicolonMode = "always"
 )
 
+// SingleStatementBraces controls braces around single-statement control bodies.
 type SingleStatementBraces string
 
+// Values for SingleStatementBraces.
 const (
 	SingleStatementBracesPreserve SingleStatementBraces = "preserve"
 	SingleStatementBracesAlways   SingleStatementBraces = "always"
 	SingleStatementBracesNever    SingleStatementBraces = "never"
 )
 
+// DirectiveIndent controls preprocessor line indentation.
 type DirectiveIndent string
 
+// Values for DirectiveIndent.
 const (
 	DirectiveIndentNone        DirectiveIndent = "none"
 	DirectiveIndentKeepInBlock DirectiveIndent = "keep_in_block"
 )
 
+// EnumTrailingComma controls the final comma in enum bodies.
 type EnumTrailingComma string
 
+// Values for EnumTrailingComma.
 const (
 	EnumTrailingCommaPreserve EnumTrailingComma = "preserve"
 	EnumTrailingCommaAlways   EnumTrailingComma = "always"
 )
 
+// TagColonSpacing controls spacing around a tag prefix's colon.
 type TagColonSpacing string
 
+// Values for TagColonSpacing.
 const (
 	TagColonSpacingTight    TagColonSpacing = "tight"
 	TagColonSpacingPreserve TagColonSpacing = "preserve"
 	TagColonSpacingCompact  TagColonSpacing = "compact"
 )
 
+// MultilineListStyle controls how wrapped lists are laid out.
 type MultilineListStyle string
 
+// Values for MultilineListStyle.
 const (
 	MultilineListAuto       MultilineListStyle = "auto"
 	MultilineListOnePerLine MultilineListStyle = "one_per_line"
 	MultilineListBinPack    MultilineListStyle = "bin_pack"
 )
 
+// BinaryOperatorBreak controls where a wrapped binary operator is placed.
 type BinaryOperatorBreak string
 
+// Values for BinaryOperatorBreak.
 const (
 	BinaryOperatorBreakAfter  BinaryOperatorBreak = "after"
 	BinaryOperatorBreakBefore BinaryOperatorBreak = "before"
 )
 
+// Config holds all formatting options.
 type Config struct {
 	LineWidth                      int                   `json:"line_width" yaml:"line_width" toml:"line_width"`
 	IndentStyle                    IndentStyle           `json:"indent_style" yaml:"indent_style" toml:"indent_style"`

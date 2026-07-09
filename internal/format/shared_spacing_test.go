@@ -8,6 +8,8 @@ import (
 )
 
 func TestSharedExpressionDirectiveInsertsMissingKeywordSpace(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("stock F() {\n#if A\nif(first) {\n#if(INNER)\nCall();\n#endif\n#else\nif(second) {\n#endif\nreturn 1;\n}\n}\n")
 
 	formatted := mustFormat(t, source, config.Default())
@@ -22,6 +24,8 @@ func TestSharedExpressionDirectiveInsertsMissingKeywordSpace(t *testing.T) {
 }
 
 func TestUnknownRawDirectivePreservesPayloadAdjacency(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("#custom(payload)\n")
 
 	formatted := mustFormat(t, source, config.Default())
@@ -31,6 +35,8 @@ func TestUnknownRawDirectivePreservesPayloadAdjacency(t *testing.T) {
 }
 
 func TestSharedRegionCollapsesRequiredKeywordSpacing(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("stock F() {\n#if A\nif(first) {\nnew    value; result = sizeof    value; return    value;\n#if defined    FEATURE\nCall();\n#endif\n#else\nif(second) {\n#endif\nreturn 1;\n}\n}\n")
 	formatted := mustFormat(t, source, config.Default())
 
@@ -48,6 +54,8 @@ func TestSharedRegionCollapsesRequiredKeywordSpacing(t *testing.T) {
 }
 
 func TestSharedRegionCollapsesCustomQualifierSpacing(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("#if A\nac_fpublic    Handler(value)\n{\n#else\nac_fpublic    Handler(other)\n{\n#endif\nreturn 1;\n}\n")
 
 	formatted := mustFormat(t, source, config.Default())
@@ -63,6 +71,8 @@ func TestSharedRegionCollapsesCustomQualifierSpacing(t *testing.T) {
 }
 
 func TestSharedRegionSeparatesAdjacentStrings(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("stock F() {\n#if A\nif(first) {\nvalue = \"first\"\"second\"; packed = !\"third\"!\"fourth\";\n#else\nif(second) {\n#endif\nreturn 1;\n}\n}\n")
 	formatted := mustFormat(t, source, config.Default())
 
@@ -80,6 +90,8 @@ func TestSharedRegionSeparatesAdjacentStrings(t *testing.T) {
 }
 
 func TestSharedRegionBracesMultilineControlBody(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("stock F() {\n#if A\nif(first &&\nsecond)\nCallOne();\n#else\nif(third ||\nfourth)\nCallTwo();\n#endif\n}\n")
 	formatted := mustFormat(t, source, config.Default())
 	text := string(formatted)
@@ -98,6 +110,8 @@ func TestSharedRegionBracesMultilineControlBody(t *testing.T) {
 }
 
 func TestSharedDirectiveFreeBlockCorrectsBodyWithoutMovingClose(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("stock F() {\n#if A\nswitch(value)\n{\ncase 1:\n{\nCallOne();\nif(flag)\n{\nCallTwo();\n}\n}\n}\nif(first) {\n#else\nif(second) {\n#endif\nCallThree();\n}\n}\n")
 	formatted := mustFormat(t, source, config.Default())
 
@@ -141,17 +155,11 @@ func TestSharedDirectiveFreeBlockCorrectsBodyWithoutMovingClose(t *testing.T) {
 }
 
 func TestSharedRegionNormalizesRangeOperatorSpacing(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("stock F() {\n#if A\nif(first) {\nnew value = 14..16;\n#else\nif(second) {\n#endif\nreturn value;\n}\n}\n")
 
-	formatted := mustFormat(t, source, config.Default())
-	if !strings.Contains(string(formatted), "new value = 14 .. 16;") {
-		t.Fatalf("shared range operator spacing was not normalized:\n%s", formatted)
-	}
-
-	second := mustFormat(t, formatted, config.Default())
-	if string(second) != string(formatted) {
-		t.Fatalf("shared range spacing is not idempotent\nfirst:\n%s\nsecond:\n%s", formatted, second)
-	}
+	formatAndAssertIdempotent(t, source, config.Default(), "new value = 14 .. 16;", "shared range operator spacing was not normalized")
 
 	compact := config.Default()
 	compact.SpaceAroundOperators = false
@@ -163,6 +171,8 @@ func TestSharedRegionNormalizesRangeOperatorSpacing(t *testing.T) {
 }
 
 func TestSharedRegionNormalizesUpdateOperatorSpacing(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("stock F() {\n#if A\nif(first) {\nvalue ++; ++ other;\n#else\nif(second) {\n#endif\nreturn value;\n}\n}\n")
 
 	formatted := mustFormat(t, source, config.Default())
@@ -177,6 +187,8 @@ func TestSharedRegionNormalizesUpdateOperatorSpacing(t *testing.T) {
 }
 
 func TestSharedRegionNormalizesTightPunctuation(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("stock F() {\n#if A\nif(first) {\nCall(. target = value, . reliability = 1); result = Namespace :: Symbol;\n#else\nif(second) {\n#endif\nreturn result;\n}\n}\n")
 	formatted := mustFormat(t, source, config.Default())
 
@@ -194,6 +206,8 @@ func TestSharedRegionNormalizesTightPunctuation(t *testing.T) {
 }
 
 func TestSharedRegionNormalizesSeparatorSpacing(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("stock F() {\n#if A\nif(first) {\nCall(first , second) ; value = 1;next = 2;\n#else\nif(second) {\n#endif\nreturn value;\n}\n}\n")
 
 	formatted := mustFormat(t, source, config.Default())
@@ -208,6 +222,8 @@ func TestSharedRegionNormalizesSeparatorSpacing(t *testing.T) {
 }
 
 func TestSharedRegionNormalizesCallAndSubscriptAdjacency(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("stock F() {\n#if A\nif(first) {\nCall (value); result = items [index];\n#else\nif(second) {\n#endif\nreturn result;\n}\n}\n")
 
 	formatted := mustFormat(t, source, config.Default())
@@ -222,6 +238,8 @@ func TestSharedRegionNormalizesCallAndSubscriptAdjacency(t *testing.T) {
 }
 
 func TestSharedDeclarationOptionsDoNotLeakIntoInitializer(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("stock F() {\n#if A\nif(first) {\nnew result = Call (items [index], values [other]), second [4];\n#else\nif(second) {\n#endif\nreturn result;\n}\n}\n")
 	cfg := config.Default()
 	cfg.SpaceBeforeFunctionParen = true
@@ -240,17 +258,11 @@ func TestSharedDeclarationOptionsDoNotLeakIntoInitializer(t *testing.T) {
 }
 
 func TestSharedRegionNormalizesKeywordParenAdjacency(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("stock F() {\n#if A\nif(first) {\nresult = sizeof (items) + tagof (value); return(value);\n#else\nif(second) {\n#endif\nreturn result;\n}\n}\n")
 
-	formatted := mustFormat(t, source, config.Default())
-	if !strings.Contains(string(formatted), "sizeof(items) + tagof(value); return (value);") {
-		t.Fatalf("shared keyword/paren adjacency was not normalized:\n%s", formatted)
-	}
-
-	second := mustFormat(t, formatted, config.Default())
-	if string(second) != string(formatted) {
-		t.Fatalf("shared keyword/paren adjacency is not idempotent\nfirst:\n%s\nsecond:\n%s", formatted, second)
-	}
+	formatAndAssertIdempotent(t, source, config.Default(), "sizeof(items) + tagof(value); return (value);", "shared keyword/paren adjacency was not normalized")
 
 	padded := config.Default()
 	padded.SpaceInsideParens = true
@@ -262,6 +274,8 @@ func TestSharedRegionNormalizesKeywordParenAdjacency(t *testing.T) {
 }
 
 func TestSharedRegionDistinguishesTagCastAndTernaryColons(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("stock F() {\n#if A\nif(first) {\nnew custom : value; result = condition?YES:NO; nested = first?second?A:B:C; result = Float : 1.0;\n#else\nif(second) {\n#endif\nreturn result;\n}\n}\n")
 	formatted := mustFormat(t, source, config.Default())
 
@@ -279,6 +293,8 @@ func TestSharedRegionDistinguishesTagCastAndTernaryColons(t *testing.T) {
 }
 
 func TestSharedOverlappingWhitespaceEditsDoNotPanic(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("#if ? ? ?   ?")
 	formatted := mustFormat(t, source, config.Default())
 
@@ -289,6 +305,8 @@ func TestSharedOverlappingWhitespaceEditsDoNotPanic(t *testing.T) {
 }
 
 func TestSharedRegionNormalizesCaseAndLabelColons(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("stock F() {\n#if A\nif(first) {\ncase 1 : Call();\nretry : Call();\n#else\nif(second) {\n#endif\nreturn 1;\n}\n}\n")
 	formatted := mustFormat(t, source, config.Default())
 
@@ -306,6 +324,8 @@ func TestSharedRegionNormalizesCaseAndLabelColons(t *testing.T) {
 }
 
 func TestOpaqueTokenPastingMacroIsPreservedAndIdempotent(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("#define ac_fpublic%0(%1) forward%0(%1); public%0(%1)\n")
 
 	formatted := mustFormat(t, source, config.Default())
@@ -320,6 +340,8 @@ func TestOpaqueTokenPastingMacroIsPreservedAndIdempotent(t *testing.T) {
 }
 
 func TestSharedConditionalRespectsInnerSpacingOptions(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("stock F() {\n#if A\nif( Check( { -1, 2 } ) ) {\n#else\nif( items[ index ] ) {\n#endif\nreturn 1;\n}\n}\n")
 	requireSharedConditionalPath(t, source)
 
@@ -340,6 +362,8 @@ func TestSharedConditionalRespectsInnerSpacingOptions(t *testing.T) {
 }
 
 func TestSharedForBoundaryIgnoresInnerParenPadding(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("stock F() {\n#if A\nfor( ; value; ++value ) {\nfor(;;) Call(value);\n#else\nfor( ; other; ++other ) {\nfor(;other;) Call(other);\n#endif\nCall( value );\n}\n}\n")
 	cfg := config.Default()
 	cfg.SpaceInsideParens = true
@@ -359,6 +383,8 @@ func TestSharedForBoundaryIgnoresInnerParenPadding(t *testing.T) {
 }
 
 func TestSharedRegionKeepsOperatorTightBeforeSemicolonAndComma(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("#if ?\nx < y>;\nx < y,\n")
 	formatted := mustFormat(t, source, config.Default())
 

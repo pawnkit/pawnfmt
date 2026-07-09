@@ -8,6 +8,8 @@ import (
 )
 
 func TestSharedBraceConditionalFormatting(t *testing.T) {
+	t.Parallel()
+
 	source := []byte(strings.Join([]string{
 		"stock F() {",
 		"#if defined A",
@@ -48,6 +50,8 @@ func TestSharedBraceConditionalFormatting(t *testing.T) {
 }
 
 func TestSharedAllmanSplitsOtherControlOpeners(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("stock F() {\n#if A\nwhile(first) {\n#else\nfor(new i; i < 2; i++) {\n#endif\ndo {\nCall();\n} while(false);\n}\n}\n")
 	formatted := mustFormat(t, source, config.Default())
 
@@ -71,6 +75,8 @@ func TestSharedAllmanSplitsOtherControlOpeners(t *testing.T) {
 }
 
 func TestConditionalFunctionHeadersFormatting(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("#if defined LONG\npublic F(value,extra)\n#else\npublic F(value)\n#endif\n{ return value; }\n")
 	want := strings.Join([]string{
 		"#if defined LONG",
@@ -112,6 +118,8 @@ func TestConditionalFunctionHeadersFormatting(t *testing.T) {
 }
 
 func TestCommentAndDeclaratorReadability(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("//Header\nnew first[] = {1, 2}, second[] = {3, 4}; //0 values\n")
 	cfg := config.Default()
 	cfg.LineWidth = 35
@@ -129,6 +137,8 @@ func TestCommentAndDeclaratorReadability(t *testing.T) {
 }
 
 func TestSharedConditionalTokenAwareWrapping(t *testing.T) {
+	t.Parallel()
+
 	source := []byte(strings.Join([]string{
 		"stock F() {",
 		"#if A",
@@ -161,6 +171,8 @@ func TestSharedConditionalTokenAwareWrapping(t *testing.T) {
 }
 
 func TestSharedWrappingCountsTabVisualWidth(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("stock F() {\n#if A\nif(very_long_condition && another_long_condition && final_condition) {\n#else\nif(other_long_condition && another_long_condition && final_condition) {\n#endif\nreturn 1;\n}\n}\n")
 	requireSharedConditionalPath(t, source)
 
@@ -193,6 +205,8 @@ func TestSharedWrappingCountsTabVisualWidth(t *testing.T) {
 }
 
 func TestWrappingCountsUnicodeCharactersInsteadOfBytes(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("stock F() {\n#if A\nif(first) {\nCall(\"éééééééé\", value);\n#else\nif(second) {\n#endif\nreturn 1;\n}\n}\n")
 	requireSharedConditionalPath(t, source)
 
@@ -211,6 +225,8 @@ func TestWrappingCountsUnicodeCharactersInsteadOfBytes(t *testing.T) {
 }
 
 func TestSharedConditionalRespectsSpacingOptions(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("stock F() {\n#if A\nif(Float :value, other) {\n#else\nif(bool :value, other) {\n#endif\nreturn 1;\n}\n}\n")
 	requireSharedConditionalPath(t, source)
 
@@ -230,6 +246,8 @@ func TestSharedConditionalRespectsSpacingOptions(t *testing.T) {
 }
 
 func TestSharedConditionalDistinguishesPrefixAndBinaryOperators(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("#if A\nstock F(& Float:value, & other)\n#else\nstock F(& Float:value, & other)\n#endif\n{ return value == - 1 && ! other ? value & other : + other; }\n")
 	formatted := mustFormat(t, source, config.Default())
 
@@ -247,6 +265,8 @@ func TestSharedConditionalDistinguishesPrefixAndBinaryOperators(t *testing.T) {
 }
 
 func TestSharedConditionalPreservesWrappedBinaryOperatorSpacing(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("stock F() {\n#if A\nif(very_long_value - another_long_value > limit) {\n#else\nif(other_long_value - another_long_value > limit) {\n#endif\nreturn 1;\n}\n}\n")
 	requireSharedConditionalPath(t, source)
 
@@ -266,6 +286,8 @@ func TestSharedConditionalPreservesWrappedBinaryOperatorSpacing(t *testing.T) {
 }
 
 func TestSharedConditionalIndentsExistingContinuationLines(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("stock F() {\n#if A\nif(first_condition &&\nsecond_condition &&\nthird_condition) {\n#else\nif(other_condition ||\nfinal_condition) {\n#endif\nCall(first_argument,\nsecond_argument);\n}\n}\n")
 	requireSharedConditionalPath(t, source)
 	formatted := mustFormat(t, source, config.Default())
@@ -283,6 +305,8 @@ func TestSharedConditionalIndentsExistingContinuationLines(t *testing.T) {
 }
 
 func TestSharedConditionalAppliesAlwaysBracesToCompleteInlineControls(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("stock F() {\n#if A\nif(first) return 1;\nelse Call(first);\n#else\nif(second) return 2;\nelse if(third) Call(second);\n#endif\nreturn 0;\n}\n")
 	formatted := mustFormat(t, source, config.Default())
 
@@ -314,6 +338,8 @@ func TestSharedConditionalAppliesAlwaysBracesToCompleteInlineControls(t *testing
 }
 
 func TestSharedInlineControlRespectsMultilineWithoutBraceSynthesis(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("stock F() {\n#if A\nif(first) Call(first);\nelse Call(second);\n#else\nif(third) Call(third);\n#endif\n}\n")
 
 	for _, braces := range []config.SingleStatementBraces{
@@ -340,6 +366,8 @@ func TestSharedInlineControlRespectsMultilineWithoutBraceSynthesis(t *testing.T)
 }
 
 func TestSharedInlineControlBracesConvergeAcrossStyles(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("stock F() {\n#if A\nif(first) Call(first);\nelse Call(second);\n#else\nif(third) Call(third);\n#endif\n}\n")
 
 	cases := []struct {
@@ -352,6 +380,8 @@ func TestSharedInlineControlBracesConvergeAcrossStyles(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			cfg := config.Default()
 			tc.mutate(&cfg)
 			first := mustFormat(t, source, cfg)
@@ -365,6 +395,8 @@ func TestSharedInlineControlBracesConvergeAcrossStyles(t *testing.T) {
 }
 
 func TestSharedDirectiveContinuationsUseStableIndent(t *testing.T) {
+	t.Parallel()
+
 	source := []byte("stock F() {\n#if A\nif(first) {\n#if FIRST\\\n|| SECOND\\\n|| THIRD\nCall();\n#endif\n#else\nif(second) {\n#endif\nCall();\n}\n}\n")
 	formatted := mustFormat(t, source, config.Default())
 	text := string(formatted)
@@ -388,6 +420,8 @@ func TestSharedDirectiveContinuationsUseStableIndent(t *testing.T) {
 }
 
 func TestSharedConditionalSynthesizesSoleSharedOpenBrace(t *testing.T) {
+	t.Parallel()
+
 	source := []byte(strings.Join([]string{
 		"stock F() {",
 		"#if defined isnull",
@@ -416,6 +450,8 @@ func TestSharedConditionalSynthesizesSoleSharedOpenBrace(t *testing.T) {
 }
 
 func TestSharedConditionalRendersTrailingElse(t *testing.T) {
+	t.Parallel()
+
 	source := []byte(strings.Join([]string{
 		"stock F() {",
 		"#if defined isnull",
@@ -445,6 +481,8 @@ func TestSharedConditionalRendersTrailingElse(t *testing.T) {
 }
 
 func TestIfStatementRendersConditionalElseIfExtension(t *testing.T) {
+	t.Parallel()
+
 	source := []byte(strings.Join([]string{
 		"stock F(a) {",
 		"if (a == 1)",
@@ -477,6 +515,8 @@ func TestIfStatementRendersConditionalElseIfExtension(t *testing.T) {
 }
 
 func TestConditionalRegionRendersSharedTrailingElseOnce(t *testing.T) {
+	t.Parallel()
+
 	source := []byte(strings.Join([]string{
 		"stock F(lc) {",
 		"#if defined A",
@@ -505,6 +545,8 @@ func TestConditionalRegionRendersSharedTrailingElseOnce(t *testing.T) {
 }
 
 func TestSharedConditionalSynthesizesBraceDespiteBalancedNestedBlocks(t *testing.T) {
+	t.Parallel()
+
 	source := []byte(strings.Join([]string{
 		"stock F(lid, newkeys) {",
 		"#if defined A",
@@ -544,6 +586,8 @@ func TestSharedConditionalSynthesizesBraceDespiteBalancedNestedBlocks(t *testing
 }
 
 func TestSharedInlineControlSplitsWithoutBracesWhenConfigured(t *testing.T) {
+	t.Parallel()
+
 	cfg := config.Default()
 	cfg.SingleStatementBraces = config.SingleStatementBracesNever
 	cfg.KeepSimpleStatementsSingleLine = false
@@ -587,6 +631,8 @@ func TestSharedInlineControlSplitsWithoutBracesWhenConfigured(t *testing.T) {
 }
 
 func TestSharedControlStatementWrapsConditionAndBodySeparately(t *testing.T) {
+	t.Parallel()
+
 	cfg := config.Default()
 	cfg.SingleStatementBraces = config.SingleStatementBracesPreserve
 	cfg.LineWidth = 60

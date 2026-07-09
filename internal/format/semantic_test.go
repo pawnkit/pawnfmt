@@ -3,6 +3,8 @@ package format
 import "testing"
 
 func TestVerifySemanticTokensAllowsFormattingStructure(t *testing.T) {
+	t.Parallel()
+
 	before := []byte("if (ready) return Call(a, b);\n")
 
 	after := []byte("if (ready) {\n    return Call(a, b,);\n}\n")
@@ -12,6 +14,8 @@ func TestVerifySemanticTokensAllowsFormattingStructure(t *testing.T) {
 }
 
 func TestVerifySemanticTokensRejectsMeaningfulChanges(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name  string
 		after string
@@ -24,6 +28,8 @@ func TestVerifySemanticTokensRejectsMeaningfulChanges(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
 			if err := verifySemanticTokens(before, []byte(test.after)); err == nil {
 				t.Fatal("expected semantic change to be rejected")
 			}

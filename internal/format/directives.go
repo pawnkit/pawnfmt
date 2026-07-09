@@ -65,6 +65,7 @@ func (s *state) formatConditionDirective(n *parser.Node) doc.Doc {
 }
 
 func directiveKeywordFor(k parser.Kind) string {
+	//nolint:exhaustive // only the condition-directive kinds have a keyword here
 	switch k {
 	case parser.KindDirectiveIf:
 		return "if"
@@ -129,73 +130,7 @@ func (s *state) formatConditionalRegion(n *parser.Node) doc.Doc {
 	var parts []doc.Doc
 
 	for bi, branch := range n.Children {
-		directive := branch.Field("directive")
-
-		if bi > 0 {
-			if indentNested {
-				parts = append(parts, doc.HardLine())
-			} else {
-				parts = append(parts, s.itemSeparatorBefore(directive))
-			}
-		}
-
-		parts = append(parts, s.formatNode(directive))
-
-		var items []*parser.Node
-
-		for _, item := range branch.Children {
-			if item != directive {
-				items = append(items, item)
-			}
-		}
-
-		var (
-			branchParts []doc.Doc
-			prev        *parser.Node
-		)
-
-		for i := 0; i < len(items); i++ {
-			item := items[i]
-
-			var base doc.Doc
-
-			switch {
-			case prev == nil:
-				base = doc.HardLine()
-			case forceTopLevel:
-				base = s.topLevelSeparator(prev, item)
-			default:
-				base = blankLineSeparator(s.blankLinesBefore(item.LeadingTrivia()))
-			}
-
-			separator := base
-			if !indentNested {
-				separator = s.directiveAwareSeparator(base, item)
-			}
-
-			if item.Kind == parser.KindLabelStatement && i+1 < len(items) &&
-				!leadingStartsNewLine(item.TrailingTrivia()) && !leadingStartsNewLine(items[i+1].LeadingTrivia()) {
-				next := items[i+1]
-				branchParts = append(branchParts, separator, s.formatNode(item), doc.Text(" "), s.formatNode(next))
-				prev = next
-				i++
-
-				continue
-			}
-
-			if i == len(items)-1 && item.Kind == parser.KindIfStatement && branch.Field("shared_alternative") != nil {
-				s.hint.suppressIfAlternative = true
-			}
-
-			branchParts = append(branchParts, separator, s.formatNode(item))
-			prev = item
-		}
-
-		if indentNested && len(branchParts) > 0 {
-			parts = append(parts, doc.Indent(doc.Concat(branchParts...)))
-		} else {
-			parts = append(parts, branchParts...)
-		}
+		parts = append(parts, s.formatConditionalBranch(branch, bi, forceTopLevel, indentNested)...)
 	}
 
 	if alt := n.Field("alternative"); alt != nil {
@@ -208,4 +143,83 @@ func (s *state) formatConditionalRegion(n *parser.Node) doc.Doc {
 	}
 
 	return doc.Concat(parts...)
+}
+
+func (s *state) formatConditionalBranch(branch *parser.Node, bi int, forceTopLevel, indentNested bool) []doc.Doc {
+	directive := branch.Field("directive")
+
+	var parts []doc.Doc
+
+	if bi > 0 {
+		if indentNested {
+			parts = append(parts, doc.HardLine())
+		} else {
+			parts = append(parts, s.itemSeparatorBefore(directive))
+		}
+	}
+
+	parts = append(parts, s.formatNode(directive))
+
+	var items []*parser.Node
+
+	for _, item := range branch.Children {
+		if item != directive {
+			items = append(items, item)
+		}
+	}
+
+	branchParts := s.formatConditionalBranchItems(branch, items, forceTopLevel, indentNested)
+	if indentNested && len(branchParts) > 0 {
+		parts = append(parts, doc.Indent(doc.Concat(branchParts...)))
+	} else {
+		parts = append(parts, branchParts...)
+	}
+
+	return parts
+}
+
+func (s *state) formatConditionalBranchItems(branch *parser.Node, items []*parser.Node, forceTopLevel, indentNested bool) []doc.Doc {
+	var (
+		branchParts []doc.Doc
+		prev        *parser.Node
+	)
+
+	for i := 0; i < len(items); i++ {
+		item := items[i]
+
+		var base doc.Doc
+
+		switch {
+		case prev == nil:
+			base = doc.HardLine()
+		case forceTopLevel:
+			base = s.topLevelSeparator(prev, item)
+		default:
+			base = blankLineSeparator(s.blankLinesBefore(item.LeadingTrivia()))
+		}
+
+		separator := base
+		if !indentNested {
+			separator = s.directiveAwareSeparator(base, item)
+		}
+
+		if item.Kind == parser.KindLabelStatement && i+1 < len(items) &&
+			!leadingStartsNewLine(item.TrailingTrivia()) && !leadingStartsNewLine(items[i+1].LeadingTrivia()) {
+			next := items[i+1]
+			branchParts = append(branchParts, separator, s.formatNode(item), doc.Text(" "), s.formatNode(next))
+			prev = next
+			i++
+
+			continue
+		}
+
+		if i == len(items)-1 && item.Kind == parser.KindIfStatement && branch.Field("shared_alternative") != nil {
+			s.hint.suppressIfAlternative = true
+		}
+
+		branchParts = append(branchParts, separator, s.formatNode(item))
+		prev = item
+	}
+
+	return branchParts
 }

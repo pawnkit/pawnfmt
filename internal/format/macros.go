@@ -146,28 +146,36 @@ func containsHardLine(d doc.Doc) bool {
 	case doc.BreakParentDoc:
 		return true
 	case doc.ConcatDoc:
-		if slices.ContainsFunc(v.Parts, containsHardLine) {
-			return true
-		}
+		return slices.ContainsFunc(v.Parts, containsHardLine)
 	case doc.FillDoc:
-		if slices.ContainsFunc(v.Parts, containsHardLine) {
-			return true
-		}
-	case doc.IndentDoc:
-		return containsHardLine(v.Contents)
-	case doc.ResetIndentDoc:
-		return containsHardLine(v.Contents)
-	case doc.OutdentDoc:
-		return containsHardLine(v.Contents)
-	case doc.GroupDoc:
-		return containsHardLine(v.Contents)
-	case doc.LineSuffixDoc:
-		return containsHardLine(v.Contents)
+		return slices.ContainsFunc(v.Parts, containsHardLine)
 	case doc.IfBreakDoc:
 		return containsHardLine(v.Broken) || containsHardLine(v.Flat)
-	}
+	default:
+		if inner, ok := unwrapDoc(d); ok {
+			return containsHardLine(inner)
+		}
 
-	return false
+		return false
+	}
+}
+
+// unwrapDoc returns the single wrapped Doc for wrapper kinds like Indent/Group.
+func unwrapDoc(d doc.Doc) (doc.Doc, bool) {
+	switch v := d.(type) {
+	case doc.IndentDoc:
+		return v.Contents, true
+	case doc.ResetIndentDoc:
+		return v.Contents, true
+	case doc.OutdentDoc:
+		return v.Contents, true
+	case doc.GroupDoc:
+		return v.Contents, true
+	case doc.LineSuffixDoc:
+		return v.Contents, true
+	default:
+		return nil, false
+	}
 }
 
 func backslashContinue(text string) string {

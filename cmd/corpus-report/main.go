@@ -1,3 +1,4 @@
+// Command corpus-report runs the formatter against the real-world corpus and reports results.
 package main
 
 import (

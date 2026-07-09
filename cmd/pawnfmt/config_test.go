@@ -8,6 +8,7 @@ import (
 )
 
 func TestRunExplicitConfigPathIsApplied(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	cfgPath := filepath.Join(dir, "custom.toml")
 	writeCLIFixture(t, cfgPath, "indent_width = 2\n")
@@ -26,6 +27,8 @@ func TestRunExplicitConfigPathIsApplied(t *testing.T) {
 }
 
 func TestRunExplicitConfigPathThatDoesNotExistIsAConfigError(t *testing.T) {
+	t.Parallel()
+
 	code, _, stderr := runCLI([]string{"--config", filepath.Join(t.TempDir(), "missing.toml"), "a.pwn"}, "")
 	if code != exitConfigError {
 		t.Fatalf("exit code = %d, want %d (exitConfigError)", code, exitConfigError)
@@ -37,6 +40,7 @@ func TestRunExplicitConfigPathThatDoesNotExistIsAConfigError(t *testing.T) {
 }
 
 func TestRunNoConfigFlagIgnoresADiscoverableConfigFile(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	writeCLIFixture(t, filepath.Join(dir, "pawnfmt.toml"), "indent_width = 2\n")
 	srcPath := filepath.Join(dir, "a.pwn")
@@ -53,6 +57,7 @@ func TestRunNoConfigFlagIgnoresADiscoverableConfigFile(t *testing.T) {
 }
 
 func TestRunDiscoversNearestConfigFileAutomatically(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	writeCLIFixture(t, filepath.Join(dir, "pawnfmt.toml"), "indent_width = 2\n")
 	srcPath := filepath.Join(dir, "a.pwn")
@@ -69,6 +74,7 @@ func TestRunDiscoversNearestConfigFileAutomatically(t *testing.T) {
 }
 
 func TestRunStdinFilenameDrivesConfigDiscoveryForStdinMode(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	writeCLIFixture(t, filepath.Join(dir, "pawnfmt.toml"), "indent_width = 2\n")
 	stdinFilename := filepath.Join(dir, "virtual.pwn")
@@ -84,6 +90,7 @@ func TestRunStdinFilenameDrivesConfigDiscoveryForStdinMode(t *testing.T) {
 }
 
 func TestRunDebugFormatDocPrintsTheDocTree(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	path := filepath.Join(dir, "a.pwn")
 	writeCLIFixture(t, path, "new x;\n")
@@ -99,6 +106,7 @@ func TestRunDebugFormatDocPrintsTheDocTree(t *testing.T) {
 }
 
 func TestRunDebugFormatDocReportsUnparseableSourceAsAFormatError(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	path := filepath.Join(dir, "broken.pwn")
 	writeCLIFixture(t, path, "}")
@@ -114,6 +122,7 @@ func TestRunDebugFormatDocReportsUnparseableSourceAsAFormatError(t *testing.T) {
 }
 
 func TestStartDirForPrefersTheDirectoryOfTheFirstPath(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	path := filepath.Join(dir, "sub", "a.pwn")
 	writeCLIFixture(t, path, "new x;\n")
@@ -127,6 +136,7 @@ func TestStartDirForPrefersTheDirectoryOfTheFirstPath(t *testing.T) {
 }
 
 func TestStartDirForUsesADirectoryPathDirectly(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	got := startDirFor(&options{Paths: []string{dir}})
 
@@ -137,6 +147,8 @@ func TestStartDirForUsesADirectoryPathDirectly(t *testing.T) {
 }
 
 func TestStartDirForFallsBackToWorkingDirectoryWithNoPathsOrStdinFilename(t *testing.T) {
+	t.Parallel()
+
 	got := startDirFor(&options{})
 
 	wd, err := os.Getwd()

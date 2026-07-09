@@ -7,6 +7,7 @@ import (
 )
 
 func TestAtomicWriteCreatesANewFile(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 
 	path := filepath.Join(dir, "new.pwn")
@@ -25,6 +26,7 @@ func TestAtomicWriteCreatesANewFile(t *testing.T) {
 }
 
 func TestAtomicWriteOverwritesAnExistingFilePreservingItsMode(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 
 	path := filepath.Join(dir, "existing.pwn")
@@ -56,6 +58,7 @@ func TestAtomicWriteOverwritesAnExistingFilePreservingItsMode(t *testing.T) {
 }
 
 func TestAtomicWriteLeavesNoTempFileBehindOnSuccess(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 
 	path := filepath.Join(dir, "clean.pwn")
@@ -74,6 +77,8 @@ func TestAtomicWriteLeavesNoTempFileBehindOnSuccess(t *testing.T) {
 }
 
 func TestAtomicWriteFailsCleanlyWhenTheDirectoryDoesNotExist(t *testing.T) {
+	t.Parallel()
+
 	path := filepath.Join(t.TempDir(), "missing-dir", "file.pwn")
 	if err := atomicWrite(path, []byte("x\n")); err == nil {
 		t.Fatal("atomicWrite should fail when its target directory does not exist")

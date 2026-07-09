@@ -11,6 +11,8 @@ import (
 )
 
 func TestFormatOnceIsStable(t *testing.T) {
+	t.Parallel()
+
 	paths, err := filepath.Glob(filepath.Join("..", "..", "testdata", "*", "*.pwn"))
 	if err != nil {
 		t.Fatalf("glob formatter fixtures: %v", err)
@@ -23,6 +25,8 @@ func TestFormatOnceIsStable(t *testing.T) {
 
 	for _, path := range paths {
 		t.Run(filepath.Base(path), func(t *testing.T) {
+			t.Parallel()
+
 			source, err := os.ReadFile(path)
 			if err != nil {
 				t.Fatalf("read fixture: %v", err)
@@ -46,6 +50,8 @@ func TestFormatOnceIsStable(t *testing.T) {
 }
 
 func TestExternalFixtureFormatOnceIsStable(t *testing.T) {
+	t.Parallel()
+
 	path := os.Getenv("PAWNFMT_ONE_PASS_FIXTURE")
 	if path == "" {
 		t.Skip("PAWNFMT_ONE_PASS_FIXTURE is not set")

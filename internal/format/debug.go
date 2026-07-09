@@ -11,6 +11,7 @@ import (
 	"github.com/pawnkit/pawnfmt/internal/trivia"
 )
 
+// DebugDocTree renders source's internal doc.Doc tree for debugging.
 func DebugDocTree(source []byte, cfg config.Config) (string, error) {
 	cfg.ApplyDefaults()
 
@@ -47,6 +48,15 @@ func dumpDoc(b *strings.Builder, d doc.Doc, depth int) {
 		fmt.Fprintf(b, "%sHardLine\n", indent)
 	case doc.BreakParentDoc:
 		fmt.Fprintf(b, "%sBreakParent\n", indent)
+	default:
+		dumpDocContainer(b, d, depth)
+	}
+}
+
+func dumpDocContainer(b *strings.Builder, d doc.Doc, depth int) {
+	indent := strings.Repeat("  ", depth)
+
+	switch n := d.(type) {
 	case doc.LineSuffixDoc:
 		fmt.Fprintf(b, "%sLineSuffix\n", indent)
 		dumpDoc(b, n.Contents, depth+1)
@@ -91,6 +101,7 @@ func dumpDoc(b *strings.Builder, d doc.Doc, depth int) {
 	}
 }
 
+// DebugCST renders source's parsed concrete syntax tree for debugging.
 func DebugCST(source []byte) string {
 	parsed := parser.Parse(source)
 

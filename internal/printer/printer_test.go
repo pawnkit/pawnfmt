@@ -12,18 +12,24 @@ func opts(lineWidth int) printer.Options {
 }
 
 func TestPrintNilRootReturnsEmpty(t *testing.T) {
+	t.Parallel()
+
 	if got := printer.Print(nil, opts(80)); got != "" {
 		t.Fatalf("Print(nil) = %q, want empty string", got)
 	}
 }
 
 func TestPrintText(t *testing.T) {
+	t.Parallel()
+
 	if got := printer.Print(doc.Text("hello"), opts(80)); got != "hello" {
 		t.Fatalf("Print(Text) = %q, want %q", got, "hello")
 	}
 }
 
 func TestPrintConcatPreservesOrder(t *testing.T) {
+	t.Parallel()
+
 	d := doc.Concat(doc.Text("a"), doc.Text("b"), doc.Text("c"))
 	if got := printer.Print(d, opts(80)); got != "abc" {
 		t.Fatalf("Print(Concat) = %q, want %q", got, "abc")
@@ -31,6 +37,8 @@ func TestPrintConcatPreservesOrder(t *testing.T) {
 }
 
 func TestGroupRendersFlatWhenItFits(t *testing.T) {
+	t.Parallel()
+
 	d := doc.Group(doc.Concat(doc.Text("a"), doc.Line(), doc.Text("b")))
 	if got := printer.Print(d, opts(80)); got != "a b" {
 		t.Fatalf("Print(short Group with Line) = %q, want %q (flat: Line -> space)", got, "a b")
@@ -38,6 +46,8 @@ func TestGroupRendersFlatWhenItFits(t *testing.T) {
 }
 
 func TestGroupBreaksWhenItDoesNotFit(t *testing.T) {
+	t.Parallel()
+
 	d := doc.Group(doc.Concat(doc.Text("aaaaaaaaaa"), doc.Line(), doc.Text("bbbbbbbbbb")))
 
 	want := "aaaaaaaaaa\nbbbbbbbbbb"
@@ -47,6 +57,8 @@ func TestGroupBreaksWhenItDoesNotFit(t *testing.T) {
 }
 
 func TestGroupSoftLineVanishesWhenFlatButBreaksWhenBroken(t *testing.T) {
+	t.Parallel()
+
 	flatDoc := doc.Group(doc.Concat(doc.Text("a"), doc.SoftLine(), doc.Text("b")))
 	if got := printer.Print(flatDoc, opts(80)); got != "ab" {
 		t.Fatalf("Print(short Group with SoftLine) = %q, want %q (flat: SoftLine -> nothing)", got, "ab")
@@ -61,6 +73,8 @@ func TestGroupSoftLineVanishesWhenFlatButBreaksWhenBroken(t *testing.T) {
 }
 
 func TestHardLineAlwaysBreaksEvenInsideFlatGroup(t *testing.T) {
+	t.Parallel()
+
 	d := doc.Group(doc.Concat(doc.Text("a"), doc.HardLine(), doc.Text("b")))
 
 	want := "a\nb"
@@ -70,6 +84,8 @@ func TestHardLineAlwaysBreaksEvenInsideFlatGroup(t *testing.T) {
 }
 
 func TestIndentAddsOneLevelForHardLines(t *testing.T) {
+	t.Parallel()
+
 	d := doc.Concat(doc.Text("a"), doc.Indent(doc.Concat(doc.HardLine(), doc.Text("b"))))
 
 	want := "a\n    b"
@@ -79,6 +95,8 @@ func TestIndentAddsOneLevelForHardLines(t *testing.T) {
 }
 
 func TestIndentNestsAdditively(t *testing.T) {
+	t.Parallel()
+
 	d := doc.Indent(doc.Indent(doc.Concat(doc.HardLine(), doc.Text("b"))))
 
 	want := "\n        b"
@@ -88,6 +106,8 @@ func TestIndentNestsAdditively(t *testing.T) {
 }
 
 func TestResetIndentForcesAbsoluteZeroRegardlessOfAmbient(t *testing.T) {
+	t.Parallel()
+
 	d := doc.Indent(doc.Indent(doc.Concat(doc.HardLine(), doc.ResetIndent(doc.Concat(doc.HardLine(), doc.Text("b"))))))
 
 	want := "\n        \nb"
@@ -97,6 +117,8 @@ func TestResetIndentForcesAbsoluteZeroRegardlessOfAmbient(t *testing.T) {
 }
 
 func TestOutdentIsOneLevelLessThanAmbient(t *testing.T) {
+	t.Parallel()
+
 	d := doc.Indent(doc.Indent(doc.Concat(doc.HardLine(), doc.Outdent(doc.Concat(doc.HardLine(), doc.Text("b"))))))
 
 	want := "\n        \n    b"
@@ -106,6 +128,8 @@ func TestOutdentIsOneLevelLessThanAmbient(t *testing.T) {
 }
 
 func TestOutdentFloorsAtZeroRatherThanGoingNegative(t *testing.T) {
+	t.Parallel()
+
 	d := doc.Outdent(doc.Concat(doc.HardLine(), doc.Text("b")))
 
 	want := "\nb"
@@ -115,6 +139,8 @@ func TestOutdentFloorsAtZeroRatherThanGoingNegative(t *testing.T) {
 }
 
 func TestOutdentDoesNotCompoundAcrossSiblings(t *testing.T) {
+	t.Parallel()
+
 	d := doc.Indent(doc.Indent(doc.Concat(
 		doc.Outdent(doc.Concat(doc.HardLine(), doc.Text("first"))),
 		doc.Outdent(doc.Concat(doc.HardLine(), doc.Text("second"))),
@@ -127,6 +153,8 @@ func TestOutdentDoesNotCompoundAcrossSiblings(t *testing.T) {
 }
 
 func TestIfBreakSelectsFlatWhenGroupFits(t *testing.T) {
+	t.Parallel()
+
 	d := doc.Group(doc.Concat(doc.Text("a"), doc.IfBreak(doc.Text(","), doc.Text(""))))
 	if got := printer.Print(d, opts(80)); got != "a" {
 		t.Fatalf("Print(fitting Group with IfBreak) = %q, want %q (flat branch)", got, "a")
@@ -134,6 +162,8 @@ func TestIfBreakSelectsFlatWhenGroupFits(t *testing.T) {
 }
 
 func TestIfBreakSelectsBrokenWhenGroupBreaks(t *testing.T) {
+	t.Parallel()
+
 	d := doc.Group(doc.Concat(doc.Text("aaaaaaaaaa"), doc.Line(), doc.IfBreak(doc.Text(","), doc.Text(""))))
 
 	want := "aaaaaaaaaa\n,"
@@ -143,6 +173,8 @@ func TestIfBreakSelectsBrokenWhenGroupBreaks(t *testing.T) {
 }
 
 func TestIfBreakNilBranchRendersNothing(t *testing.T) {
+	t.Parallel()
+
 	flat := doc.Group(doc.IfBreak(doc.Text("only-broken"), nil))
 	if got := printer.Print(flat, opts(80)); got != "" {
 		t.Fatalf("Print(flat Group, IfBreak with nil flat branch) = %q, want empty", got)
@@ -150,6 +182,8 @@ func TestIfBreakNilBranchRendersNothing(t *testing.T) {
 }
 
 func TestFillKeepsShortItemsOnOneLineButBreaksWhereNeeded(t *testing.T) {
+	t.Parallel()
+
 	d := doc.Fill(doc.Text("a"), doc.Line(), doc.Text("b"), doc.Line(), doc.Text("c"))
 	if got := printer.Print(d, opts(80)); got != "a b c" {
 		t.Fatalf("Print(Fill, all fits) = %q, want %q", got, "a b c")
@@ -157,6 +191,8 @@ func TestFillKeepsShortItemsOnOneLineButBreaksWhereNeeded(t *testing.T) {
 }
 
 func TestFillBreaksOnlyThePairThatOverflows(t *testing.T) {
+	t.Parallel()
+
 	d := doc.Fill(doc.Text("aa"), doc.Line(), doc.Text("bb"), doc.Line(), doc.Text("cccccccccc"))
 
 	want := "aa bb\ncccccccccc"
@@ -166,6 +202,8 @@ func TestFillBreaksOnlyThePairThatOverflows(t *testing.T) {
 }
 
 func TestFillSingleItem(t *testing.T) {
+	t.Parallel()
+
 	d := doc.Fill(doc.Text("solo"))
 	if got := printer.Print(d, opts(80)); got != "solo" {
 		t.Fatalf("Print(Fill with one item) = %q, want %q", got, "solo")
@@ -173,6 +211,8 @@ func TestFillSingleItem(t *testing.T) {
 }
 
 func TestFillContentWithEmbeddedHardLineForcesBreakForThatChunk(t *testing.T) {
+	t.Parallel()
+
 	multiline := doc.Concat(doc.Text("a"), doc.HardLine(), doc.Text("b"))
 	d := doc.Fill(multiline, doc.Line(), doc.Text("c"))
 
@@ -183,6 +223,8 @@ func TestFillContentWithEmbeddedHardLineForcesBreakForThatChunk(t *testing.T) {
 }
 
 func TestWithDefaultsAppliesFallbacksForZeroValues(t *testing.T) {
+	t.Parallel()
+
 	d := doc.Concat(doc.Text("a"), doc.HardLine(), doc.Indent(doc.Concat(doc.HardLine(), doc.Text("b"))))
 	got := printer.Print(d, printer.Options{})
 
@@ -193,6 +235,8 @@ func TestWithDefaultsAppliesFallbacksForZeroValues(t *testing.T) {
 }
 
 func TestInsertFinalNewlineAddsExactlyOne(t *testing.T) {
+	t.Parallel()
+
 	o := opts(80)
 
 	o.InsertFinalNewline = true
@@ -207,6 +251,8 @@ func TestInsertFinalNewlineAddsExactlyOne(t *testing.T) {
 }
 
 func TestNoInsertFinalNewlineStripsTrailingNewline(t *testing.T) {
+	t.Parallel()
+
 	o := opts(80)
 	o.InsertFinalNewline = false
 
@@ -217,6 +263,8 @@ func TestNoInsertFinalNewlineStripsTrailingNewline(t *testing.T) {
 }
 
 func TestTrimTrailingWhitespaceStripsSpacesBeforeNewlines(t *testing.T) {
+	t.Parallel()
+
 	o := opts(80)
 	o.TrimTrailingWhitespace = true
 	d := doc.Concat(doc.Text("a   "), doc.HardLine(), doc.Text("b"))
@@ -228,6 +276,8 @@ func TestTrimTrailingWhitespaceStripsSpacesBeforeNewlines(t *testing.T) {
 }
 
 func TestNewlineStyleCRLF(t *testing.T) {
+	t.Parallel()
+
 	o := opts(80)
 	o.Newline = "\r\n"
 	d := doc.Concat(doc.Text("a"), doc.HardLine(), doc.Text("b"))
@@ -239,6 +289,8 @@ func TestNewlineStyleCRLF(t *testing.T) {
 }
 
 func TestIndentStyleTabUsesTabsNotSpaces(t *testing.T) {
+	t.Parallel()
+
 	o := opts(80)
 	o.IndentStyle = "tab"
 	d := doc.Indent(doc.Concat(doc.HardLine(), doc.Text("b")))

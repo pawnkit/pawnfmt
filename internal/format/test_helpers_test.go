@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 
 	parser "github.com/pawnkit/pawn-parser"
@@ -21,9 +22,27 @@ const (
 func mustFormat(t *testing.T, source []byte, cfg config.Config) []byte {
 	t.Helper()
 
-	formatted, err := formatter.FormatSource(source, cfg)
+	formatted, err := formatter.Source(source, cfg)
 	if err != nil {
 		t.Fatalf("format source: %v", err)
+	}
+
+	return formatted
+}
+
+// formatAndAssertIdempotent formats source, asserts the output contains
+// wantSubstr, then reformats and asserts the second pass matches the first.
+func formatAndAssertIdempotent(t *testing.T, source []byte, cfg config.Config, wantSubstr, failMsg string) []byte {
+	t.Helper()
+
+	formatted := mustFormat(t, source, cfg)
+	if !strings.Contains(string(formatted), wantSubstr) {
+		t.Fatalf("%s:\n%s", failMsg, formatted)
+	}
+
+	second := mustFormat(t, formatted, cfg)
+	if string(second) != string(formatted) {
+		t.Fatalf("%s is not idempotent\nfirst:\n%s\nsecond:\n%s", failMsg, formatted, second)
 	}
 
 	return formatted

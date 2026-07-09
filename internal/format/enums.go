@@ -51,64 +51,75 @@ func (s *state) formatEnumBody(body *parser.Node) doc.Doc {
 		return s.formatDirectiveList(body.Children, "{", "}", trailingComma)
 	}
 
-	var prefixWidths []int
-
-	maxPrefixWidth := 0
-
-	if s.config.AlignEnumFields {
-		prefixWidths = make([]int, len(body.Children))
-		for i, entry := range body.Children {
-			w := len(s.renderFlat(s.formatEnumEntryPrefix(entry)))
-
-			prefixWidths[i] = w
-			if entry.Field("value") != nil && w > maxPrefixWidth {
-				maxPrefixWidth = w
-			}
-		}
-	}
-
-	var parts []doc.Doc
-
-	parts = append(parts, doc.Text("{"))
+	prefixWidths, maxPrefixWidth := s.enumEntryPrefixWidths(body.Children)
 
 	var inner []doc.Doc
 
 	for i, entry := range body.Children {
 		if i > 0 {
-			inner = append(inner, doc.HardLine())
-
-			if blanks := s.blankLinesBefore(entry.LeadingTrivia()); blanks > 0 {
-				for range blanks {
-					inner = append(inner, doc.HardLine())
-				}
-			}
+			inner = append(inner, s.blankAwareHardLines(entry)...)
 		}
 
 		addComma := i < len(body.Children)-1 || trailingComma
-		if s.config.AlignEnumFields && entry.Field("value") != nil && prefixWidths[i] < maxPrefixWidth {
-			padding := doc.Text(strings.Repeat(" ", maxPrefixWidth-prefixWidths[i]))
-
-			entryDoc := doc.Concat(s.formatEnumEntryPrefix(entry), padding, s.assignmentSeparator(), s.formatNode(entry.Field("value")))
-			if addComma {
-				entryDoc = doc.Concat(entryDoc, doc.Text(","))
-			}
-
-			if trail := s.trailingDoc(entry.TrailingTrivia()); trail != nil {
-				entryDoc = doc.Concat(entryDoc, trail)
-			}
-
-			inner = append(inner, entryDoc)
-
-			continue
-		}
-
-		inner = append(inner, s.formatListItem(entry, addComma))
+		inner = append(inner, s.formatEnumEntryLine(entry, addComma, prefixWidths[i], maxPrefixWidth))
 	}
 
-	parts = append(parts, doc.Indent(doc.Concat(doc.HardLine(), doc.Concat(inner...))))
-	parts = append(parts, doc.HardLine(), doc.Text("}"))
+	parts := []doc.Doc{
+		doc.Text("{"),
+		doc.Indent(doc.Concat(doc.HardLine(), doc.Concat(inner...))),
+		doc.HardLine(), doc.Text("}"),
+	}
 
 	return doc.Concat(parts...)
+}
+
+func (s *state) enumEntryPrefixWidths(entries []*parser.Node) ([]int, int) {
+	prefixWidths := make([]int, len(entries))
+	if !s.config.AlignEnumFields {
+		return prefixWidths, 0
+	}
+
+	maxPrefixWidth := 0
+
+	for i, entry := range entries {
+		w := len(s.renderFlat(s.formatEnumEntryPrefix(entry)))
+
+		prefixWidths[i] = w
+		if entry.Field("value") != nil && w > maxPrefixWidth {
+			maxPrefixWidth = w
+		}
+	}
+
+	return prefixWidths, maxPrefixWidth
+}
+
+func (s *state) blankAwareHardLines(entry *parser.Node) []doc.Doc {
+	lines := []doc.Doc{doc.HardLine()}
+
+	for range s.blankLinesBefore(entry.LeadingTrivia()) {
+		lines = append(lines, doc.HardLine())
+	}
+
+	return lines
+}
+
+func (s *state) formatEnumEntryLine(entry *parser.Node, addComma bool, prefixWidth, maxPrefixWidth int) doc.Doc {
+	if !s.config.AlignEnumFields || entry.Field("value") == nil || prefixWidth >= maxPrefixWidth {
+		return s.formatListItem(entry, addComma)
+	}
+
+	padding := doc.Text(strings.Repeat(" ", maxPrefixWidth-prefixWidth))
+
+	entryDoc := doc.Concat(s.formatEnumEntryPrefix(entry), padding, s.assignmentSeparator(), s.formatNode(entry.Field("value")))
+	if addComma {
+		entryDoc = doc.Concat(entryDoc, doc.Text(","))
+	}
+
+	if trail := s.trailingDoc(entry.TrailingTrivia()); trail != nil {
+		entryDoc = doc.Concat(entryDoc, trail)
+	}
+
+	return entryDoc
 }
 
 func sourceHasTrailingComma(body *parser.Node, source []byte) bool {

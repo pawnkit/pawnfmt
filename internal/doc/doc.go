@@ -1,57 +1,69 @@
+// Package doc implements a Wadler/Prettier-style pretty-printing IR.
 package doc
 
+// Doc is a node in the pretty-printing document tree.
 type Doc interface {
 	docNode()
 }
 
+// TextDoc renders literal text verbatim.
 type TextDoc struct {
 	Value string
 }
 
 func (TextDoc) docNode() {}
 
+// LineDoc renders a space in flat mode, or a newline in break mode.
 type LineDoc struct{}
 
 func (LineDoc) docNode() {}
 
+// SoftLineDoc renders nothing in flat mode, or a newline in break mode.
 type SoftLineDoc struct{}
 
 func (SoftLineDoc) docNode() {}
 
+// HardLineDoc always renders a newline and forces its enclosing Group to break.
 type HardLineDoc struct{}
 
 func (HardLineDoc) docNode() {}
 
+// ConcatDoc renders its parts in sequence.
 type ConcatDoc struct {
 	Parts []Doc
 }
 
 func (ConcatDoc) docNode() {}
 
+// IndentDoc renders Contents one indent level deeper.
 type IndentDoc struct {
 	Contents Doc
 }
 
 func (IndentDoc) docNode() {}
 
+// ResetIndentDoc renders Contents at column zero, ignoring ambient indent.
 type ResetIndentDoc struct {
 	Contents Doc
 }
 
 func (ResetIndentDoc) docNode() {}
 
+// OutdentDoc renders Contents one indent level shallower.
 type OutdentDoc struct {
 	Contents Doc
 }
 
 func (OutdentDoc) docNode() {}
 
+// GroupDoc renders Contents flat if it fits on the line, else breaks it.
 type GroupDoc struct {
 	Contents Doc
 }
 
 func (GroupDoc) docNode() {}
 
+// IfBreakDoc renders Broken when its enclosing Group breaks, else Flat.
 type IfBreakDoc struct {
 	Broken Doc
 	Flat   Doc
@@ -59,6 +71,7 @@ type IfBreakDoc struct {
 
 func (IfBreakDoc) docNode() {}
 
+// FillDoc packs parts onto lines, breaking only where a part wouldn't fit.
 type FillDoc struct {
 	Parts []Doc
 }
@@ -77,18 +90,22 @@ type LineSuffixDoc struct {
 
 func (LineSuffixDoc) docNode() {}
 
+// Text renders value verbatim.
 func Text(value string) Doc {
 	return TextDoc{Value: value}
 }
 
+// Line renders a space in flat mode, or a newline in break mode.
 func Line() Doc {
 	return LineDoc{}
 }
 
+// SoftLine renders nothing in flat mode, or a newline in break mode.
 func SoftLine() Doc {
 	return SoftLineDoc{}
 }
 
+// HardLine always renders a newline and forces its enclosing Group to break.
 func HardLine() Doc {
 	return HardLineDoc{}
 }
@@ -109,6 +126,7 @@ func LineSuffix(contents Doc) Doc {
 	return LineSuffixDoc{Contents: contents}
 }
 
+// Concat renders parts in sequence, dropping any nil entries.
 func Concat(parts ...Doc) Doc {
 	filtered := make([]Doc, 0, len(parts))
 	for _, part := range parts {
@@ -128,6 +146,7 @@ func Concat(parts ...Doc) Doc {
 	return ConcatDoc{Parts: filtered}
 }
 
+// Indent renders contents one indent level deeper.
 func Indent(contents Doc) Doc {
 	if contents == nil {
 		return Text("")
@@ -136,6 +155,7 @@ func Indent(contents Doc) Doc {
 	return IndentDoc{Contents: contents}
 }
 
+// ResetIndent renders contents at column zero, ignoring ambient indent.
 func ResetIndent(contents Doc) Doc {
 	if contents == nil {
 		return Text("")
@@ -144,6 +164,7 @@ func ResetIndent(contents Doc) Doc {
 	return ResetIndentDoc{Contents: contents}
 }
 
+// Outdent renders contents one indent level shallower.
 func Outdent(contents Doc) Doc {
 	if contents == nil {
 		return Text("")
@@ -152,6 +173,7 @@ func Outdent(contents Doc) Doc {
 	return OutdentDoc{Contents: contents}
 }
 
+// Group renders contents flat if it fits on the line, else breaks it.
 func Group(contents Doc) Doc {
 	if contents == nil {
 		return Text("")
@@ -160,6 +182,7 @@ func Group(contents Doc) Doc {
 	return GroupDoc{Contents: contents}
 }
 
+// Join concatenates parts with separator between each, dropping nil entries.
 func Join(separator Doc, parts ...Doc) Doc {
 	filtered := make([]Doc, 0, len(parts))
 	for _, part := range parts {
@@ -184,10 +207,12 @@ func Join(separator Doc, parts ...Doc) Doc {
 	return Concat(out...)
 }
 
+// IfBreak renders broken when its enclosing Group breaks, else flat.
 func IfBreak(broken, flat Doc) Doc {
 	return IfBreakDoc{Broken: broken, Flat: flat}
 }
 
+// Fill packs parts onto lines, breaking only where a part wouldn't fit.
 func Fill(parts ...Doc) Doc {
 	filtered := make([]Doc, 0, len(parts))
 	for _, part := range parts {
@@ -207,6 +232,7 @@ func Fill(parts ...Doc) Doc {
 	return FillDoc{Parts: filtered}
 }
 
+// RawTextBlock renders value verbatim line-by-line at column zero.
 func RawTextBlock(value string) Doc {
 	if value == "" {
 		return Text("")
