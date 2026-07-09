@@ -56,15 +56,18 @@ func (formatter *Formatter) formatOnce(source []byte) ([]byte, error) {
 	st := newState(parsed, formatter.config, index)
 
 	formatted := printer.Print(st.formatNode(parsed.Root), st.printerOptions())
+	verified := parser.Parse([]byte(formatted))
+	if verified.HasParseErrors() {
+		return nil, parseDiagnostic([]byte(formatted), verified, "formatted output")
+	}
+
 	if !formatter.config.SortIncludes {
 		if err := verifySemanticTokens(source, []byte(formatted)); err != nil {
 			return nil, fmt.Errorf("formatted output changed source semantics: %w", err)
 		}
-	}
-
-	verified := parser.Parse([]byte(formatted))
-	if verified.HasParseErrors() {
-		return nil, parseDiagnostic([]byte(formatted), verified, "formatted output")
+		if err := verifySemanticStructure(parsed, verified); err != nil {
+			return nil, fmt.Errorf("formatted output changed source structure: %w", err)
+		}
 	}
 
 	return []byte(formatted), nil
