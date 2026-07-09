@@ -16,13 +16,48 @@ import (
 
 // LoadFile reads, decodes, defaults, and validates a config file.
 func LoadFile(path string) (Config, error) {
-	data, err := os.ReadFile(path)
+	return loadFile(path, nil, make(map[string]int))
+}
+
+func loadFile(path string, chain []string, visiting map[string]int) (Config, error) {
+	canonical, err := canonicalConfigPath(path)
 	if err != nil {
-		return Config{}, fmt.Errorf("read config: %w", err)
+		return Config{}, err
+	}
+	if start, exists := visiting[canonical]; exists {
+		cycle := append(append([]string(nil), chain[start:]...), canonical)
+		return Config{}, fmt.Errorf("config inheritance cycle: %s", strings.Join(cycle, " -> "))
+	}
+
+	visiting[canonical] = len(chain)
+	chain = append(chain, canonical)
+	defer delete(visiting, canonical)
+
+	data, err := os.ReadFile(canonical)
+	if err != nil {
+		return Config{}, fmt.Errorf("read config %s: %w", canonical, err)
+	}
+
+	child := Config{}
+	if err := decodeFile(canonical, data, &child); err != nil {
+		return Config{}, err
 	}
 
 	cfg := Default()
-	if err := decodeFile(path, data, &cfg); err != nil {
+	if child.Extends != "" {
+		parentPath := child.Extends
+		if !filepath.IsAbs(parentPath) {
+			parentPath = filepath.Join(filepath.Dir(canonical), parentPath)
+		}
+
+		cfg, err = loadFile(parentPath, chain, visiting)
+		if err != nil {
+			return Config{}, fmt.Errorf("extend %s: %w", canonical, err)
+		}
+	}
+
+	cfg.Extends = ""
+	if err := decodeFile(canonical, data, &cfg); err != nil {
 		return Config{}, err
 	}
 
@@ -35,6 +70,19 @@ func LoadFile(path string) (Config, error) {
 	return cfg, nil
 }
 
+func canonicalConfigPath(path string) (string, error) {
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		return "", fmt.Errorf("resolve config path: %w", err)
+	}
+
+	if resolved, err := filepath.EvalSymlinks(abs); err == nil {
+		return resolved, nil
+	}
+
+	return filepath.Clean(abs), nil
+}
+
 func decodeFile(path string, data []byte, out *Config) error {
 	ext := strings.ToLower(filepath.Ext(path))
 	switch ext {
@@ -45,15 +93,21 @@ func decodeFile(path string, data []byte, out *Config) error {
 	case ".json":
 		return decodeJSONStrict(data, out)
 	default:
-		if err := decodeTOMLStrict(data, out); err == nil {
+		candidate := *out
+		if err := decodeTOMLStrict(data, &candidate); err == nil {
+			*out = candidate
 			return nil
 		}
 
-		if err := decodeJSONStrict(data, out); err == nil {
+		candidate = *out
+		if err := decodeJSONStrict(data, &candidate); err == nil {
+			*out = candidate
 			return nil
 		}
 
-		if err := decodeYAMLStrict(data, out); err == nil {
+		candidate = *out
+		if err := decodeYAMLStrict(data, &candidate); err == nil {
+			*out = candidate
 			return nil
 		}
 

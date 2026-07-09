@@ -16,6 +16,19 @@ Config files are strict. Unknown keys fail fast instead of being ignored.
 
 TOML takes discovery precedence when more than one supported config file exists in the same directory, followed by YAML and then JSON.
 
+## Inheriting configuration
+
+Use `extends` to build a config from another TOML, YAML, or JSON config. Relative paths are resolved from the child config's directory. Child values override inherited values, including explicit `false`, `0`, and empty lists.
+
+```toml
+extends = "../pawnfmt.toml"
+
+line_width = 120
+indent_width = 2
+```
+
+Inheritance may cross config formats and span multiple levels. Cycles and missing parents are configuration errors.
+
 ## Example
 
 ```toml
@@ -33,6 +46,7 @@ exclude = ["vendor/*", "generated/*"]
 
 | Option | Default | Values | Notes |
 | --- | --- | --- | --- |
+| `extends` | `""` | path string | Optional parent configuration, resolved relative to the current config file. |
 | `parse_mode` | `"strict"` | `"strict"`, `"tolerant"` | `strict` rejects parser-broken input. `tolerant` formats clean syntax regions while preserving raw/error regions byte-for-byte. |
 | `line_width` | `100` | integer, at least `20` | Target wrap width. |
 | `indent_style` | `"space"` | `"space"`, `"tab"` | Uses tabs for indentation when set to `"tab"`. |

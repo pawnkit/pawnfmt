@@ -89,6 +89,24 @@ func TestRunDiscoversJSONConfigFileAutomatically(t *testing.T) {
 	}
 }
 
+func TestRunDiscoveredConfigExtendsParent(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	nested := filepath.Join(root, "nested")
+	writeCLIFixture(t, filepath.Join(root, "base.toml"), "indent_width = 2\nline_width = 120\n")
+	writeCLIFixture(t, filepath.Join(nested, "pawnfmt.json"), "{\"extends\": \"../base.toml\", \"indent_width\": 6}\n")
+	srcPath := filepath.Join(nested, "a.pwn")
+	writeCLIFixture(t, srcPath, "stock F() {\n\tnew x;\n}\n")
+
+	code, stdout, stderr := runCLI([]string{srcPath}, "")
+	if code != exitOK {
+		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitOK, stderr)
+	}
+	if !strings.Contains(stdout, "\n      new x;") {
+		t.Fatalf("child override from inherited config was not applied:\n%s", stdout)
+	}
+}
+
 func TestRunDiscoversConfigIndependentlyForEachFile(t *testing.T) {
 	t.Parallel()
 	root := t.TempDir()

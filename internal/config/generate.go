@@ -13,6 +13,9 @@ func defaultTOMLHeader(d Config) string {
 # Every key is shown with its default value. Change the options you care
 # about, or delete a line to keep using its default.
 
+# Optional parent config path, resolved relative to this file.
+extends = %q
+
 # Parser handling: "strict" rejects parser-broken input; "tolerant" formats
 # clean regions while preserving error regions byte-for-byte.
 parse_mode = %q
@@ -65,6 +68,7 @@ space_before_function_paren = %t
 space_before_array_brackets = %t
 
 `,
+		d.Extends,
 		string(d.ParseMode),
 		d.LineWidth,
 		string(d.IndentStyle),

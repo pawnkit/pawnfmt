@@ -118,6 +118,7 @@ const (
 
 // Config holds all formatting options.
 type Config struct {
+	Extends                        string                `json:"extends" yaml:"extends" toml:"extends"`
 	ParseMode                      ParseMode             `json:"parse_mode" yaml:"parse_mode" toml:"parse_mode"`
 	LineWidth                      int                   `json:"line_width" yaml:"line_width" toml:"line_width"`
 	IndentStyle                    IndentStyle           `json:"indent_style" yaml:"indent_style" toml:"indent_style"`

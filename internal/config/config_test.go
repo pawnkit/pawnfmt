@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/pawnkit/pawnfmt/internal/config"
@@ -205,6 +206,86 @@ func TestLoadFileJSON(t *testing.T) {
 	}
 	if cfg.SpaceAfterComma != config.Default().SpaceAfterComma {
 		t.Errorf("SpaceAfterComma should keep its default when unset in the file")
+	}
+}
+
+func TestLoadFileExtendsParentAndOverridesValues(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	parent := filepath.Join(dir, "base.toml")
+	childDir := filepath.Join(dir, "nested")
+	if err := os.MkdirAll(childDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(parent, []byte("line_width = 120\nindent_width = 2\nsort_includes = true\nmax_blank_lines = 4\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	child := filepath.Join(childDir, "pawnfmt.toml")
+	if err := os.WriteFile(child, []byte("extends = \"../base.toml\"\nindent_width = 6\nsort_includes = false\nmax_blank_lines = 0\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg, err := config.LoadFile(child)
+	if err != nil {
+		t.Fatalf("LoadFile: %v", err)
+	}
+	if cfg.LineWidth != 120 || cfg.IndentWidth != 6 {
+		t.Fatalf("inherited/overridden values = line_width %d, indent_width %d", cfg.LineWidth, cfg.IndentWidth)
+	}
+	if cfg.SortIncludes {
+		t.Fatal("explicit false in child must override true in parent")
+	}
+	if cfg.MaxBlankLines != 0 {
+		t.Fatalf("explicit zero in child must override parent, got %d", cfg.MaxBlankLines)
+	}
+}
+
+func TestLoadFileExtendsAcrossConfigFormats(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	parent := filepath.Join(dir, "base.yaml")
+	child := filepath.Join(dir, "pawnfmt.json")
+	if err := os.WriteFile(parent, []byte("line_width: 120\nindent_width: 2\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(child, []byte("{\"extends\": \"base.yaml\", \"indent_width\": 3}\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg, err := config.LoadFile(child)
+	if err != nil {
+		t.Fatalf("LoadFile: %v", err)
+	}
+	if cfg.LineWidth != 120 || cfg.IndentWidth != 3 {
+		t.Fatalf("cross-format inheritance failed: line_width %d, indent_width %d", cfg.LineWidth, cfg.IndentWidth)
+	}
+}
+
+func TestLoadFileRejectsInheritanceCycle(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	a := filepath.Join(dir, "a.toml")
+	b := filepath.Join(dir, "b.json")
+	if err := os.WriteFile(a, []byte("extends = \"b.json\"\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(b, []byte("{\"extends\": \"a.toml\"}\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	_, err := config.LoadFile(a)
+	if err == nil || !strings.Contains(err.Error(), "inheritance cycle") {
+		t.Fatalf("expected an inheritance-cycle error, got %v", err)
+	}
+}
+
+func TestLoadFileReportsMissingExtendedConfig(t *testing.T) {
+	t.Parallel()
+	path := writeFile(t, "pawnfmt.toml", "extends = \"missing.toml\"\n")
+
+	_, err := config.LoadFile(path)
+	if err == nil || !strings.Contains(err.Error(), "missing.toml") {
+		t.Fatalf("expected missing parent path in error, got %v", err)
 	}
 }
 
