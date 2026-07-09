@@ -40,6 +40,10 @@ func TestApplyDefaultsBackfillsStringAndWidthFields(t *testing.T) {
 		t.Errorf("NewlineStyle = %q, want %q", cfg.NewlineStyle, defaults.NewlineStyle)
 	}
 
+	if cfg.ParseMode != defaults.ParseMode {
+		t.Errorf("ParseMode = %q, want %q", cfg.ParseMode, defaults.ParseMode)
+	}
+
 	if cfg.BraceStyle != defaults.BraceStyle {
 		t.Errorf("BraceStyle = %q, want %q", cfg.BraceStyle, defaults.BraceStyle)
 	}
@@ -111,6 +115,7 @@ func TestValidateRejectsInvalidValues(t *testing.T) {
 		{"bad multiline call args", func(c *config.Config) { c.MultilineCallArgs = "compact" }},
 		{"bad break binary operator", func(c *config.Config) { c.BreakBinaryOperator = "sideways" }},
 		{"continuation indent width negative", func(c *config.Config) { c.ContinuationIndentWidth = -1 }},
+		{"bad parse mode", func(c *config.Config) { c.ParseMode = "hopeful" }},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

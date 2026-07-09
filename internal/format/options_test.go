@@ -696,3 +696,45 @@ func TestParseDiagnosticReportsMultilineLocation(t *testing.T) {
 		}
 	}
 }
+
+func TestTolerantParseModeFormatsCleanRegionsAndPreservesBrokenRegion(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("new   first=1;\n}\nnew   second=2;\n")
+	cfg := config.Default()
+	cfg.ParseMode = config.ParseModeTolerant
+
+	formatted, err := formatter.Source(source, cfg)
+	if err != nil {
+		t.Fatalf("tolerant formatting failed: %v", err)
+	}
+
+	for _, want := range []string{"new first = 1;", "\n}\n", "new second = 2;"} {
+		if !strings.Contains(string(formatted), want) {
+			t.Fatalf("tolerant output missing %q:\n%s", want, formatted)
+		}
+	}
+
+	second, err := formatter.Source(formatted, cfg)
+	if err != nil {
+		t.Fatalf("second tolerant format failed: %v", err)
+	}
+	if string(second) != string(formatted) {
+		t.Fatalf("tolerant formatting is not idempotent\nfirst:\n%s\nsecond:\n%s", formatted, second)
+	}
+}
+
+func TestStrictParseModeRejectsInputAcceptedByTolerantMode(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("new first;\n}\nnew second;\n")
+	cfg := config.Default()
+	if _, err := formatter.Source(source, cfg); err == nil {
+		t.Fatal("strict mode should reject parser-broken input")
+	}
+
+	cfg.ParseMode = config.ParseModeTolerant
+	if _, err := formatter.Source(source, cfg); err != nil {
+		t.Fatalf("tolerant mode should preserve the broken region: %v", err)
+	}
+}

@@ -136,6 +136,9 @@ func compareSemanticNodes(before, after *parser.Node, path string) error {
 	if before.Tok.Kind != after.Tok.Kind {
 		return fmt.Errorf("operator at %s changed from %s to %s", path, before.Tok.Kind, after.Tok.Kind)
 	}
+	if before.Kind == parser.KindRaw && !bytes.Equal(before.Raw, after.Raw) {
+		return fmt.Errorf("raw syntax at %s changed", path)
+	}
 
 	if len(before.Children) != len(after.Children) {
 		return fmt.Errorf("%s at %s changed child count from %d to %d",

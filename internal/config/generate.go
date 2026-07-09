@@ -13,6 +13,10 @@ func defaultTOMLHeader(d Config) string {
 # Every key is shown with its default value. Change the options you care
 # about, or delete a line to keep using its default.
 
+# Parser handling: "strict" rejects parser-broken input; "tolerant" formats
+# clean regions while preserving error regions byte-for-byte.
+parse_mode = %q
+
 # Line length pawnfmt tries to stay within.
 line_width = %d
 
@@ -61,6 +65,7 @@ space_before_function_paren = %t
 space_before_array_brackets = %t
 
 `,
+		string(d.ParseMode),
 		d.LineWidth,
 		string(d.IndentStyle),
 		d.IndentWidth,

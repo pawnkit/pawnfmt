@@ -3,6 +3,7 @@ package config
 // Default returns pawnfmt's built-in default configuration.
 func Default() Config {
 	return Config{
+		ParseMode:                      ParseModeStrict,
 		LineWidth:                      100,
 		IndentStyle:                    IndentStyleSpace,
 		IndentWidth:                    4,
@@ -57,6 +58,10 @@ func (cfg *Config) ApplyDefaults() {
 }
 
 func (cfg *Config) applyLayoutDefaults(defaults Config) {
+	if cfg.ParseMode == "" {
+		cfg.ParseMode = defaults.ParseMode
+	}
+
 	if cfg.LineWidth == 0 {
 		cfg.LineWidth = defaults.LineWidth
 	}

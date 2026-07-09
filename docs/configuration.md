@@ -33,6 +33,7 @@ exclude = ["vendor/*", "generated/*"]
 
 | Option | Default | Values | Notes |
 | --- | --- | --- | --- |
+| `parse_mode` | `"strict"` | `"strict"`, `"tolerant"` | `strict` rejects parser-broken input. `tolerant` formats clean syntax regions while preserving raw/error regions byte-for-byte. |
 | `line_width` | `100` | integer, at least `20` | Target wrap width. |
 | `indent_style` | `"space"` | `"space"`, `"tab"` | Uses tabs for indentation when set to `"tab"`. |
 | `indent_width` | `4` | integer, at least `1` | Spaces per indent level. Ignored for tab indentation. |

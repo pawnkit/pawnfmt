@@ -48,7 +48,8 @@ func (formatter *Formatter) FormatSource(source []byte) ([]byte, error) {
 
 func (formatter *Formatter) formatOnce(source []byte) ([]byte, error) {
 	parsed := parser.Parse(source)
-	if parsed.HasParseErrors() {
+	inputBroken := parsed.HasParseErrors()
+	if inputBroken && formatter.config.ParseMode == config.ParseModeStrict {
 		return nil, parseDiagnostic(source, parsed, "source")
 	}
 
@@ -57,7 +58,7 @@ func (formatter *Formatter) formatOnce(source []byte) ([]byte, error) {
 
 	formatted := printer.Print(st.formatNode(parsed.Root), st.printerOptions())
 	verified := parser.Parse([]byte(formatted))
-	if verified.HasParseErrors() {
+	if verified.HasParseErrors() && (!inputBroken || formatter.config.ParseMode == config.ParseModeStrict) {
 		return nil, parseDiagnostic([]byte(formatted), verified, "formatted output")
 	}
 
