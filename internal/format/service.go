@@ -49,7 +49,7 @@ func (formatter *Formatter) FormatSource(source []byte) ([]byte, error) {
 func (formatter *Formatter) formatOnce(source []byte) ([]byte, error) {
 	parsed := parser.Parse(source)
 	if parsed.HasParseErrors() {
-		return nil, errors.New("source does not parse cleanly")
+		return nil, parseDiagnostic(source, parsed, "source")
 	}
 
 	index := trivia.Scan(source)
@@ -64,7 +64,7 @@ func (formatter *Formatter) formatOnce(source []byte) ([]byte, error) {
 
 	verified := parser.Parse([]byte(formatted))
 	if verified.HasParseErrors() {
-		return nil, errors.New("formatted output does not parse cleanly")
+		return nil, parseDiagnostic([]byte(formatted), verified, "formatted output")
 	}
 
 	return []byte(formatted), nil

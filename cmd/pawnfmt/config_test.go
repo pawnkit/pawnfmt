@@ -189,8 +189,10 @@ func TestRunDebugFormatDocReportsUnparseableSourceAsAFormatError(t *testing.T) {
 		t.Fatalf("exit code = %d, want %d (exitFormatError)", code, exitFormatError)
 	}
 
-	if stderr == "" {
-		t.Fatal("stderr should explain the parse failure")
+	for _, want := range []string{"line 1, column 1", "1 | }", "| ^"} {
+		if !strings.Contains(stderr, want) {
+			t.Fatalf("stderr missing %q:\n%s", want, stderr)
+		}
 	}
 }
 

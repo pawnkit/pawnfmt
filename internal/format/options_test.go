@@ -625,7 +625,33 @@ func TestRejectsParseInvalidInput(t *testing.T) {
 		t.Fatal("expected parse-invalid input to be rejected")
 	}
 
-	if !strings.Contains(err.Error(), "source does not parse cleanly") {
-		t.Fatalf("unexpected error: %v", err)
+	for _, want := range []string{
+		"source does not parse cleanly at line 1, column 1 near token \"}\"",
+		"1 | }",
+		"| ^",
+	} {
+		if !strings.Contains(err.Error(), want) {
+			t.Fatalf("error missing %q:\n%v", want, err)
+		}
+	}
+}
+
+func TestParseDiagnosticReportsMultilineLocation(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("new valid;\n    }\n")
+	_, err := formatter.Source(source, config.Default())
+	if err == nil {
+		t.Fatal("expected parse-invalid input to be rejected")
+	}
+
+	for _, want := range []string{
+		"line 2, column 5",
+		"2 |     }",
+		"|     ^",
+	} {
+		if !strings.Contains(err.Error(), want) {
+			t.Fatalf("error missing %q:\n%v", want, err)
+		}
 	}
 }

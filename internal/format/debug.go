@@ -1,7 +1,6 @@
 package format
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
@@ -21,7 +20,7 @@ func DebugDocTree(source []byte, cfg config.Config) (string, error) {
 
 	parsed := parser.Parse(source)
 	if parsed.HasParseErrors() {
-		return "", errors.New("source does not parse cleanly")
+		return "", parseDiagnostic(source, parsed, "source")
 	}
 
 	index := trivia.Scan(source)
