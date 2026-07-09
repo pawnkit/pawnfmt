@@ -77,6 +77,17 @@ const (
 	TagColonSpacingCompact  TagColonSpacing = "compact"
 )
 
+// NumericLiteralCase controls the casing of hex digits and the float
+// exponent marker in numeric literals.
+type NumericLiteralCase string
+
+// Values for NumericLiteralCase.
+const (
+	NumericLiteralCasePreserve NumericLiteralCase = "preserve"
+	NumericLiteralCaseUpper    NumericLiteralCase = "upper"
+	NumericLiteralCaseLower    NumericLiteralCase = "lower"
+)
+
 // MultilineListStyle controls how wrapped lists are laid out.
 type MultilineListStyle string
 
@@ -125,6 +136,7 @@ type Config struct {
 	AlignTrailingComments          bool                  `json:"align_trailing_comments" yaml:"align_trailing_comments" toml:"align_trailing_comments"`
 	EnumTrailingComma              EnumTrailingComma     `json:"enum_trailing_comma" yaml:"enum_trailing_comma" toml:"enum_trailing_comma"`
 	TagColonSpacing                TagColonSpacing       `json:"tag_colon_spacing" yaml:"tag_colon_spacing" toml:"tag_colon_spacing"`
+	NumericLiteralCase             NumericLiteralCase    `json:"numeric_literal_case" yaml:"numeric_literal_case" toml:"numeric_literal_case"`
 	SpaceBeforeArrayBrackets       bool                  `json:"space_before_array_brackets" yaml:"space_before_array_brackets" toml:"space_before_array_brackets"`
 	MultilineFunctionParams        MultilineListStyle    `json:"multiline_function_params" yaml:"multiline_function_params" toml:"multiline_function_params"`
 	MultilineCallArgs              MultilineListStyle    `json:"multiline_call_args" yaml:"multiline_call_args" toml:"multiline_call_args"`

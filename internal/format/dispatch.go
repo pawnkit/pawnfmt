@@ -264,8 +264,10 @@ func (s *state) dispatchOperatorExpression(n *parser.Node) (doc.Doc, bool) {
 func (s *state) dispatchLeafExpression(n *parser.Node) (doc.Doc, bool) {
 	//nolint:exhaustive // only the leaf/literal expression kinds this dispatcher handles are listed
 	switch n.Kind {
-	case parser.KindIdentifier, parser.KindLiteral, parser.KindArgumentName, parser.KindIteratorArgument:
+	case parser.KindIdentifier, parser.KindArgumentName, parser.KindIteratorArgument:
 		return doc.Text(n.Text(s.source)), true
+	case parser.KindLiteral:
+		return doc.Text(s.formatLiteral(n)), true
 	case parser.KindDefinedExpression:
 		return s.formatDefinedExpression(n), true
 	case parser.KindTaggedExpression:

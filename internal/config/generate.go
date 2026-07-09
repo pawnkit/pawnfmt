@@ -108,6 +108,8 @@ enum_trailing_comma = %q
 # Tag prefix spacing: "tight" normalizes "Float: x", "compact" normalizes
 # "Float:x", "preserve" keeps input.
 tag_colon_spacing = %q
+# Casing for hex digits and float exponents: "upper", "lower", or "preserve".
+numeric_literal_case = %q
 
 `,
 		string(d.Semicolons),
@@ -121,6 +123,7 @@ tag_colon_spacing = %q
 		d.AlignTrailingComments,
 		string(d.EnumTrailingComma),
 		string(d.TagColonSpacing),
+		string(d.NumericLiteralCase),
 	)
 }
 

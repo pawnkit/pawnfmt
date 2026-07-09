@@ -62,6 +62,7 @@ exclude = ["vendor/*", "generated/*"]
 | `align_trailing_comments` | `false` | boolean | Aligns trailing `//` comments in contiguous runs. |
 | `enum_trailing_comma` | `"always"` | `"preserve"`, `"always"` | Controls the final comma in enum bodies.
 | `tag_colon_spacing` | `"compact"` | `"tight"`, `"compact"`, `"preserve"` | `tight` formats tag prefixes like `Float: x`; `compact` like `Float:x`. |
+| `numeric_literal_case` | `"upper"` | `"upper"`, `"lower"`, `"preserve"` | Casing for hex digits (`0xFF00AA`) and the float exponent letter (`1.5E10`). |
 | `multiline_function_params` | `"auto"` | `"auto"`, `"one_per_line"`, `"bin_pack"` | Controls wrapping for function parameters. |
 | `multiline_call_args` | `"auto"` | `"auto"`, `"one_per_line"`, `"bin_pack"` | Controls wrapping for call arguments. |
 | `break_binary_operator` | `"after"` | `"after"`, `"before"` | Places wrapped binary operators at the end of the old line or start of the new one. |

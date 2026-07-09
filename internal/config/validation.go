@@ -69,6 +69,10 @@ func (cfg Config) validateEnums() error {
 		return err
 	}
 
+	if err := oneOf("numeric_literal_case", string(cfg.NumericLiteralCase), string(NumericLiteralCasePreserve), string(NumericLiteralCaseUpper), string(NumericLiteralCaseLower)); err != nil {
+		return err
+	}
+
 	if err := oneOf("multiline_function_params", string(cfg.MultilineFunctionParams), string(MultilineListAuto), string(MultilineListOnePerLine), string(MultilineListBinPack)); err != nil {
 		return err
 	}

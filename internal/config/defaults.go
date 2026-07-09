@@ -30,6 +30,7 @@ func Default() Config {
 		AlignTrailingComments:          false,
 		EnumTrailingComma:              EnumTrailingCommaAlways,
 		TagColonSpacing:                TagColonSpacingCompact,
+		NumericLiteralCase:             NumericLiteralCaseUpper,
 		SpaceBeforeArrayBrackets:       false,
 		MultilineFunctionParams:        MultilineListAuto,
 		MultilineCallArgs:              MultilineListAuto,
@@ -107,5 +108,9 @@ func (cfg *Config) applyStyleDefaults(defaults Config) {
 
 	if cfg.TagColonSpacing == "" {
 		cfg.TagColonSpacing = defaults.TagColonSpacing
+	}
+
+	if cfg.NumericLiteralCase == "" {
+		cfg.NumericLiteralCase = defaults.NumericLiteralCase
 	}
 }

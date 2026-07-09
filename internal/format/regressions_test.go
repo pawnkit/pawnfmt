@@ -692,3 +692,65 @@ func TestTagColonSpacingCompactDropsSpaceAfterColonEverywhere(t *testing.T) {
 		t.Fatalf("output is not idempotent\nfirst:\n%s\nsecond:\n%s", formatted, second)
 	}
 }
+
+func TestNumericLiteralCaseDefaultsToUpper(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("new x = 0xff00aa;\nnew Float:f = 1.5e10;\nnew z = 0b1010;\n")
+	want := "new x = 0xFF00AA;\nnew Float:f = 1.5E10;\nnew z = 0b1010;\n"
+
+	formatted := mustFormat(t, source, config.Default())
+	if string(formatted) != want {
+		t.Fatalf("expected upper-case hex digits and exponent by default\nexpected:\n%s\nactual:\n%s", want, formatted)
+	}
+
+	second := mustFormat(t, formatted, config.Default())
+	if string(second) != string(formatted) {
+		t.Fatalf("output is not idempotent\nfirst:\n%s\nsecond:\n%s", formatted, second)
+	}
+}
+
+func TestNumericLiteralCaseLowerAndPreserve(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("new x = 0xFf00Aa;\nnew Float:f = 1.5E10;\n")
+
+	lowerCfg := config.Default()
+	lowerCfg.NumericLiteralCase = config.NumericLiteralCaseLower
+
+	want := "new x = 0xff00aa;\nnew Float:f = 1.5e10;\n"
+
+	lowered := mustFormat(t, source, lowerCfg)
+	if string(lowered) != want {
+		t.Fatalf("expected lower-case hex digits and exponent\nexpected:\n%s\nactual:\n%s", want, lowered)
+	}
+
+	preserveCfg := config.Default()
+	preserveCfg.NumericLiteralCase = config.NumericLiteralCasePreserve
+
+	preserved := mustFormat(t, source, preserveCfg)
+	if string(preserved) != string(source) {
+		t.Fatalf("expected numeric literal casing to be preserved\nexpected:\n%s\nactual:\n%s", source, preserved)
+	}
+}
+
+func TestNumericLiteralCaseAppliesInsideConditionalRegions(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("stock F() {\n#if A\nif (x == 0xff00aa) {\n#else\nif (y == 0xbb) {\n#endif\nreturn 1;\n}\n}\n")
+	requireSharedConditionalPath(t, source)
+
+	formatted := mustFormat(t, source, config.Default())
+
+	text := string(formatted)
+	for _, want := range []string{"0xFF00AA", "0xBB"} {
+		if !strings.Contains(text, want) {
+			t.Fatalf("shared conditional region did not normalize numeric literal case %q:\n%s", want, text)
+		}
+	}
+
+	second := mustFormat(t, formatted, config.Default())
+	if string(second) != text {
+		t.Fatalf("numeric literal case normalization is not idempotent\nfirst:\n%s\nsecond:\n%s", text, second)
+	}
+}

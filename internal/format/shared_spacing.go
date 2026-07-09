@@ -44,7 +44,26 @@ func normalizeSharedLine(line string, cfg config.Config) string {
 		}
 	}
 
+	for _, tok := range tokens {
+		normalizeSharedNumericLiteralCase(line, cfg, tok, &edits)
+	}
+
 	return strings.TrimRight(applySharedTextEdits(line, edits), " \t")
+}
+
+func normalizeSharedNumericLiteralCase(line string, cfg config.Config, tok token.Token, edits *[]textEdit) {
+	if tok.Kind != token.IntLiteral && tok.Kind != token.FloatLiteral {
+		return
+	}
+
+	text := tok.Text([]byte(line))
+
+	normalized := normalizeNumericLiteralCase(text, tok.Kind, cfg.NumericLiteralCase)
+	if normalized == text {
+		return
+	}
+
+	*edits = append(*edits, textEdit{start: tok.Start.Offset, end: tok.End.Offset, text: normalized})
 }
 
 func normalizeSharedPunctuation(line string, cfg config.Config, tokens []token.Token, declarationLike bool, i int, edits *[]textEdit) bool {

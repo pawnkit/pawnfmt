@@ -19,7 +19,7 @@ func verifySemanticTokens(before, after []byte) error {
 
 	limit := min(len(got), len(want))
 	for i := range limit {
-		if want[i].kind != got[i].kind || !bytes.Equal(want[i].text, got[i].text) {
+		if want[i].kind != got[i].kind || !equalSemanticText(want[i].kind, want[i].text, got[i].text) {
 			return fmt.Errorf("semantic token %d changed from %s %q to %s %q", i+1,
 				want[i].kind, want[i].text, got[i].kind, got[i].text)
 		}
@@ -30,6 +30,14 @@ func verifySemanticTokens(before, after []byte) error {
 	}
 
 	return nil
+}
+
+func equalSemanticText(kind token.Kind, want, got []byte) bool {
+	if kind == token.IntLiteral || kind == token.FloatLiteral {
+		return bytes.EqualFold(want, got)
+	}
+
+	return bytes.Equal(want, got)
 }
 
 func semanticTokens(source []byte) []semanticToken {
