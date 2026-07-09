@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -180,6 +181,31 @@ func TestRunStdinModeFormatsAndWritesToStdout(t *testing.T) {
 
 	if stdout != "new x = 1;\n" {
 		t.Fatalf("stdin mode stdout = %q, want %q", stdout, "new x = 1;\n")
+	}
+}
+
+func TestRunStdinRangeFormatsOnlySelectedTopLevelUnit(t *testing.T) {
+	t.Parallel()
+	source := "new   first=1;\nnew   second=2;\n"
+	start := strings.Index(source, "first")
+	end := start + len("first")
+
+	code, stdout, stderr := runCLI([]string{
+		"--stdin", "--range-start", strconv.Itoa(start), "--range-end", strconv.Itoa(end),
+	}, source)
+	if code != exitOK {
+		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitOK, stderr)
+	}
+	if stdout != "new first = 1;\nnew   second=2;\n" {
+		t.Fatalf("range output changed unselected source:\n%s", stdout)
+	}
+}
+
+func TestRunRangeRequiresBothBounds(t *testing.T) {
+	t.Parallel()
+	code, _, stderr := runCLI([]string{"--stdin", "--range-start", "0"}, "new x;\n")
+	if code != exitConfigError || !strings.Contains(stderr, "provided together") {
+		t.Fatalf("exit=%d stderr=%q, want paired-range config error", code, stderr)
 	}
 }
 

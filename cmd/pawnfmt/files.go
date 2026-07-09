@@ -39,6 +39,10 @@ func runFiles(opts *options, stdout, stderr io.Writer) int {
 		writeErrorf(stderr, errColors, "no .pwn/.inc files found in the given paths")
 		return exitConfigError
 	}
+	if rangeEnabled(opts) && len(files) != 1 {
+		writeErrorf(stderr, errColors, "range formatting requires exactly one input file")
+		return exitConfigError
+	}
 
 	configs, err := resolveConfigsForFiles(opts, files)
 	if err != nil {
@@ -48,6 +52,11 @@ func runFiles(opts *options, stdout, stderr io.Writer) int {
 
 	if opts.DebugTokens || opts.DebugCST || opts.DebugFormatDoc {
 		return runFileDebugMode(opts, files, configs[0], stdout, stderr)
+	}
+
+	if rangeEnabled(opts) {
+		result := formatOneFileRange(files[0], configs[0], opts.RangeStart, opts.RangeEnd)
+		return reportFileResults(opts, files, []fileResult{result}, stdout, stderr)
 	}
 
 	return reportFileResults(opts, files, formatFilesParallel(files, configs), stdout, stderr)
@@ -164,5 +173,22 @@ func formatOneFile(path string, cfg config.Config) fileResult {
 		source:    source,
 		formatted: formatted,
 		changed:   !bytes.Equal(source, formatted),
+	}
+}
+
+func formatOneFileRange(path string, cfg config.Config, start, end int) fileResult {
+	source, err := os.ReadFile(path)
+	if err != nil {
+		return fileResult{path: path, err: err}
+	}
+
+	result, err := formatter.SourceRange(source, cfg, start, end)
+	if err != nil {
+		return fileResult{path: path, source: source, err: fmt.Errorf("format range: %w", err)}
+	}
+
+	return fileResult{
+		path: path, source: source, formatted: result.Source,
+		changed: !bytes.Equal(source, result.Source),
 	}
 }

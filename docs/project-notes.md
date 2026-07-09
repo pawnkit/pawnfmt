@@ -39,6 +39,7 @@ pawnfmt --diff script.pwn
 Other handy flags:
 
 - `--stdin` reads source from stdin and writes formatted source to stdout.
+- `--range-start N --range-end M` formats the complete top-level syntax unit intersecting the half-open byte range `[N,M)`. Range formatting requires exactly one file or stdin and preserves all bytes outside the expanded unit.
 - `--color=auto|always|never` controls colour in output. `auto` colours terminal output and keeps redirected output plain.
 - `--debug-tokens` prints the lexer token stream for one input.
 - `--debug-cst` prints the parsed CST for one input.

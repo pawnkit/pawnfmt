@@ -11,6 +11,14 @@ import (
 
 func dispatch(opts *options, stdin io.Reader, stdout, stderr io.Writer) int {
 	errColors := colorsFor(opts.Color, stderr)
+	if (opts.RangeStart >= 0) != (opts.RangeEnd >= 0) {
+		writeErrorf(stderr, errColors, "--range-start and --range-end must be provided together")
+		return exitConfigError
+	}
+	if rangeEnabled(opts) && (opts.DebugTokens || opts.DebugCST || opts.DebugFormatDoc) {
+		writeErrorf(stderr, errColors, "range formatting cannot be combined with debug modes")
+		return exitConfigError
+	}
 	if opts.Stdin && len(opts.Paths) > 0 {
 		writeErrorf(stderr, errColors, "--stdin cannot be combined with file/directory arguments")
 		return exitConfigError
@@ -74,7 +82,7 @@ func runStdin(opts *options, stdin io.Reader, stdout, stderr io.Writer) int {
 		return code
 	}
 
-	formatted, err := formatter.Source(source, cfg)
+	formatted, err := formatSourceForOptions(source, cfg, opts)
 	if err != nil {
 		writeErrorf(stderr, errColors, "%v", err)
 		return exitFormatError
@@ -86,6 +94,22 @@ func runStdin(opts *options, stdin io.Reader, stdout, stderr io.Writer) int {
 	}
 
 	return exitOK
+}
+
+func rangeEnabled(opts *options) bool {
+	return opts.RangeStart >= 0 && opts.RangeEnd >= 0
+}
+
+func formatSourceForOptions(source []byte, cfg config.Config, opts *options) ([]byte, error) {
+	if !rangeEnabled(opts) {
+		return formatter.Source(source, cfg)
+	}
+
+	result, err := formatter.SourceRange(source, cfg, opts.RangeStart, opts.RangeEnd)
+	if err != nil {
+		return nil, err
+	}
+	return result.Source, nil
 }
 
 func runDebugModes(opts *options, source []byte, cfg config.Config, stdout, stderr io.Writer) (code int, handled bool) {

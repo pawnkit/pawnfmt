@@ -26,6 +26,8 @@ type options struct {
 	Config         string           `help:"path to a pawnfmt config file (.toml/.yaml/.json)"`
 	NoConfig       bool             `help:"ignore any discovered config file and use built-in defaults"`
 	NoGitignore    bool             `help:"do not respect .gitignore/.pawnfmtignore files when walking directories"`
+	RangeStart     int              `default:"-1" help:"start byte offset for range formatting (requires --range-end)"`
+	RangeEnd       int              `default:"-1" help:"exclusive end byte offset for range formatting (requires --range-start)"`
 	PrintConfig    bool             `help:"print the resolved configuration and exit"`
 	InitConfig     bool             `help:"write a fully-commented pawnfmt.toml with default values and exit (pass a path as the first argument to write elsewhere)"`
 	DebugTokens    bool             `help:"print the lexer token stream for the input instead of formatting"`
