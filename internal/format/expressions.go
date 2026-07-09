@@ -149,10 +149,15 @@ func (s *state) formatTernaryExpression(n *parser.Node) doc.Doc {
 	cons := n.Field("consequence")
 	alt := n.Field("alternative")
 
+	sep, question, colon := doc.Line(), "? ", ": "
+	if !s.config.SpaceAroundOperators {
+		sep, question, colon = doc.SoftLine(), "?", ":"
+	}
+
 	return doc.Group(doc.Concat(
 		s.formatNode(cond),
-		doc.Indent(doc.Concat(doc.Line(), doc.Text("? "), s.formatNode(cons))),
-		doc.Indent(doc.Concat(doc.Line(), doc.Text(": "), s.formatNode(alt))),
+		doc.Indent(doc.Concat(sep, doc.Text(question), s.formatNode(cons))),
+		doc.Indent(doc.Concat(sep, doc.Text(colon), s.formatNode(alt))),
 	))
 }
 

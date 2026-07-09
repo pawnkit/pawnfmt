@@ -244,10 +244,15 @@ func (s *state) formatForStatement(n *parser.Node) doc.Doc {
 		incrDoc = s.formatNode(incr)
 	}
 
+	semi := ";"
+	if s.config.SpaceAfterComma {
+		semi = "; "
+	}
+
 	header := doc.Concat(
 		doc.Text("for ("),
-		initDoc, doc.Text("; "),
-		condDoc, doc.Text("; "),
+		initDoc, doc.Text(semi),
+		condDoc, doc.Text(semi),
 		incrDoc, doc.Text(")"),
 	)
 

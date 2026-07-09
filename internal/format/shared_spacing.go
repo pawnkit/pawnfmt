@@ -67,18 +67,18 @@ func normalizeSharedNumericLiteralCase(line string, cfg config.Config, tok token
 }
 
 func normalizeSharedPunctuation(line string, cfg config.Config, tokens []token.Token, declarationLike bool, i int, edits *[]textEdit) bool {
-	return normalizeSharedTernaryAndCaseColon(line, tokens, i, edits) ||
+	return normalizeSharedTernaryAndCaseColon(line, cfg, tokens, i, edits) ||
 		normalizeSharedRangeAndAccess(line, cfg, tokens, i, edits) ||
-		normalizeSharedPunctuationAdjacency(line, tokens, i, edits) ||
+		normalizeSharedPunctuationAdjacency(line, cfg, tokens, i, edits) ||
 		normalizeSharedLiteralAndKeywordAdjacency(line, cfg, tokens, declarationLike, i, edits)
 }
 
-func normalizeSharedTernaryAndCaseColon(line string, tokens []token.Token, i int, edits *[]textEdit) bool {
-	return normalizeSharedTernarySeparator(line, tokens, i, edits) ||
+func normalizeSharedTernaryAndCaseColon(line string, cfg config.Config, tokens []token.Token, i int, edits *[]textEdit) bool {
+	return normalizeSharedTernarySeparator(line, cfg, tokens, i, edits) ||
 		normalizeSharedCaseOrLabelColon(line, tokens, i, edits)
 }
 
-func normalizeSharedTernarySeparator(line string, tokens []token.Token, i int, edits *[]textEdit) bool {
+func normalizeSharedTernarySeparator(line string, cfg config.Config, tokens []token.Token, i int, edits *[]textEdit) bool {
 	cur, next := tokens[i], tokens[i+1]
 
 	ternarySeparator := cur.Kind == token.Question || cur.Kind == token.Colon && sharedTernaryColon(tokens, i)
@@ -86,16 +86,21 @@ func normalizeSharedTernarySeparator(line string, tokens []token.Token, i int, e
 		return false
 	}
 
+	sep := ""
+	if cfg.SpaceAroundOperators {
+		sep = " "
+	}
+
 	if i > 0 {
 		prev := tokens[i-1]
 		if prev.End.Offset <= cur.Start.Offset && horizontalGap(line[prev.End.Offset:cur.Start.Offset]) {
-			*edits = append(*edits, textEdit{start: prev.End.Offset, end: cur.Start.Offset, text: " "})
+			*edits = append(*edits, textEdit{start: prev.End.Offset, end: cur.Start.Offset, text: sep})
 		}
 	}
 
 	if next.Kind != token.EOF && cur.End.Offset <= next.Start.Offset &&
 		horizontalGap(line[cur.End.Offset:next.Start.Offset]) {
-		*edits = append(*edits, textEdit{start: cur.End.Offset, end: next.Start.Offset, text: " "})
+		*edits = append(*edits, textEdit{start: cur.End.Offset, end: next.Start.Offset, text: sep})
 	}
 
 	return true
@@ -184,7 +189,7 @@ func normalizeSharedMemberAccess(line string, tokens []token.Token, i int, edits
 	return true
 }
 
-func normalizeSharedPunctuationAdjacency(line string, tokens []token.Token, i int, edits *[]textEdit) bool {
+func normalizeSharedPunctuationAdjacency(line string, cfg config.Config, tokens []token.Token, i int, edits *[]textEdit) bool {
 	cur, next := tokens[i], tokens[i+1]
 
 	if (next.Kind == token.Comma || next.Kind == token.Semicolon) &&
@@ -196,7 +201,13 @@ func normalizeSharedPunctuationAdjacency(line string, tokens []token.Token, i in
 	if cur.Kind == token.Semicolon && next.Kind != token.RParen && next.Kind != token.Semicolon &&
 		cur.End.Offset <= next.Start.Offset &&
 		horizontalGap(line[cur.End.Offset:next.Start.Offset]) {
-		*edits = append(*edits, textEdit{start: cur.End.Offset, end: next.Start.Offset, text: " "})
+		sep := ""
+		if cfg.SpaceAfterComma {
+			sep = " "
+		}
+
+		*edits = append(*edits, textEdit{start: cur.End.Offset, end: next.Start.Offset, text: sep})
+
 		return true
 	}
 

@@ -844,3 +844,66 @@ func TestUnaryOperatorSpacingAppliesInsideConditionalRegions(t *testing.T) {
 		t.Fatalf("shared unary operator spacing is not idempotent\nfirst:\n%s\nsecond:\n%s", text, second)
 	}
 }
+
+func TestForLoopSemicolonSpacingFollowsSpaceAfterComma(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("stock F() {\n    for (i = 0; i < 10; i++)\n    {\n    }\n}\n")
+
+	spaced := mustFormat(t, source, config.Default())
+	if !strings.Contains(string(spaced), "for (i = 0; i < 10; i++)") {
+		t.Fatalf("expected spaced for-loop semicolons by default:\n%s", spaced)
+	}
+
+	compact := config.Default()
+	compact.SpaceAfterComma = false
+
+	compactFormatted := mustFormat(t, source, compact)
+	if !strings.Contains(string(compactFormatted), "for (i = 0;i < 10;i++)") {
+		t.Fatalf("expected tight for-loop semicolons when space_after_comma is false:\n%s", compactFormatted)
+	}
+}
+
+func TestTernarySpacingFollowsSpaceAroundOperators(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("stock F(x, a, b) {\n    return x ? a : b;\n}\n")
+
+	spaced := mustFormat(t, source, config.Default())
+	if !strings.Contains(string(spaced), "x ? a : b") {
+		t.Fatalf("expected spaced ternary by default:\n%s", spaced)
+	}
+
+	compact := config.Default()
+	compact.SpaceAroundOperators = false
+
+	compactFormatted := mustFormat(t, source, compact)
+	if !strings.Contains(string(compactFormatted), "x?a:b") {
+		t.Fatalf("expected tight ternary when space_around_operators is false:\n%s", compactFormatted)
+	}
+}
+
+func TestForLoopAndTernarySpacingAppliesInsideConditionalRegions(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("stock F() {\n#if A\nif (first) {\nfor(i=0;i<10;i++){}\nnew v = x?a:b;\n#else\nif (second) {\n#endif\nreturn 1;\n}\n}\n")
+	requireSharedConditionalPath(t, source)
+
+	compact := config.Default()
+	compact.SpaceAfterComma = false
+	compact.SpaceAroundOperators = false
+
+	formatted := mustFormat(t, source, compact)
+
+	text := string(formatted)
+	for _, want := range []string{"for (i=0;i<10;i++)", "v=x?a:b"} {
+		if !strings.Contains(text, want) {
+			t.Fatalf("shared conditional region did not apply compact spacing %q:\n%s", want, text)
+		}
+	}
+
+	second := mustFormat(t, formatted, compact)
+	if string(second) != text {
+		t.Fatalf("shared for-loop/ternary spacing is not idempotent\nfirst:\n%s\nsecond:\n%s", text, second)
+	}
+}
