@@ -12,7 +12,9 @@ import (
 
 const (
 	flagCheck         = "--check"
+	flagStdin         = "--stdin"
 	flagStdinFilename = "--stdin-filename"
+	testFileA         = "a.pwn"
 )
 
 func writeCLIFixture(t *testing.T, path, content string) {
@@ -180,7 +182,7 @@ func TestRunWriteAndCheckTogetherIsRejected(t *testing.T) {
 func TestRunStdinModeFormatsAndWritesToStdout(t *testing.T) {
 	t.Parallel()
 
-	code, stdout, stderr := runCLI([]string{"--stdin"}, "new   x=1;\n")
+	code, stdout, stderr := runCLI([]string{flagStdin}, "new   x=1;\n")
 	if code != exitOK {
 		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitOK, stderr)
 	}
@@ -198,7 +200,7 @@ func TestRunStdinRangeFormatsOnlySelectedTopLevelUnit(t *testing.T) {
 	end := start + len("first")
 
 	code, stdout, stderr := runCLI([]string{
-		"--stdin", "--range-start", strconv.Itoa(start), "--range-end", strconv.Itoa(end),
+		flagStdin, "--range-start", strconv.Itoa(start), "--range-end", strconv.Itoa(end),
 	}, source)
 	if code != exitOK {
 		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitOK, stderr)
@@ -212,7 +214,7 @@ func TestRunStdinRangeFormatsOnlySelectedTopLevelUnit(t *testing.T) {
 func TestRunRangeRequiresBothBounds(t *testing.T) {
 	t.Parallel()
 
-	code, _, stderr := runCLI([]string{"--stdin", "--range-start", "0"}, "new x;\n")
+	code, _, stderr := runCLI([]string{flagStdin, "--range-start", "0"}, "new x;\n")
 	if code != exitConfigError || !strings.Contains(stderr, "provided together") {
 		t.Fatalf("exit=%d stderr=%q, want paired-range config error", code, stderr)
 	}
@@ -225,7 +227,7 @@ func TestRunCursorJSONReturnsAdjustedOffset(t *testing.T) {
 	cursor := strings.Index(source, "playerScore") + 6
 
 	code, stdout, stderr := runCLI([]string{
-		"--stdin", "--cursor-offset", strconv.Itoa(cursor), "--output-format", formatJSON,
+		flagStdin, "--cursor-offset", strconv.Itoa(cursor), "--output-format", formatJSON,
 	}, source)
 	if code != exitOK {
 		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitOK, stderr)
@@ -252,7 +254,7 @@ func TestRunRangeJSONIncludesExpandedRange(t *testing.T) {
 	start := strings.Index(source, "first")
 
 	code, stdout, stderr := runCLI([]string{
-		"--stdin", "--range-start", strconv.Itoa(start), "--range-end", strconv.Itoa(start + 1),
+		flagStdin, "--range-start", strconv.Itoa(start), "--range-end", strconv.Itoa(start + 1),
 		"--output-format", formatJSON,
 	}, source)
 	if code != exitOK {
@@ -277,7 +279,7 @@ func TestRunRangeJSONIncludesExpandedRange(t *testing.T) {
 func TestRunCursorRequiresJSONOutput(t *testing.T) {
 	t.Parallel()
 
-	code, _, stderr := runCLI([]string{"--stdin", "--cursor-offset", "0"}, "new x;\n")
+	code, _, stderr := runCLI([]string{flagStdin, "--cursor-offset", "0"}, "new x;\n")
 	if code != exitConfigError || !strings.Contains(stderr, "requires --output-format=json") {
 		t.Fatalf("exit=%d stderr=%q, want cursor-output config error", code, stderr)
 	}
@@ -287,7 +289,7 @@ func TestRunJSONParseDiagnosticIsStructured(t *testing.T) {
 	t.Parallel()
 
 	code, _, stderr := runCLI([]string{
-		"--stdin", flagStdinFilename, "broken.pwn", "--error-format", formatJSON,
+		flagStdin, flagStdinFilename, "broken.pwn", "--error-format", formatJSON,
 	}, "}\n")
 	if code != exitFormatError {
 		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitFormatError, stderr)
@@ -321,7 +323,7 @@ func TestRunGitHubParseDiagnosticUsesWorkflowCommand(t *testing.T) {
 	t.Parallel()
 
 	code, _, stderr := runCLI([]string{
-		"--stdin", flagStdinFilename, "broken.pwn", "--error-format", "github",
+		flagStdin, flagStdinFilename, "broken.pwn", "--error-format", "github",
 	}, "}\n")
 	if code != exitFormatError {
 		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitFormatError, stderr)
@@ -358,7 +360,7 @@ func TestRunJSONConfigDiagnosticHasCategory(t *testing.T) {
 func TestRunStdinCombinedWithPathsIsRejected(t *testing.T) {
 	t.Parallel()
 
-	code, _, stderr := runCLI([]string{"--stdin", "a.pwn"}, "")
+	code, _, stderr := runCLI([]string{flagStdin, testFileA}, "")
 	if code != exitConfigError {
 		t.Fatalf("exit code = %d, want %d (exitConfigError)", code, exitConfigError)
 	}

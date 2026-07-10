@@ -168,8 +168,8 @@ func newIgnoreStack(startPath string) *ignoreStack {
 	}
 
 	s := &ignoreStack{}
-	for i := len(ancestors) - 1; i >= 0; i-- {
-		s.pushDir(ancestors[i])
+	for _, v := range slices.Backward(ancestors) {
+		s.pushDir(v)
 	}
 
 	return s

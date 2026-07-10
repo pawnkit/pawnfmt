@@ -1,6 +1,7 @@
 package format
 
 import (
+	"slices"
 	"sort"
 	"strings"
 
@@ -579,8 +580,9 @@ func applySharedTextEdits(line string, edits []textEdit) string {
 	seen := make(map[[2]int]bool, len(edits))
 
 	rightmostStart := len(line) + 1
-	for i := len(edits) - 1; i >= 0; i-- {
-		edit := edits[i]
+
+	for _, v := range slices.Backward(edits) {
+		edit := v
 
 		key := [2]int{edit.start, edit.end}
 		if seen[key] || edit.start < 0 || edit.start > edit.end || edit.end > len(line) || edit.end > rightmostStart {

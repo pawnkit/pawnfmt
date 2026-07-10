@@ -29,7 +29,7 @@ func TestRunExplicitConfigPathIsApplied(t *testing.T) {
 func TestRunExplicitConfigPathThatDoesNotExistIsAConfigError(t *testing.T) {
 	t.Parallel()
 
-	code, _, stderr := runCLI([]string{"--config", filepath.Join(t.TempDir(), "missing.toml"), "a.pwn"}, "")
+	code, _, stderr := runCLI([]string{"--config", filepath.Join(t.TempDir(), "missing.toml"), testFileA}, "")
 	if code != exitConfigError {
 		t.Fatalf("exit code = %d, want %d (exitConfigError)", code, exitConfigError)
 	}
@@ -211,7 +211,7 @@ func TestRunStdinFilenameDrivesConfigDiscoveryForStdinMode(t *testing.T) {
 	writeCLIFixture(t, filepath.Join(dir, "pawnfmt.toml"), "indent_width = 2\n")
 	stdinFilename := filepath.Join(dir, "virtual.pwn")
 
-	code, stdout, stderr := runCLI([]string{"--stdin", flagStdinFilename, stdinFilename}, "stock F() {\n\tnew x;\n}\n")
+	code, stdout, stderr := runCLI([]string{flagStdin, flagStdinFilename, stdinFilename}, "stock F() {\n\tnew x;\n}\n")
 	if code != exitOK {
 		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitOK, stderr)
 	}
@@ -227,7 +227,7 @@ func TestRunStdinFilenameAppliesEditorConfig(t *testing.T) {
 	writeCLIFixture(t, filepath.Join(dir, ".editorconfig"), "root = true\n[*.pwn]\nindent_size = 2\n")
 	stdinFilename := filepath.Join(dir, "virtual.pwn")
 
-	code, stdout, stderr := runCLI([]string{"--stdin", flagStdinFilename, stdinFilename}, "stock F() {\n\tnew x;\n}\n")
+	code, stdout, stderr := runCLI([]string{flagStdin, flagStdinFilename, stdinFilename}, "stock F() {\n\tnew x;\n}\n")
 	if code != exitOK {
 		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitOK, stderr)
 	}

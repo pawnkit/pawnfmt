@@ -11,19 +11,19 @@ func TestSharedBraceConditionalFormatting(t *testing.T) {
 	t.Parallel()
 
 	source := []byte(strings.Join([]string{
-		"stock F() {",
+		stockFuncOpen,
 		"#if defined A",
 		"\tif(x) {",
 		elseDirective,
 		"\tif(y) {",
-		"#endif",
+		endifDirective,
 		"\t\treturn 1;",
 		"\t}",
 		"}",
 		"",
 	}, "\n"))
 	want := strings.Join([]string{
-		"stock F()",
+		stockFuncSig,
 		"{",
 		"    #if defined A",
 		"        if (x)",
@@ -31,7 +31,7 @@ func TestSharedBraceConditionalFormatting(t *testing.T) {
 		elseDirectiveIndented,
 		"        if (y)",
 		"        {",
-		"    #endif",
+		endifDirectiveIndented,
 		"            return 1;",
 		"        }",
 		"}",
@@ -83,7 +83,7 @@ func TestConditionalFunctionHeadersFormatting(t *testing.T) {
 		"    public F(value, extra)",
 		elseDirective,
 		"    public F(value)",
-		"#endif",
+		endifDirective,
 		"{",
 		"    return value;",
 		"}",
@@ -140,12 +140,12 @@ func TestSharedConditionalTokenAwareWrapping(t *testing.T) {
 	t.Parallel()
 
 	source := []byte(strings.Join([]string{
-		"stock F() {",
+		stockFuncOpen,
 		"#if A",
 		"\tif(very_long_condition && another_long_condition) {",
 		elseDirective,
 		"\tif(other_long_condition && final_long_condition) {",
-		"#endif",
+		endifDirective,
 		"\t\tCall(Float:value, first_argument, second_argument); //note",
 		"\t}",
 		"}",
@@ -426,14 +426,14 @@ func TestSharedConditionalSynthesizesSoleSharedOpenBrace(t *testing.T) {
 	t.Parallel()
 
 	source := []byte(strings.Join([]string{
-		"stock F() {",
+		stockFuncOpen,
 		"#if defined isnull",
 		"if (isnull(s))",
 		elseDirective,
 		"if (s[0] == 0)",
-		"#endif",
+		endifDirective,
 		"{",
-		"return 1;",
+		returnOneStatement,
 		"}",
 		"}",
 		"",
@@ -456,14 +456,14 @@ func TestSharedConditionalRendersTrailingElse(t *testing.T) {
 	t.Parallel()
 
 	source := []byte(strings.Join([]string{
-		"stock F() {",
+		stockFuncOpen,
 		"#if defined isnull",
 		"if (isnull(s))",
 		elseDirective,
 		"if (s[0] == 0)",
-		"#endif",
+		endifDirective,
 		"{",
-		"return 1;",
+		returnOneStatement,
 		"}",
 		"else return 0;",
 		"}",
@@ -490,14 +490,14 @@ func TestIfStatementRendersConditionalElseIfExtension(t *testing.T) {
 		"stock F(a) {",
 		"if (a == 1)",
 		"{",
-		"return 1;",
+		returnOneStatement,
 		"}",
 		"#if defined B",
 		"else if (a == 2)",
 		"{",
 		"return 2;",
 		"}",
-		"#endif",
+		endifDirective,
 		"else return 0;",
 		"}",
 		"",
@@ -526,7 +526,7 @@ func TestConditionalRegionRendersSharedTrailingElseOnce(t *testing.T) {
 		"if(lc == 1) lc = 10;",
 		elseDirective,
 		"if(lc == 2) lc = 10;",
-		"#endif",
+		endifDirective,
 		"else if(s[0])",
 		"{",
 		"trim(s);",
@@ -566,9 +566,9 @@ func TestSharedConditionalSynthesizesBraceDespiteBalancedNestedBlocks(t *testing
 		elseDirective,
 		"new clab = 4;",
 		"if (clab != -2)",
-		"#endif",
+		endifDirective,
 		"{",
-		"return 1;",
+		returnOneStatement,
 		"}",
 		"else return 0;",
 		"}",
@@ -578,7 +578,7 @@ func TestSharedConditionalSynthesizesBraceDespiteBalancedNestedBlocks(t *testing
 	formatted := mustFormat(t, source, config.Default())
 
 	text := string(formatted)
-	if !strings.Contains(text, "return 1;") {
+	if !strings.Contains(text, returnOneStatement) {
 		t.Fatalf("shared body's opening brace was dropped despite balanced nested blocks in the prefix:\n%s", text)
 	}
 
@@ -595,27 +595,27 @@ func TestSharedInlineControlSplitsWithoutBracesWhenConfigured(t *testing.T) {
 	cfg.SingleStatementBraces = config.SingleStatementBracesNever
 	cfg.KeepSimpleStatementsSingleLine = false
 	source := []byte(strings.Join([]string{
-		"stock F() {",
+		stockFuncOpen,
 		"#if A",
 		"if(first) {",
 		elseDirective,
 		"if(second) Call(second);",
-		"#endif",
+		endifDirective,
 		"Common();",
 		"}",
 		"}",
 		"",
 	}, "\n"))
 	want := strings.Join([]string{
-		"stock F()",
+		stockFuncSig,
 		"{",
 		"    #if A",
 		"    if (first)",
-		"    {",
+		openBraceIndented,
 		elseDirectiveIndented,
 		"    if (second)",
 		"        Call(second);",
-		"    #endif",
+		endifDirectiveIndented,
 		"        Common();",
 		closingBraceIndented,
 		"}",
@@ -640,28 +640,28 @@ func TestSharedControlStatementWrapsConditionAndBodySeparately(t *testing.T) {
 	cfg.SingleStatementBraces = config.SingleStatementBracesPreserve
 	cfg.LineWidth = 60
 	source := []byte(strings.Join([]string{
-		"stock F() {",
+		stockFuncOpen,
 		"#if A",
 		"if(first) {",
 		elseDirective,
 		"if(firstConditionIsVeryLong && secondConditionIsAlsoVeryLong) CallSomeFunctionHere(argumentOne, argumentTwo);",
-		"#endif",
+		endifDirective,
 		"Common();",
 		"}",
 		"}",
 		"",
 	}, "\n"))
 	want := strings.Join([]string{
-		"stock F()",
+		stockFuncSig,
 		"{",
 		"    #if A",
 		"    if (first)",
-		"    {",
+		openBraceIndented,
 		elseDirectiveIndented,
 		"    if (firstConditionIsVeryLong",
 		"        && secondConditionIsAlsoVeryLong)",
 		"        CallSomeFunctionHere(argumentOne, argumentTwo);",
-		"    #endif",
+		endifDirectiveIndented,
 		"        Common();",
 		closingBraceIndented,
 		"}",

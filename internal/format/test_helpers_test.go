@@ -13,10 +13,16 @@ import (
 )
 
 const (
-	elseDirective         = "#else"
-	elseDirectiveIndented = "    #else"
-	emptyBraceBody        = "{}"
-	closingBraceIndented  = "    }"
+	elseDirective          = "#else"
+	elseDirectiveIndented  = "    #else"
+	emptyBraceBody         = "{}"
+	closingBraceIndented   = "    }"
+	endifDirective         = "#endif"
+	endifDirectiveIndented = "    #endif"
+	openBraceIndented      = "    {"
+	stockFuncOpen          = "stock F() {"
+	stockFuncSig           = "stock F()"
+	returnOneStatement     = "return 1;"
 )
 
 func mustFormat(t *testing.T, source []byte, cfg config.Config) []byte {

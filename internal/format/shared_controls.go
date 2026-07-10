@@ -1,6 +1,7 @@
 package format
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/pawnkit/pawn-parser/lexer"
@@ -145,12 +146,12 @@ func sharedLineStartsContinuation(line string) bool {
 
 func sharedLineEndsContinuation(line string) bool {
 	tokens := lexer.Tokenize([]byte(line))
-	for i := len(tokens) - 1; i >= 0; i-- {
-		if tokens[i].Kind == token.EOF {
+	for _, v := range slices.Backward(tokens) {
+		if v.Kind == token.EOF {
 			continue
 		}
 
-		return tokens[i].Kind == token.Comma || sharedContinuationOperator(tokens[i].Kind)
+		return v.Kind == token.Comma || sharedContinuationOperator(v.Kind)
 	}
 
 	return false
