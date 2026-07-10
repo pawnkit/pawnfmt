@@ -16,6 +16,8 @@ const (
 	exitInternalError = 4
 )
 
+const formatJSON = "json"
+
 type options struct {
 	Write          bool             `short:"w" xor:"mode" help:"write formatted output back to each file"`
 	Check          bool             `xor:"mode" help:"exit with status 1 if any file would change, without writing"`
@@ -46,6 +48,7 @@ func main() {
 
 func run(args []string, stdin io.Reader, stdout, stderr io.Writer) (code int) {
 	colors := colorsFor("auto", stderr)
+
 	var opts *options
 
 	defer func() {
@@ -56,8 +59,11 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) (code int) {
 		}
 	}()
 
-	var exitCode int
-	var done bool
+	var (
+		exitCode int
+		done     bool
+	)
+
 	opts, exitCode, done = parseCLI(args, stdout, stderr)
 	if opts != nil {
 		colors = colorsFor(opts.Color, stderr)

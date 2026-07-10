@@ -12,52 +12,13 @@ import (
 
 func dispatch(opts *options, stdin io.Reader, stdout, stderr io.Writer) int {
 	errColors := colorsFor(opts.Color, stderr)
-	if (opts.RangeStart >= 0) != (opts.RangeEnd >= 0) {
-		writeOptionErrorf(opts, stderr, errColors, "cli", "", "--range-start and --range-end must be provided together")
-		return exitConfigError
-	}
-	if rangeEnabled(opts) && (opts.DebugTokens || opts.DebugCST || opts.DebugFormatDoc) {
-		writeOptionErrorf(opts, stderr, errColors, "cli", "", "range formatting cannot be combined with debug modes")
-		return exitConfigError
-	}
-	if opts.CursorOffset >= 0 && opts.OutputFormat != "json" {
-		writeOptionErrorf(opts, stderr, errColors, "cli", "", "--cursor-offset requires --output-format=json")
-		return exitConfigError
-	}
-	if opts.OutputFormat == "json" && (opts.Write || opts.Check || opts.Diff) {
-		writeOptionErrorf(opts, stderr, errColors, "cli", "", "--output-format=json cannot be combined with --write, --check, or --diff")
-		return exitConfigError
-	}
-	if opts.OutputFormat == "json" && (opts.DebugTokens || opts.DebugCST || opts.DebugFormatDoc) {
-		writeOptionErrorf(opts, stderr, errColors, "cli", "", "--output-format=json cannot be combined with debug modes")
-		return exitConfigError
-	}
-	if opts.Stdin && len(opts.Paths) > 0 {
-		writeOptionErrorf(opts, stderr, errColors, "cli", "", "--stdin cannot be combined with file/directory arguments")
+	if msg := validateDispatchOptions(opts); msg != "" {
+		writeOptionErrorf(opts, stderr, errColors, "cli", "", "%s", msg)
 		return exitConfigError
 	}
 
 	if opts.PrintConfig {
-		filename := opts.StdinFilename
-		if filename == "" && len(opts.Paths) > 0 {
-			filename = opts.Paths[0]
-		}
-		if info, err := os.Stat(filename); err == nil && info.IsDir() {
-			filename = ""
-		}
-
-		cfg, err := resolveConfigForFile(opts, filename)
-		if err != nil {
-			writeOptionErrorf(opts, stderr, errColors, "config", "", "%v", err)
-			return exitConfigError
-		}
-
-		if err := printResolvedConfig(cfg, stdout); err != nil {
-			writeOptionErrorf(opts, stderr, errColors, "internal", "", "%v", err)
-			return exitInternalError
-		}
-
-		return exitOK
+		return runPrintConfig(opts, stdout, stderr, errColors)
 	}
 
 	if opts.InitConfig {
@@ -74,6 +35,77 @@ func dispatch(opts *options, stdin io.Reader, stdout, stderr io.Writer) int {
 	}
 
 	return runFiles(opts, stdout, stderr)
+}
+
+func wantsDebugMode(opts *options) bool {
+	return opts.DebugTokens || opts.DebugCST || opts.DebugFormatDoc
+}
+
+func wantsFileOutputMode(opts *options) bool {
+	return opts.Write || opts.Check || opts.Diff
+}
+
+func rangeConflictsWithDebug(opts *options) bool {
+	return rangeEnabled(opts) && wantsDebugMode(opts)
+}
+
+func cursorRequiresJSON(opts *options) bool {
+	return opts.CursorOffset >= 0 && opts.OutputFormat != formatJSON
+}
+
+func jsonConflictsWithFileOutput(opts *options) bool {
+	return opts.OutputFormat == formatJSON && wantsFileOutputMode(opts)
+}
+
+func jsonConflictsWithDebug(opts *options) bool {
+	return opts.OutputFormat == formatJSON && wantsDebugMode(opts)
+}
+
+func stdinConflictsWithPaths(opts *options) bool {
+	return opts.Stdin && len(opts.Paths) > 0
+}
+
+func validateDispatchOptions(opts *options) string {
+	switch {
+	case (opts.RangeStart >= 0) != (opts.RangeEnd >= 0):
+		return "--range-start and --range-end must be provided together"
+	case rangeConflictsWithDebug(opts):
+		return "range formatting cannot be combined with debug modes"
+	case cursorRequiresJSON(opts):
+		return "--cursor-offset requires --output-format=json"
+	case jsonConflictsWithFileOutput(opts):
+		return "--output-format=json cannot be combined with --write, --check, or --diff"
+	case jsonConflictsWithDebug(opts):
+		return "--output-format=json cannot be combined with debug modes"
+	case stdinConflictsWithPaths(opts):
+		return "--stdin cannot be combined with file/directory arguments"
+	default:
+		return ""
+	}
+}
+
+func runPrintConfig(opts *options, stdout, stderr io.Writer, errColors cliColors) int {
+	filename := opts.StdinFilename
+	if filename == "" && len(opts.Paths) > 0 {
+		filename = opts.Paths[0]
+	}
+
+	if info, err := os.Stat(filename); err == nil && info.IsDir() {
+		filename = ""
+	}
+
+	cfg, err := resolveConfigForFile(opts, filename)
+	if err != nil {
+		writeOptionErrorf(opts, stderr, errColors, "config", "", "%v", err)
+		return exitConfigError
+	}
+
+	if err := printResolvedConfig(cfg, stdout); err != nil {
+		writeOptionErrorf(opts, stderr, errColors, "internal", "", "%v", err)
+		return exitInternalError
+	}
+
+	return exitOK
 }
 
 func runStdin(opts *options, stdin io.Reader, stdout, stderr io.Writer) int {
@@ -132,8 +164,10 @@ func formatSourceForOptions(source []byte, cfg config.Config, opts *options) (fo
 			if err != nil {
 				return formatRequestResult{}, err
 			}
+
 			request.cursorOffset = &adjusted
 		}
+
 		return request, nil
 	}
 
@@ -142,10 +176,12 @@ func formatSourceForOptions(source []byte, cfg config.Config, opts *options) (fo
 		if err != nil {
 			return formatRequestResult{}, err
 		}
+
 		return formatRequestResult{formatted: result.Source, cursorOffset: &result.CursorOffset}, nil
 	}
 
 	formatted, err := formatter.Source(source, cfg)
+
 	return formatRequestResult{formatted: formatted}, err
 }
 
@@ -159,6 +195,7 @@ func writeFormatResult(w io.Writer, result formatRequestResult, outputFormat str
 		Start int `json:"start"`
 		End   int `json:"end"`
 	}
+
 	payload := struct {
 		Formatted      string     `json:"formatted"`
 		CursorOffset   *int       `json:"cursor_offset,omitempty"`
@@ -170,6 +207,7 @@ func writeFormatResult(w io.Writer, result formatRequestResult, outputFormat str
 
 	encoder := json.NewEncoder(w)
 	encoder.SetEscapeHTML(false)
+
 	return encoder.Encode(payload)
 }
 

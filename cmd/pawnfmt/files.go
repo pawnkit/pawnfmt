@@ -22,6 +22,14 @@ type fileResult struct {
 	formattedRange *formatter.Range
 }
 
+func singleFileModeRequested(opts *options) bool {
+	return rangeEnabled(opts) || opts.CursorOffset >= 0 || opts.OutputFormat == formatJSON
+}
+
+func tooManyFilesForSingleMode(opts *options, fileCount int) bool {
+	return singleFileModeRequested(opts) && fileCount != 1
+}
+
 func runFiles(opts *options, stdout, stderr io.Writer) int {
 	errColors := colorsFor(opts.Color, stderr)
 
@@ -41,7 +49,8 @@ func runFiles(opts *options, stdout, stderr io.Writer) int {
 		writeOptionErrorf(opts, stderr, errColors, "cli", "", "no .pwn/.inc files found in the given paths")
 		return exitConfigError
 	}
-	if (rangeEnabled(opts) || opts.CursorOffset >= 0 || opts.OutputFormat == "json") && len(files) != 1 {
+
+	if tooManyFilesForSingleMode(opts, len(files)) {
 		writeOptionErrorf(opts, stderr, errColors, "cli", "", "range, cursor, and JSON output modes require exactly one input file")
 		return exitConfigError
 	}
@@ -52,11 +61,11 @@ func runFiles(opts *options, stdout, stderr io.Writer) int {
 		return exitConfigError
 	}
 
-	if opts.DebugTokens || opts.DebugCST || opts.DebugFormatDoc {
+	if wantsDebugMode(opts) {
 		return runFileDebugMode(opts, files, configs[0], stdout, stderr)
 	}
 
-	if rangeEnabled(opts) || opts.CursorOffset >= 0 || opts.OutputFormat == "json" {
+	if singleFileModeRequested(opts) {
 		result := formatOneFileRequest(files[0], configs[0], opts)
 		return reportFileResults(opts, files, []fileResult{result}, stdout, stderr)
 	}
@@ -82,6 +91,38 @@ func runFileDebugMode(opts *options, files []string, cfg config.Config, stdout, 
 	return code
 }
 
+func shouldWriteResultToStdout(opts *options, fileCount int) bool {
+	return !opts.Write && !opts.Check && !opts.Diff && fileCount == 1
+}
+
+func writeSingleFileResult(stdout io.Writer, r fileResult, outputFormat string) error {
+	return writeFormatResult(stdout, formatRequestResult{
+		formatted: r.formatted, cursorOffset: r.cursorOffset, formattedRange: r.formattedRange,
+	}, outputFormat)
+}
+
+func applyFileChange(opts *options, r fileResult, stdoutColors, errColors cliColors, stdout, stderr io.Writer) bool {
+	switch {
+	case opts.Check:
+		_, _ = fmt.Fprintln(stdout, stdoutColors.yellow(r.path))
+		return true
+	case opts.Diff:
+		_, _ = fmt.Fprint(stdout, unifiedDiffColored(r.path, r.source, r.formatted, stdoutColors))
+		return true
+	case opts.Write:
+		if err := atomicWrite(r.path, r.formatted); err != nil {
+			writeOptionErrorf(opts, stderr, errColors, "io", r.path, "%v", err)
+			return false
+		}
+
+		return true
+	default:
+		writeOptionErrorf(opts, stderr, errColors, "cli", r.path, "pass --write, --check, or --diff when formatting more than one file")
+
+		return false
+	}
+}
+
 func reportFileResults(opts *options, files []string, results []fileResult, stdout, stderr io.Writer) int {
 	stdoutColors := colorsFor(opts.Color, stdout)
 	errColors := colorsFor(opts.Color, stderr)
@@ -97,14 +138,13 @@ func reportFileResults(opts *options, files []string, results []fileResult, stdo
 			continue
 		}
 
-		if !opts.Write && !opts.Check && !opts.Diff && len(files) == 1 {
-			err := writeFormatResult(stdout, formatRequestResult{
-				formatted: r.formatted, cursorOffset: r.cursorOffset, formattedRange: r.formattedRange,
-			}, opts.OutputFormat)
-			if err != nil {
+		if shouldWriteResultToStdout(opts, len(files)) {
+			if err := writeSingleFileResult(stdout, r, opts.OutputFormat); err != nil {
 				writeOptionErrorf(opts, stderr, errColors, "io", "", "write stdout: %v", err)
+
 				anyError = true
 			}
+
 			continue
 		}
 
@@ -114,19 +154,7 @@ func reportFileResults(opts *options, files []string, results []fileResult, stdo
 
 		anyChanged = true
 
-		switch {
-		case opts.Check:
-			_, _ = fmt.Fprintln(stdout, stdoutColors.yellow(r.path))
-		case opts.Diff:
-			_, _ = fmt.Fprint(stdout, unifiedDiffColored(r.path, r.source, r.formatted, stdoutColors))
-		case opts.Write:
-			if err := atomicWrite(r.path, r.formatted); err != nil {
-				writeOptionErrorf(opts, stderr, errColors, "io", r.path, "%v", err)
-
-				anyError = true
-			}
-		default:
-			writeOptionErrorf(opts, stderr, errColors, "cli", r.path, "pass --write, --check, or --diff when formatting more than one file")
+		if !applyFileChange(opts, r, stdoutColors, errColors, stdout, stderr) {
 			anyError = true
 		}
 	}

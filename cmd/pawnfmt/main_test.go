@@ -187,6 +187,7 @@ func TestRunStdinModeFormatsAndWritesToStdout(t *testing.T) {
 
 func TestRunStdinRangeFormatsOnlySelectedTopLevelUnit(t *testing.T) {
 	t.Parallel()
+
 	source := "new   first=1;\nnew   second=2;\n"
 	start := strings.Index(source, "first")
 	end := start + len("first")
@@ -197,6 +198,7 @@ func TestRunStdinRangeFormatsOnlySelectedTopLevelUnit(t *testing.T) {
 	if code != exitOK {
 		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitOK, stderr)
 	}
+
 	if stdout != "new first = 1;\nnew   second=2;\n" {
 		t.Fatalf("range output changed unselected source:\n%s", stdout)
 	}
@@ -204,6 +206,7 @@ func TestRunStdinRangeFormatsOnlySelectedTopLevelUnit(t *testing.T) {
 
 func TestRunRangeRequiresBothBounds(t *testing.T) {
 	t.Parallel()
+
 	code, _, stderr := runCLI([]string{"--stdin", "--range-start", "0"}, "new x;\n")
 	if code != exitConfigError || !strings.Contains(stderr, "provided together") {
 		t.Fatalf("exit=%d stderr=%q, want paired-range config error", code, stderr)
@@ -212,6 +215,7 @@ func TestRunRangeRequiresBothBounds(t *testing.T) {
 
 func TestRunCursorJSONReturnsAdjustedOffset(t *testing.T) {
 	t.Parallel()
+
 	source := "new   playerScore=1;\n"
 	cursor := strings.Index(source, "playerScore") + 6
 
@@ -229,6 +233,7 @@ func TestRunCursorJSONReturnsAdjustedOffset(t *testing.T) {
 	if err := json.Unmarshal([]byte(stdout), &result); err != nil {
 		t.Fatalf("decode JSON output: %v\n%s", err, stdout)
 	}
+
 	wantCursor := strings.Index(result.Formatted, "playerScore") + 6
 	if result.Formatted != "new playerScore = 1;\n" || result.CursorOffset != wantCursor {
 		t.Fatalf("unexpected JSON result: %+v", result)
@@ -237,6 +242,7 @@ func TestRunCursorJSONReturnsAdjustedOffset(t *testing.T) {
 
 func TestRunRangeJSONIncludesExpandedRange(t *testing.T) {
 	t.Parallel()
+
 	source := "new   first=1;\nnew   second=2;\n"
 	start := strings.Index(source, "first")
 
@@ -257,6 +263,7 @@ func TestRunRangeJSONIncludesExpandedRange(t *testing.T) {
 	if err := json.Unmarshal([]byte(stdout), &result); err != nil {
 		t.Fatalf("decode JSON output: %v", err)
 	}
+
 	if result.FormattedRange == nil || result.FormattedRange.Start > start || result.FormattedRange.End <= start {
 		t.Fatalf("JSON output missing expanded range around %d: %s", start, stdout)
 	}
@@ -264,6 +271,7 @@ func TestRunRangeJSONIncludesExpandedRange(t *testing.T) {
 
 func TestRunCursorRequiresJSONOutput(t *testing.T) {
 	t.Parallel()
+
 	code, _, stderr := runCLI([]string{"--stdin", "--cursor-offset", "0"}, "new x;\n")
 	if code != exitConfigError || !strings.Contains(stderr, "requires --output-format=json") {
 		t.Fatalf("exit=%d stderr=%q, want cursor-output config error", code, stderr)
@@ -272,6 +280,7 @@ func TestRunCursorRequiresJSONOutput(t *testing.T) {
 
 func TestRunJSONParseDiagnosticIsStructured(t *testing.T) {
 	t.Parallel()
+
 	code, _, stderr := runCLI([]string{
 		"--stdin", "--stdin-filename", "broken.pwn", "--error-format", "json",
 	}, "}\n")
@@ -291,11 +300,13 @@ func TestRunJSONParseDiagnosticIsStructured(t *testing.T) {
 	if err := json.Unmarshal([]byte(stderr), &diagnostic); err != nil {
 		t.Fatalf("decode JSON diagnostic: %v\n%s", err, stderr)
 	}
+
 	if diagnostic.Severity != "error" || diagnostic.Category != "parse" ||
 		diagnostic.Path != "broken.pwn" || diagnostic.Line != 1 || diagnostic.Column != 1 ||
 		diagnostic.Offset == nil || *diagnostic.Offset != 0 {
 		t.Fatalf("unexpected diagnostic: %+v", diagnostic)
 	}
+
 	if strings.Contains(diagnostic.Message, "\n") || !strings.Contains(diagnostic.Message, "near token") {
 		t.Fatalf("JSON diagnostic message should be single-line and specific: %q", diagnostic.Message)
 	}
@@ -303,12 +314,14 @@ func TestRunJSONParseDiagnosticIsStructured(t *testing.T) {
 
 func TestRunGitHubParseDiagnosticUsesWorkflowCommand(t *testing.T) {
 	t.Parallel()
+
 	code, _, stderr := runCLI([]string{
 		"--stdin", "--stdin-filename", "broken.pwn", "--error-format", "github",
 	}, "}\n")
 	if code != exitFormatError {
 		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitFormatError, stderr)
 	}
+
 	for _, want := range []string{"::error ", "file=broken.pwn", "line=1", "col=1", "title=pawnfmt parse"} {
 		if !strings.Contains(stderr, want) {
 			t.Fatalf("GitHub diagnostic missing %q:\n%s", want, stderr)
@@ -318,10 +331,12 @@ func TestRunGitHubParseDiagnosticUsesWorkflowCommand(t *testing.T) {
 
 func TestRunJSONConfigDiagnosticHasCategory(t *testing.T) {
 	t.Parallel()
+
 	code, _, stderr := runCLI([]string{"--error-format", "json"}, "")
 	if code != exitConfigError {
 		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitConfigError, stderr)
 	}
+
 	var diagnostic struct {
 		Category string `json:"category"`
 		Message  string `json:"message"`
@@ -329,6 +344,7 @@ func TestRunJSONConfigDiagnosticHasCategory(t *testing.T) {
 	if err := json.Unmarshal([]byte(stderr), &diagnostic); err != nil {
 		t.Fatalf("decode JSON diagnostic: %v\n%s", err, stderr)
 	}
+
 	if diagnostic.Category != "cli" || !strings.Contains(diagnostic.Message, "no input") {
 		t.Fatalf("unexpected diagnostic: %+v", diagnostic)
 	}

@@ -30,12 +30,14 @@ func loadFile(path string, base Config, chain []string, visiting map[string]int)
 	if err != nil {
 		return Config{}, err
 	}
+
 	if start, exists := visiting[canonical]; exists {
 		cycle := append(append([]string(nil), chain[start:]...), canonical)
 		return Config{}, fmt.Errorf("config inheritance cycle: %s", strings.Join(cycle, " -> "))
 	}
 
 	visiting[canonical] = len(chain)
+
 	chain = append(chain, canonical)
 	defer delete(visiting, canonical)
 
@@ -50,6 +52,7 @@ func loadFile(path string, base Config, chain []string, visiting map[string]int)
 	}
 
 	cfg := base
+
 	if child.Extends != "" {
 		parentPath := child.Extends
 		if !filepath.IsAbs(parentPath) {

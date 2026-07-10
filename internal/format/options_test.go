@@ -681,6 +681,7 @@ func TestParseDiagnosticReportsMultilineLocation(t *testing.T) {
 	t.Parallel()
 
 	source := []byte("new valid;\n    }\n")
+
 	_, err := formatter.Source(source, config.Default())
 	if err == nil {
 		t.Fatal("expected parse-invalid input to be rejected")
@@ -719,6 +720,7 @@ func TestTolerantParseModeFormatsCleanRegionsAndPreservesBrokenRegion(t *testing
 	if err != nil {
 		t.Fatalf("second tolerant format failed: %v", err)
 	}
+
 	if string(second) != string(formatted) {
 		t.Fatalf("tolerant formatting is not idempotent\nfirst:\n%s\nsecond:\n%s", formatted, second)
 	}
@@ -728,6 +730,7 @@ func TestStrictParseModeRejectsInputAcceptedByTolerantMode(t *testing.T) {
 	t.Parallel()
 
 	source := []byte("new first;\n}\nnew second;\n")
+
 	cfg := config.Default()
 	if _, err := formatter.Source(source, cfg); err == nil {
 		t.Fatal("strict mode should reject parser-broken input")

@@ -48,6 +48,7 @@ func (formatter *Formatter) FormatSource(source []byte) ([]byte, error) {
 
 func (formatter *Formatter) formatOnce(source []byte) ([]byte, error) {
 	parsed := parser.Parse(source)
+
 	inputBroken := parsed.HasParseErrors()
 	if inputBroken && formatter.config.ParseMode == config.ParseModeStrict {
 		return nil, parseDiagnostic(source, parsed, "source")
@@ -57,6 +58,7 @@ func (formatter *Formatter) formatOnce(source []byte) ([]byte, error) {
 	st := newState(parsed, formatter.config, index)
 
 	formatted := printer.Print(st.formatNode(parsed.Root), st.printerOptions())
+
 	verified := parser.Parse([]byte(formatted))
 	if verified.HasParseErrors() && (!inputBroken || formatter.config.ParseMode == config.ParseModeStrict) {
 		return nil, parseDiagnostic([]byte(formatted), verified, "formatted output")
@@ -71,6 +73,7 @@ func (formatter *Formatter) formatOnce(source []byte) ([]byte, error) {
 			return nil, fmt.Errorf("formatted output changed source semantics: %w", err)
 		}
 	}
+
 	if err := verifySemanticStructure(parsed, verified); err != nil {
 		return nil, fmt.Errorf("formatted output changed source structure: %w", err)
 	}

@@ -22,8 +22,9 @@ type cliDiagnostic struct {
 
 func writeDiagnostic(w io.Writer, colors cliColors, errorFormat, category, path string, err error) {
 	diagnostic := diagnosticFromError(category, path, err)
+
 	switch errorFormat {
-	case "json":
+	case formatJSON:
 		_ = json.NewEncoder(w).Encode(diagnostic)
 	case "github":
 		writeGitHubDiagnostic(w, diagnostic)
@@ -32,6 +33,7 @@ func writeDiagnostic(w io.Writer, colors cliColors, errorFormat, category, path 
 		if path != "" {
 			prefix = path + ": "
 		}
+
 		writeErrorf(w, colors, "%s%v", prefix, err)
 	}
 }
@@ -59,12 +61,15 @@ func writeGitHubDiagnostic(w io.Writer, diagnostic cliDiagnostic) {
 	if diagnostic.Path != "" {
 		properties = append(properties, "file="+escapeGitHubProperty(diagnostic.Path))
 	}
+
 	if diagnostic.Line > 0 {
 		properties = append(properties, fmt.Sprintf("line=%d", diagnostic.Line))
 	}
+
 	if diagnostic.Column > 0 {
 		properties = append(properties, fmt.Sprintf("col=%d", diagnostic.Column))
 	}
+
 	properties = append(properties, "title=pawnfmt "+escapeGitHubProperty(diagnostic.Category))
 	_, _ = fmt.Fprintf(w, "::error %s::%s\n", strings.Join(properties, ","), escapeGitHubMessage(diagnostic.Message))
 }
@@ -72,12 +77,14 @@ func writeGitHubDiagnostic(w io.Writer, diagnostic cliDiagnostic) {
 func escapeGitHubMessage(value string) string {
 	value = strings.ReplaceAll(value, "%", "%25")
 	value = strings.ReplaceAll(value, "\r", "%0D")
+
 	return strings.ReplaceAll(value, "\n", "%0A")
 }
 
 func escapeGitHubProperty(value string) string {
 	value = escapeGitHubMessage(value)
 	value = strings.ReplaceAll(value, ":", "%3A")
+
 	return strings.ReplaceAll(value, ",", "%2C")
 }
 
@@ -86,11 +93,13 @@ func writeOptionErrorf(opts *options, w io.Writer, colors cliColors, category, p
 	if opts != nil && opts.ErrorFormat != "" {
 		errorFormat = opts.ErrorFormat
 	}
+
 	err := fmt.Errorf(format, args...)
 	if format == "%v" && len(args) == 1 {
 		if original, ok := args[0].(error); ok {
 			err = original
 		}
 	}
+
 	writeDiagnostic(w, colors, errorFormat, category, path, err)
 }

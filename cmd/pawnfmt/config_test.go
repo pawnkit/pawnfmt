@@ -68,6 +68,7 @@ func TestRunAppliesEditorConfigBeforePawnConfig(t *testing.T) {
 	if code != exitOK {
 		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitOK, stderr)
 	}
+
 	if !strings.Contains(stdout, "\n      new x;") {
 		t.Fatalf("pawn config should override EditorConfig indentation:\n%s", stdout)
 	}
@@ -84,6 +85,7 @@ func TestRunNoConfigIgnoresEditorConfig(t *testing.T) {
 	if code != exitOK {
 		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitOK, stderr)
 	}
+
 	if !strings.Contains(stdout, "\n    new x;") {
 		t.Fatalf("--no-config should retain the default indent width:\n%s", stdout)
 	}
@@ -117,6 +119,7 @@ func TestRunDiscoversJSONConfigFileAutomatically(t *testing.T) {
 	if code != exitOK {
 		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitOK, stderr)
 	}
+
 	if !strings.Contains(stdout, "  new x;") || strings.Contains(stdout, "    new x;") {
 		t.Fatalf("automatically discovered pawnfmt.json was not applied:\n%s", stdout)
 	}
@@ -135,6 +138,7 @@ func TestRunDiscoveredConfigExtendsParent(t *testing.T) {
 	if code != exitOK {
 		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitOK, stderr)
 	}
+
 	if !strings.Contains(stdout, "\n      new x;") {
 		t.Fatalf("child override from inherited config was not applied:\n%s", stdout)
 	}
@@ -163,6 +167,7 @@ func TestRunDiscoversConfigIndependentlyForEachFile(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	rightFormatted, err := os.ReadFile(rightPath)
 	if err != nil {
 		t.Fatal(err)
@@ -171,6 +176,7 @@ func TestRunDiscoversConfigIndependentlyForEachFile(t *testing.T) {
 	if !strings.Contains(string(leftFormatted), "\n  new x;") {
 		t.Fatalf("left file did not use its indent_width=2 config:\n%s", leftFormatted)
 	}
+
 	if !strings.Contains(string(rightFormatted), "\n      new x;") {
 		t.Fatalf("right file did not use its indent_width=6 config:\n%s", rightFormatted)
 	}
@@ -185,6 +191,7 @@ func TestRunReportsInvalidNestedConfigAsConfigError(t *testing.T) {
 	writeCLIFixture(t, filepath.Join(bad, "pawnfmt.toml"), "unknown_option = true\n")
 	goodPath := filepath.Join(good, "a.pwn")
 	badPath := filepath.Join(bad, "b.pwn")
+
 	writeCLIFixture(t, goodPath, "new x;\n")
 	writeCLIFixture(t, badPath, "new y;\n")
 
@@ -192,6 +199,7 @@ func TestRunReportsInvalidNestedConfigAsConfigError(t *testing.T) {
 	if code != exitConfigError {
 		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitConfigError, stderr)
 	}
+
 	if !strings.Contains(stderr, "unknown_option") {
 		t.Fatalf("stderr should identify the invalid nested config:\n%s", stderr)
 	}
@@ -223,6 +231,7 @@ func TestRunStdinFilenameAppliesEditorConfig(t *testing.T) {
 	if code != exitOK {
 		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitOK, stderr)
 	}
+
 	if !strings.Contains(stdout, "\n  new x;") {
 		t.Fatalf("--stdin-filename should apply matching EditorConfig properties:\n%s", stdout)
 	}

@@ -25,56 +25,31 @@ func TestApplyDefaultsBackfillsStringAndWidthFields(t *testing.T) {
 	cfg.ApplyDefaults()
 
 	defaults := config.Default()
-	if cfg.LineWidth != defaults.LineWidth {
-		t.Errorf("LineWidth = %d, want %d", cfg.LineWidth, defaults.LineWidth)
+
+	fields := []struct {
+		name string
+		got  any
+		want any
+	}{
+		{"LineWidth", cfg.LineWidth, defaults.LineWidth},
+		{"IndentWidth", cfg.IndentWidth, defaults.IndentWidth},
+		{"IndentStyle", cfg.IndentStyle, defaults.IndentStyle},
+		{"NewlineStyle", cfg.NewlineStyle, defaults.NewlineStyle},
+		{"ParseMode", cfg.ParseMode, defaults.ParseMode},
+		{"BraceStyle", cfg.BraceStyle, defaults.BraceStyle},
+		{"Semicolons", cfg.Semicolons, defaults.Semicolons},
+		{"SingleStatementBraces", cfg.SingleStatementBraces, defaults.SingleStatementBraces},
+		{"DirectiveIndent", cfg.DirectiveIndent, defaults.DirectiveIndent},
+		{"EnumTrailingComma", cfg.EnumTrailingComma, defaults.EnumTrailingComma},
+		{"TagColonSpacing", cfg.TagColonSpacing, defaults.TagColonSpacing},
+		{"MultilineFunctionParams", cfg.MultilineFunctionParams, defaults.MultilineFunctionParams},
+		{"MultilineCallArgs", cfg.MultilineCallArgs, defaults.MultilineCallArgs},
 	}
 
-	if cfg.IndentWidth != defaults.IndentWidth {
-		t.Errorf("IndentWidth = %d, want %d", cfg.IndentWidth, defaults.IndentWidth)
-	}
-
-	if cfg.IndentStyle != defaults.IndentStyle {
-		t.Errorf("IndentStyle = %q, want %q", cfg.IndentStyle, defaults.IndentStyle)
-	}
-
-	if cfg.NewlineStyle != defaults.NewlineStyle {
-		t.Errorf("NewlineStyle = %q, want %q", cfg.NewlineStyle, defaults.NewlineStyle)
-	}
-
-	if cfg.ParseMode != defaults.ParseMode {
-		t.Errorf("ParseMode = %q, want %q", cfg.ParseMode, defaults.ParseMode)
-	}
-
-	if cfg.BraceStyle != defaults.BraceStyle {
-		t.Errorf("BraceStyle = %q, want %q", cfg.BraceStyle, defaults.BraceStyle)
-	}
-
-	if cfg.Semicolons != defaults.Semicolons {
-		t.Errorf("Semicolons = %q, want %q", cfg.Semicolons, defaults.Semicolons)
-	}
-
-	if cfg.SingleStatementBraces != defaults.SingleStatementBraces {
-		t.Errorf("SingleStatementBraces = %q, want %q", cfg.SingleStatementBraces, defaults.SingleStatementBraces)
-	}
-
-	if cfg.DirectiveIndent != defaults.DirectiveIndent {
-		t.Errorf("DirectiveIndent = %q, want %q", cfg.DirectiveIndent, defaults.DirectiveIndent)
-	}
-
-	if cfg.EnumTrailingComma != defaults.EnumTrailingComma {
-		t.Errorf("EnumTrailingComma = %q, want %q", cfg.EnumTrailingComma, defaults.EnumTrailingComma)
-	}
-
-	if cfg.TagColonSpacing != defaults.TagColonSpacing {
-		t.Errorf("TagColonSpacing = %q, want %q", cfg.TagColonSpacing, defaults.TagColonSpacing)
-	}
-
-	if cfg.MultilineFunctionParams != defaults.MultilineFunctionParams {
-		t.Errorf("MultilineFunctionParams = %q, want %q", cfg.MultilineFunctionParams, defaults.MultilineFunctionParams)
-	}
-
-	if cfg.MultilineCallArgs != defaults.MultilineCallArgs {
-		t.Errorf("MultilineCallArgs = %q, want %q", cfg.MultilineCallArgs, defaults.MultilineCallArgs)
+	for _, field := range fields {
+		if field.got != field.want {
+			t.Errorf("%s = %v, want %v", field.name, field.got, field.want)
+		}
 	}
 }
 
@@ -201,9 +176,11 @@ func TestLoadFileJSON(t *testing.T) {
 	if cfg.LineWidth != 88 {
 		t.Errorf("LineWidth = %d, want 88", cfg.LineWidth)
 	}
+
 	if cfg.IndentWidth != 3 {
 		t.Errorf("IndentWidth = %d, want 3", cfg.IndentWidth)
 	}
+
 	if cfg.SpaceAfterComma != config.Default().SpaceAfterComma {
 		t.Errorf("SpaceAfterComma should keep its default when unset in the file")
 	}
@@ -213,13 +190,16 @@ func TestLoadFileExtendsParentAndOverridesValues(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()
 	parent := filepath.Join(dir, "base.toml")
+
 	childDir := filepath.Join(dir, "nested")
 	if err := os.MkdirAll(childDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
+
 	if err := os.WriteFile(parent, []byte("line_width = 120\nindent_width = 2\nsort_includes = true\nmax_blank_lines = 4\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
+
 	child := filepath.Join(childDir, "pawnfmt.toml")
 	if err := os.WriteFile(child, []byte("extends = \"../base.toml\"\nindent_width = 6\nsort_includes = false\nmax_blank_lines = 0\n"), 0o644); err != nil {
 		t.Fatal(err)
@@ -229,12 +209,15 @@ func TestLoadFileExtendsParentAndOverridesValues(t *testing.T) {
 	if err != nil {
 		t.Fatalf("LoadFile: %v", err)
 	}
+
 	if cfg.LineWidth != 120 || cfg.IndentWidth != 6 {
 		t.Fatalf("inherited/overridden values = line_width %d, indent_width %d", cfg.LineWidth, cfg.IndentWidth)
 	}
+
 	if cfg.SortIncludes {
 		t.Fatal("explicit false in child must override true in parent")
 	}
+
 	if cfg.MaxBlankLines != 0 {
 		t.Fatalf("explicit zero in child must override parent, got %d", cfg.MaxBlankLines)
 	}
@@ -245,9 +228,11 @@ func TestLoadFileExtendsAcrossConfigFormats(t *testing.T) {
 	dir := t.TempDir()
 	parent := filepath.Join(dir, "base.yaml")
 	child := filepath.Join(dir, "pawnfmt.json")
+
 	if err := os.WriteFile(parent, []byte("line_width: 120\nindent_width: 2\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
+
 	if err := os.WriteFile(child, []byte("{\"extends\": \"base.yaml\", \"indent_width\": 3}\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -256,6 +241,7 @@ func TestLoadFileExtendsAcrossConfigFormats(t *testing.T) {
 	if err != nil {
 		t.Fatalf("LoadFile: %v", err)
 	}
+
 	if cfg.LineWidth != 120 || cfg.IndentWidth != 3 {
 		t.Fatalf("cross-format inheritance failed: line_width %d, indent_width %d", cfg.LineWidth, cfg.IndentWidth)
 	}
@@ -266,9 +252,11 @@ func TestLoadFileRejectsInheritanceCycle(t *testing.T) {
 	dir := t.TempDir()
 	a := filepath.Join(dir, "a.toml")
 	b := filepath.Join(dir, "b.json")
+
 	if err := os.WriteFile(a, []byte("extends = \"b.json\"\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
+
 	if err := os.WriteFile(b, []byte("{\"extends\": \"a.toml\"}\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -412,6 +400,7 @@ func TestDiscoverFindsNearestConfig(t *testing.T) {
 func TestDiscoverFindsJSONConfig(t *testing.T) {
 	t.Parallel()
 	root := t.TempDir()
+
 	sub := filepath.Join(root, "nested")
 	if err := os.MkdirAll(sub, 0o755); err != nil {
 		t.Fatal(err)
@@ -426,6 +415,7 @@ func TestDiscoverFindsJSONConfig(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Discover: %v", err)
 	}
+
 	if found != want {
 		t.Errorf("Discover found %q, want %q", found, want)
 	}

@@ -51,10 +51,12 @@ func resolveConfigForFile(opts *options, filename string) (config.Config, error)
 	if filename != "" {
 		startDir = filepath.Dir(filename)
 	}
+
 	found, err := config.Discover(startDir)
 	if err != nil {
 		return config.Config{}, err
 	}
+
 	if found == "" {
 		return base, nil
 	}
@@ -64,6 +66,7 @@ func resolveConfigForFile(opts *options, filename string) (config.Config, error)
 
 func resolveConfigsForFiles(opts *options, files []string) ([]config.Config, error) {
 	configs := make([]config.Config, len(files))
+
 	if opts.NoConfig {
 		cfg := config.Default()
 		for i := range configs {
@@ -74,6 +77,7 @@ func resolveConfigsForFiles(opts *options, files []string) ([]config.Config, err
 	}
 
 	parser := editorconfig.NewCachedParser()
+
 	type cacheKey struct {
 		path           string
 		lineWidth      int
@@ -83,7 +87,9 @@ func resolveConfigsForFiles(opts *options, files []string) ([]config.Config, err
 		insertFinal    bool
 		trimWhitespace bool
 	}
+
 	loaded := make(map[cacheKey]config.Config)
+
 	for i, path := range files {
 		base := config.Default()
 		if err := config.ApplyEditorConfig(path, &base, parser); err != nil {
@@ -93,6 +99,7 @@ func resolveConfigsForFiles(opts *options, files []string) ([]config.Config, err
 		found := opts.Config
 		if found == "" {
 			var err error
+
 			found, err = config.Discover(filepath.Dir(path))
 			if err != nil {
 				return nil, fmt.Errorf("%s: %w", path, err)
@@ -118,6 +125,7 @@ func resolveConfigsForFiles(opts *options, files []string) ([]config.Config, err
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", found, err)
 		}
+
 		loaded[key] = cfg
 		configs[i] = cfg
 	}
