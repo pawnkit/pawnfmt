@@ -28,6 +28,8 @@ type options struct {
 	NoGitignore    bool             `help:"do not respect .gitignore/.pawnfmtignore files when walking directories"`
 	RangeStart     int              `default:"-1" help:"start byte offset for range formatting (requires --range-end)"`
 	RangeEnd       int              `default:"-1" help:"exclusive end byte offset for range formatting (requires --range-start)"`
+	CursorOffset   int              `default:"-1" help:"cursor byte offset to preserve; requires --output-format=json"`
+	OutputFormat   string           `default:"text" enum:"text,json" help:"formatter output format"`
 	PrintConfig    bool             `help:"print the resolved configuration and exit"`
 	InitConfig     bool             `help:"write a fully-commented pawnfmt.toml with default values and exit (pass a path as the first argument to write elsewhere)"`
 	DebugTokens    bool             `help:"print the lexer token stream for the input instead of formatting"`

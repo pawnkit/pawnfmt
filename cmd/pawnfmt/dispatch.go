@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -17,6 +18,18 @@ func dispatch(opts *options, stdin io.Reader, stdout, stderr io.Writer) int {
 	}
 	if rangeEnabled(opts) && (opts.DebugTokens || opts.DebugCST || opts.DebugFormatDoc) {
 		writeErrorf(stderr, errColors, "range formatting cannot be combined with debug modes")
+		return exitConfigError
+	}
+	if opts.CursorOffset >= 0 && opts.OutputFormat != "json" {
+		writeErrorf(stderr, errColors, "--cursor-offset requires --output-format=json")
+		return exitConfigError
+	}
+	if opts.OutputFormat == "json" && (opts.Write || opts.Check || opts.Diff) {
+		writeErrorf(stderr, errColors, "--output-format=json cannot be combined with --write, --check, or --diff")
+		return exitConfigError
+	}
+	if opts.OutputFormat == "json" && (opts.DebugTokens || opts.DebugCST || opts.DebugFormatDoc) {
+		writeErrorf(stderr, errColors, "--output-format=json cannot be combined with debug modes")
 		return exitConfigError
 	}
 	if opts.Stdin && len(opts.Paths) > 0 {
@@ -82,13 +95,13 @@ func runStdin(opts *options, stdin io.Reader, stdout, stderr io.Writer) int {
 		return code
 	}
 
-	formatted, err := formatSourceForOptions(source, cfg, opts)
+	result, err := formatSourceForOptions(source, cfg, opts)
 	if err != nil {
 		writeErrorf(stderr, errColors, "%v", err)
 		return exitFormatError
 	}
 
-	if _, err := stdout.Write(formatted); err != nil {
+	if err := writeFormatResult(stdout, result, opts.OutputFormat); err != nil {
 		writeErrorf(stderr, errColors, "write stdout: %v", err)
 		return exitInternalError
 	}
@@ -100,16 +113,64 @@ func rangeEnabled(opts *options) bool {
 	return opts.RangeStart >= 0 && opts.RangeEnd >= 0
 }
 
-func formatSourceForOptions(source []byte, cfg config.Config, opts *options) ([]byte, error) {
-	if !rangeEnabled(opts) {
-		return formatter.Source(source, cfg)
+type formatRequestResult struct {
+	formatted      []byte
+	cursorOffset   *int
+	formattedRange *formatter.Range
+}
+
+func formatSourceForOptions(source []byte, cfg config.Config, opts *options) (formatRequestResult, error) {
+	if rangeEnabled(opts) {
+		result, err := formatter.SourceRange(source, cfg, opts.RangeStart, opts.RangeEnd)
+		if err != nil {
+			return formatRequestResult{}, err
+		}
+
+		request := formatRequestResult{formatted: result.Source, formattedRange: &result.FormattedRange}
+		if opts.CursorOffset >= 0 {
+			adjusted, err := formatter.AdjustCursorOffset(source, result.Source, opts.CursorOffset)
+			if err != nil {
+				return formatRequestResult{}, err
+			}
+			request.cursorOffset = &adjusted
+		}
+		return request, nil
 	}
 
-	result, err := formatter.SourceRange(source, cfg, opts.RangeStart, opts.RangeEnd)
-	if err != nil {
-		return nil, err
+	if opts.CursorOffset >= 0 {
+		result, err := formatter.SourceWithCursor(source, cfg, opts.CursorOffset)
+		if err != nil {
+			return formatRequestResult{}, err
+		}
+		return formatRequestResult{formatted: result.Source, cursorOffset: &result.CursorOffset}, nil
 	}
-	return result.Source, nil
+
+	formatted, err := formatter.Source(source, cfg)
+	return formatRequestResult{formatted: formatted}, err
+}
+
+func writeFormatResult(w io.Writer, result formatRequestResult, outputFormat string) error {
+	if outputFormat == "text" {
+		_, err := w.Write(result.formatted)
+		return err
+	}
+
+	type jsonRange struct {
+		Start int `json:"start"`
+		End   int `json:"end"`
+	}
+	payload := struct {
+		Formatted      string     `json:"formatted"`
+		CursorOffset   *int       `json:"cursor_offset,omitempty"`
+		FormattedRange *jsonRange `json:"formatted_range,omitempty"`
+	}{Formatted: string(result.formatted), CursorOffset: result.cursorOffset}
+	if result.formattedRange != nil {
+		payload.FormattedRange = &jsonRange{Start: result.formattedRange.Start, End: result.formattedRange.End}
+	}
+
+	encoder := json.NewEncoder(w)
+	encoder.SetEscapeHTML(false)
+	return encoder.Encode(payload)
 }
 
 func runDebugModes(opts *options, source []byte, cfg config.Config, stdout, stderr io.Writer) (code int, handled bool) {

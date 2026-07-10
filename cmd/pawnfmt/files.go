@@ -13,11 +13,13 @@ import (
 )
 
 type fileResult struct {
-	path      string
-	source    []byte
-	formatted []byte
-	changed   bool
-	err       error
+	path           string
+	source         []byte
+	formatted      []byte
+	changed        bool
+	err            error
+	cursorOffset   *int
+	formattedRange *formatter.Range
 }
 
 func runFiles(opts *options, stdout, stderr io.Writer) int {
@@ -39,8 +41,8 @@ func runFiles(opts *options, stdout, stderr io.Writer) int {
 		writeErrorf(stderr, errColors, "no .pwn/.inc files found in the given paths")
 		return exitConfigError
 	}
-	if rangeEnabled(opts) && len(files) != 1 {
-		writeErrorf(stderr, errColors, "range formatting requires exactly one input file")
+	if (rangeEnabled(opts) || opts.CursorOffset >= 0 || opts.OutputFormat == "json") && len(files) != 1 {
+		writeErrorf(stderr, errColors, "range, cursor, and JSON output modes require exactly one input file")
 		return exitConfigError
 	}
 
@@ -54,8 +56,8 @@ func runFiles(opts *options, stdout, stderr io.Writer) int {
 		return runFileDebugMode(opts, files, configs[0], stdout, stderr)
 	}
 
-	if rangeEnabled(opts) {
-		result := formatOneFileRange(files[0], configs[0], opts.RangeStart, opts.RangeEnd)
+	if rangeEnabled(opts) || opts.CursorOffset >= 0 || opts.OutputFormat == "json" {
+		result := formatOneFileRequest(files[0], configs[0], opts)
 		return reportFileResults(opts, files, []fileResult{result}, stdout, stderr)
 	}
 
@@ -95,6 +97,17 @@ func reportFileResults(opts *options, files []string, results []fileResult, stdo
 			continue
 		}
 
+		if !opts.Write && !opts.Check && !opts.Diff && len(files) == 1 {
+			err := writeFormatResult(stdout, formatRequestResult{
+				formatted: r.formatted, cursorOffset: r.cursorOffset, formattedRange: r.formattedRange,
+			}, opts.OutputFormat)
+			if err != nil {
+				writeErrorf(stderr, errColors, "write stdout: %v", err)
+				anyError = true
+			}
+			continue
+		}
+
 		if !r.changed {
 			continue
 		}
@@ -113,13 +126,8 @@ func reportFileResults(opts *options, files []string, results []fileResult, stdo
 				anyError = true
 			}
 		default:
-			if len(files) == 1 {
-				_, _ = stdout.Write(r.formatted)
-			} else {
-				writeErrorf(stderr, errColors, "%s: pass --write, --check, or --diff when formatting more than one file", r.path)
-
-				anyError = true
-			}
+			writeErrorf(stderr, errColors, "%s: pass --write, --check, or --diff when formatting more than one file", r.path)
+			anyError = true
 		}
 	}
 
@@ -176,19 +184,20 @@ func formatOneFile(path string, cfg config.Config) fileResult {
 	}
 }
 
-func formatOneFileRange(path string, cfg config.Config, start, end int) fileResult {
+func formatOneFileRequest(path string, cfg config.Config, opts *options) fileResult {
 	source, err := os.ReadFile(path)
 	if err != nil {
 		return fileResult{path: path, err: err}
 	}
 
-	result, err := formatter.SourceRange(source, cfg, start, end)
+	result, err := formatSourceForOptions(source, cfg, opts)
 	if err != nil {
-		return fileResult{path: path, source: source, err: fmt.Errorf("format range: %w", err)}
+		return fileResult{path: path, source: source, err: fmt.Errorf("format: %w", err)}
 	}
 
 	return fileResult{
-		path: path, source: source, formatted: result.Source,
-		changed: !bytes.Equal(source, result.Source),
+		path: path, source: source, formatted: result.formatted,
+		changed:      !bytes.Equal(source, result.formatted),
+		cursorOffset: result.cursorOffset, formattedRange: result.formattedRange,
 	}
 }

@@ -39,12 +39,15 @@ pawnfmt --diff script.pwn
 Other handy flags:
 
 - `--stdin` reads source from stdin and writes formatted source to stdout.
-- `--range-start N --range-end M` formats the complete top-level syntax unit intersecting the half-open byte range `[N,M)`. Range formatting requires exactly one file or stdin and preserves all bytes outside the expanded unit.
+- `--range-start N --range-end M` formats the smallest safe syntax unit containing the half-open byte range `[N,M)`. Range formatting requires exactly one file or stdin and preserves all bytes outside the expanded unit.
+- `--cursor-offset N --output-format=json` preserves a byte cursor position and returns the adjusted offset with the formatted source. JSON range requests also return the expanded `formatted_range`.
 - `--color=auto|always|never` controls colour in output. `auto` colours terminal output and keeps redirected output plain.
 - `--debug-tokens` prints the lexer token stream for one input.
 - `--debug-cst` prints the parsed CST for one input.
 - `--debug-format-doc` prints the formatter's intermediate document tree.
 - `--version` prints version information.
+
+Cursor-aware formatting suppresses include sorting because moving whole directives is not a local cursor-preserving transformation. Other formatting options remain active.
 
 Debug modes require exactly one input file, unless they are used with `--stdin`.
 

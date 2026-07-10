@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -206,6 +207,66 @@ func TestRunRangeRequiresBothBounds(t *testing.T) {
 	code, _, stderr := runCLI([]string{"--stdin", "--range-start", "0"}, "new x;\n")
 	if code != exitConfigError || !strings.Contains(stderr, "provided together") {
 		t.Fatalf("exit=%d stderr=%q, want paired-range config error", code, stderr)
+	}
+}
+
+func TestRunCursorJSONReturnsAdjustedOffset(t *testing.T) {
+	t.Parallel()
+	source := "new   playerScore=1;\n"
+	cursor := strings.Index(source, "playerScore") + 6
+
+	code, stdout, stderr := runCLI([]string{
+		"--stdin", "--cursor-offset", strconv.Itoa(cursor), "--output-format", "json",
+	}, source)
+	if code != exitOK {
+		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitOK, stderr)
+	}
+
+	var result struct {
+		Formatted    string `json:"formatted"`
+		CursorOffset int    `json:"cursor_offset"`
+	}
+	if err := json.Unmarshal([]byte(stdout), &result); err != nil {
+		t.Fatalf("decode JSON output: %v\n%s", err, stdout)
+	}
+	wantCursor := strings.Index(result.Formatted, "playerScore") + 6
+	if result.Formatted != "new playerScore = 1;\n" || result.CursorOffset != wantCursor {
+		t.Fatalf("unexpected JSON result: %+v", result)
+	}
+}
+
+func TestRunRangeJSONIncludesExpandedRange(t *testing.T) {
+	t.Parallel()
+	source := "new   first=1;\nnew   second=2;\n"
+	start := strings.Index(source, "first")
+
+	code, stdout, stderr := runCLI([]string{
+		"--stdin", "--range-start", strconv.Itoa(start), "--range-end", strconv.Itoa(start + 1),
+		"--output-format", "json",
+	}, source)
+	if code != exitOK {
+		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitOK, stderr)
+	}
+
+	var result struct {
+		FormattedRange *struct {
+			Start int `json:"start"`
+			End   int `json:"end"`
+		} `json:"formatted_range"`
+	}
+	if err := json.Unmarshal([]byte(stdout), &result); err != nil {
+		t.Fatalf("decode JSON output: %v", err)
+	}
+	if result.FormattedRange == nil || result.FormattedRange.Start > start || result.FormattedRange.End <= start {
+		t.Fatalf("JSON output missing expanded range around %d: %s", start, stdout)
+	}
+}
+
+func TestRunCursorRequiresJSONOutput(t *testing.T) {
+	t.Parallel()
+	code, _, stderr := runCLI([]string{"--stdin", "--cursor-offset", "0"}, "new x;\n")
+	if code != exitConfigError || !strings.Contains(stderr, "requires --output-format=json") {
+		t.Fatalf("exit=%d stderr=%q, want cursor-output config error", code, stderr)
 	}
 }
 
