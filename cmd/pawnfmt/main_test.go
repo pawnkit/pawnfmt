@@ -10,6 +10,11 @@ import (
 	"testing"
 )
 
+const (
+	flagCheck         = "--check"
+	flagStdinFilename = "--stdin-filename"
+)
+
 func writeCLIFixture(t *testing.T, path, content string) {
 	t.Helper()
 
@@ -77,7 +82,7 @@ func TestRunCheckFlagReportsChangesWithoutWriting(t *testing.T) {
 	path := filepath.Join(dir, "a.pwn")
 	writeCLIFixture(t, path, "new   x=1;\n")
 
-	code, stdout, _ := runCLI([]string{"--check", path}, "")
+	code, stdout, _ := runCLI([]string{flagCheck, path}, "")
 	if code != exitCheckChanges {
 		t.Fatalf("exit code = %d, want %d (exitCheckChanges)", code, exitCheckChanges)
 	}
@@ -102,7 +107,7 @@ func TestRunCheckFlagExitsZeroWhenAlreadyFormatted(t *testing.T) {
 	path := filepath.Join(dir, "a.pwn")
 	writeCLIFixture(t, path, "new x = 1;\n")
 
-	code, _, stderr := runCLI([]string{"--check", path}, "")
+	code, _, stderr := runCLI([]string{flagCheck, path}, "")
 	if code != exitOK {
 		t.Fatalf("exit code = %d, want %d for an already-formatted file; stderr:\n%s", code, exitOK, stderr)
 	}
@@ -162,7 +167,7 @@ func TestRunMultipleFilesWithoutWriteCheckOrDiffIsAnError(t *testing.T) {
 func TestRunWriteAndCheckTogetherIsRejected(t *testing.T) {
 	t.Parallel()
 
-	code, _, stderr := runCLI([]string{"-w", "--check", "whatever.pwn"}, "")
+	code, _, stderr := runCLI([]string{"-w", flagCheck, "whatever.pwn"}, "")
 	if code != exitConfigError {
 		t.Fatalf("exit code = %d, want %d (exitConfigError)", code, exitConfigError)
 	}
@@ -220,7 +225,7 @@ func TestRunCursorJSONReturnsAdjustedOffset(t *testing.T) {
 	cursor := strings.Index(source, "playerScore") + 6
 
 	code, stdout, stderr := runCLI([]string{
-		"--stdin", "--cursor-offset", strconv.Itoa(cursor), "--output-format", "json",
+		"--stdin", "--cursor-offset", strconv.Itoa(cursor), "--output-format", formatJSON,
 	}, source)
 	if code != exitOK {
 		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitOK, stderr)
@@ -248,7 +253,7 @@ func TestRunRangeJSONIncludesExpandedRange(t *testing.T) {
 
 	code, stdout, stderr := runCLI([]string{
 		"--stdin", "--range-start", strconv.Itoa(start), "--range-end", strconv.Itoa(start + 1),
-		"--output-format", "json",
+		"--output-format", formatJSON,
 	}, source)
 	if code != exitOK {
 		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitOK, stderr)
@@ -282,7 +287,7 @@ func TestRunJSONParseDiagnosticIsStructured(t *testing.T) {
 	t.Parallel()
 
 	code, _, stderr := runCLI([]string{
-		"--stdin", "--stdin-filename", "broken.pwn", "--error-format", "json",
+		"--stdin", flagStdinFilename, "broken.pwn", "--error-format", formatJSON,
 	}, "}\n")
 	if code != exitFormatError {
 		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitFormatError, stderr)
@@ -316,7 +321,7 @@ func TestRunGitHubParseDiagnosticUsesWorkflowCommand(t *testing.T) {
 	t.Parallel()
 
 	code, _, stderr := runCLI([]string{
-		"--stdin", "--stdin-filename", "broken.pwn", "--error-format", "github",
+		"--stdin", flagStdinFilename, "broken.pwn", "--error-format", "github",
 	}, "}\n")
 	if code != exitFormatError {
 		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitFormatError, stderr)
@@ -332,7 +337,7 @@ func TestRunGitHubParseDiagnosticUsesWorkflowCommand(t *testing.T) {
 func TestRunJSONConfigDiagnosticHasCategory(t *testing.T) {
 	t.Parallel()
 
-	code, _, stderr := runCLI([]string{"--error-format", "json"}, "")
+	code, _, stderr := runCLI([]string{"--error-format", formatJSON}, "")
 	if code != exitConfigError {
 		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitConfigError, stderr)
 	}
