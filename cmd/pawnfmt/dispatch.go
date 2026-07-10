@@ -13,27 +13,27 @@ import (
 func dispatch(opts *options, stdin io.Reader, stdout, stderr io.Writer) int {
 	errColors := colorsFor(opts.Color, stderr)
 	if (opts.RangeStart >= 0) != (opts.RangeEnd >= 0) {
-		writeErrorf(stderr, errColors, "--range-start and --range-end must be provided together")
+		writeOptionErrorf(opts, stderr, errColors, "cli", "", "--range-start and --range-end must be provided together")
 		return exitConfigError
 	}
 	if rangeEnabled(opts) && (opts.DebugTokens || opts.DebugCST || opts.DebugFormatDoc) {
-		writeErrorf(stderr, errColors, "range formatting cannot be combined with debug modes")
+		writeOptionErrorf(opts, stderr, errColors, "cli", "", "range formatting cannot be combined with debug modes")
 		return exitConfigError
 	}
 	if opts.CursorOffset >= 0 && opts.OutputFormat != "json" {
-		writeErrorf(stderr, errColors, "--cursor-offset requires --output-format=json")
+		writeOptionErrorf(opts, stderr, errColors, "cli", "", "--cursor-offset requires --output-format=json")
 		return exitConfigError
 	}
 	if opts.OutputFormat == "json" && (opts.Write || opts.Check || opts.Diff) {
-		writeErrorf(stderr, errColors, "--output-format=json cannot be combined with --write, --check, or --diff")
+		writeOptionErrorf(opts, stderr, errColors, "cli", "", "--output-format=json cannot be combined with --write, --check, or --diff")
 		return exitConfigError
 	}
 	if opts.OutputFormat == "json" && (opts.DebugTokens || opts.DebugCST || opts.DebugFormatDoc) {
-		writeErrorf(stderr, errColors, "--output-format=json cannot be combined with debug modes")
+		writeOptionErrorf(opts, stderr, errColors, "cli", "", "--output-format=json cannot be combined with debug modes")
 		return exitConfigError
 	}
 	if opts.Stdin && len(opts.Paths) > 0 {
-		writeErrorf(stderr, errColors, "--stdin cannot be combined with file/directory arguments")
+		writeOptionErrorf(opts, stderr, errColors, "cli", "", "--stdin cannot be combined with file/directory arguments")
 		return exitConfigError
 	}
 
@@ -48,12 +48,12 @@ func dispatch(opts *options, stdin io.Reader, stdout, stderr io.Writer) int {
 
 		cfg, err := resolveConfigForFile(opts, filename)
 		if err != nil {
-			writeErrorf(stderr, errColors, "%v", err)
+			writeOptionErrorf(opts, stderr, errColors, "config", "", "%v", err)
 			return exitConfigError
 		}
 
 		if err := printResolvedConfig(cfg, stdout); err != nil {
-			writeErrorf(stderr, errColors, "%v", err)
+			writeOptionErrorf(opts, stderr, errColors, "internal", "", "%v", err)
 			return exitInternalError
 		}
 
@@ -69,7 +69,7 @@ func dispatch(opts *options, stdin io.Reader, stdout, stderr io.Writer) int {
 	}
 
 	if len(opts.Paths) == 0 {
-		writeErrorf(stderr, errColors, "no input; pass file/directory paths or use --stdin")
+		writeOptionErrorf(opts, stderr, errColors, "cli", "", "no input; pass file/directory paths or use --stdin")
 		return exitConfigError
 	}
 
@@ -81,13 +81,13 @@ func runStdin(opts *options, stdin io.Reader, stdout, stderr io.Writer) int {
 
 	source, err := io.ReadAll(stdin)
 	if err != nil {
-		writeErrorf(stderr, errColors, "read stdin: %v", err)
+		writeOptionErrorf(opts, stderr, errColors, "io", opts.StdinFilename, "read stdin: %v", err)
 		return exitFormatError
 	}
 
 	cfg, err := resolveConfigForFile(opts, opts.StdinFilename)
 	if err != nil {
-		writeErrorf(stderr, errColors, "%v", err)
+		writeOptionErrorf(opts, stderr, errColors, "config", opts.StdinFilename, "%v", err)
 		return exitConfigError
 	}
 
@@ -97,12 +97,12 @@ func runStdin(opts *options, stdin io.Reader, stdout, stderr io.Writer) int {
 
 	result, err := formatSourceForOptions(source, cfg, opts)
 	if err != nil {
-		writeErrorf(stderr, errColors, "%v", err)
+		writeOptionErrorf(opts, stderr, errColors, "format", opts.StdinFilename, "%v", err)
 		return exitFormatError
 	}
 
 	if err := writeFormatResult(stdout, result, opts.OutputFormat); err != nil {
-		writeErrorf(stderr, errColors, "write stdout: %v", err)
+		writeOptionErrorf(opts, stderr, errColors, "io", "", "write stdout: %v", err)
 		return exitInternalError
 	}
 
@@ -184,7 +184,7 @@ func runDebugModes(opts *options, source []byte, cfg config.Config, stdout, stde
 	case opts.DebugFormatDoc:
 		s, err := formatter.DebugDocTree(source, cfg)
 		if err != nil {
-			writeErrorf(stderr, colorsFor(opts.Color, stderr), "%v", err)
+			writeOptionErrorf(opts, stderr, colorsFor(opts.Color, stderr), "format", opts.StdinFilename, "%v", err)
 			return exitFormatError, true
 		}
 

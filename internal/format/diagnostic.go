@@ -14,12 +14,34 @@ func parseDiagnostic(source []byte, parsed *parser.File, subject string) error {
 	offset := parseErrorOffset(source, parsed)
 	line, column, lineText, marker := sourceLocation(source, offset)
 	detail := parseErrorDetail(source, parsed, offset)
-	lineNumberWidth := len(strconv.Itoa(line))
+	return &ParseError{
+		Subject: subject, Offset: offset, Line: line, Column: column,
+		Detail: detail, SourceLine: lineText, marker: marker,
+	}
+}
 
-	return fmt.Errorf("%s does not parse cleanly at line %d, column %d%s\n%*d | %s\n%s | %s^",
-		subject, line, column, detail,
-		lineNumberWidth, line, lineText,
-		strings.Repeat(" ", lineNumberWidth), marker)
+// ParseError is a source-located parser diagnostic.
+type ParseError struct {
+	Subject    string
+	Offset     int
+	Line       int
+	Column     int
+	Detail     string
+	SourceLine string
+	marker     string
+}
+
+// Summary returns the single-line diagnostic message without a source excerpt.
+func (err *ParseError) Summary() string {
+	return fmt.Sprintf("%s does not parse cleanly%s", err.Subject, err.Detail)
+}
+
+func (err *ParseError) Error() string {
+	lineNumberWidth := len(strconv.Itoa(err.Line))
+	return fmt.Sprintf("%s does not parse cleanly at line %d, column %d%s\n%*d | %s\n%s | %s^",
+		err.Subject, err.Line, err.Column, err.Detail,
+		lineNumberWidth, err.Line, err.SourceLine,
+		strings.Repeat(" ", lineNumberWidth), err.marker)
 }
 
 func parseErrorOffset(source []byte, parsed *parser.File) int {

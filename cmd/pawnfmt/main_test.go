@@ -270,6 +270,70 @@ func TestRunCursorRequiresJSONOutput(t *testing.T) {
 	}
 }
 
+func TestRunJSONParseDiagnosticIsStructured(t *testing.T) {
+	t.Parallel()
+	code, _, stderr := runCLI([]string{
+		"--stdin", "--stdin-filename", "broken.pwn", "--error-format", "json",
+	}, "}\n")
+	if code != exitFormatError {
+		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitFormatError, stderr)
+	}
+
+	var diagnostic struct {
+		Severity string `json:"severity"`
+		Category string `json:"category"`
+		Message  string `json:"message"`
+		Path     string `json:"path"`
+		Line     int    `json:"line"`
+		Column   int    `json:"column"`
+		Offset   *int   `json:"offset"`
+	}
+	if err := json.Unmarshal([]byte(stderr), &diagnostic); err != nil {
+		t.Fatalf("decode JSON diagnostic: %v\n%s", err, stderr)
+	}
+	if diagnostic.Severity != "error" || diagnostic.Category != "parse" ||
+		diagnostic.Path != "broken.pwn" || diagnostic.Line != 1 || diagnostic.Column != 1 ||
+		diagnostic.Offset == nil || *diagnostic.Offset != 0 {
+		t.Fatalf("unexpected diagnostic: %+v", diagnostic)
+	}
+	if strings.Contains(diagnostic.Message, "\n") || !strings.Contains(diagnostic.Message, "near token") {
+		t.Fatalf("JSON diagnostic message should be single-line and specific: %q", diagnostic.Message)
+	}
+}
+
+func TestRunGitHubParseDiagnosticUsesWorkflowCommand(t *testing.T) {
+	t.Parallel()
+	code, _, stderr := runCLI([]string{
+		"--stdin", "--stdin-filename", "broken.pwn", "--error-format", "github",
+	}, "}\n")
+	if code != exitFormatError {
+		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitFormatError, stderr)
+	}
+	for _, want := range []string{"::error ", "file=broken.pwn", "line=1", "col=1", "title=pawnfmt parse"} {
+		if !strings.Contains(stderr, want) {
+			t.Fatalf("GitHub diagnostic missing %q:\n%s", want, stderr)
+		}
+	}
+}
+
+func TestRunJSONConfigDiagnosticHasCategory(t *testing.T) {
+	t.Parallel()
+	code, _, stderr := runCLI([]string{"--error-format", "json"}, "")
+	if code != exitConfigError {
+		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitConfigError, stderr)
+	}
+	var diagnostic struct {
+		Category string `json:"category"`
+		Message  string `json:"message"`
+	}
+	if err := json.Unmarshal([]byte(stderr), &diagnostic); err != nil {
+		t.Fatalf("decode JSON diagnostic: %v\n%s", err, stderr)
+	}
+	if diagnostic.Category != "cli" || !strings.Contains(diagnostic.Message, "no input") {
+		t.Fatalf("unexpected diagnostic: %+v", diagnostic)
+	}
+}
+
 func TestRunStdinCombinedWithPathsIsRejected(t *testing.T) {
 	t.Parallel()
 

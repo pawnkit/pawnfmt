@@ -27,28 +27,28 @@ func runFiles(opts *options, stdout, stderr io.Writer) int {
 
 	cfg, err := resolveConfig(opts, startDirFor(opts))
 	if err != nil {
-		writeErrorf(stderr, errColors, "%v", err)
+		writeOptionErrorf(opts, stderr, errColors, "config", "", "%v", err)
 		return exitConfigError
 	}
 
 	files, err := collectFiles(opts.Paths, cfg.Include, cfg.Exclude, !opts.NoGitignore)
 	if err != nil {
-		writeErrorf(stderr, errColors, "%v", err)
+		writeOptionErrorf(opts, stderr, errColors, "io", "", "%v", err)
 		return exitFormatError
 	}
 
 	if len(files) == 0 {
-		writeErrorf(stderr, errColors, "no .pwn/.inc files found in the given paths")
+		writeOptionErrorf(opts, stderr, errColors, "cli", "", "no .pwn/.inc files found in the given paths")
 		return exitConfigError
 	}
 	if (rangeEnabled(opts) || opts.CursorOffset >= 0 || opts.OutputFormat == "json") && len(files) != 1 {
-		writeErrorf(stderr, errColors, "range, cursor, and JSON output modes require exactly one input file")
+		writeOptionErrorf(opts, stderr, errColors, "cli", "", "range, cursor, and JSON output modes require exactly one input file")
 		return exitConfigError
 	}
 
 	configs, err := resolveConfigsForFiles(opts, files)
 	if err != nil {
-		writeErrorf(stderr, errColors, "%v", err)
+		writeOptionErrorf(opts, stderr, errColors, "config", "", "%v", err)
 		return exitConfigError
 	}
 
@@ -67,13 +67,13 @@ func runFiles(opts *options, stdout, stderr io.Writer) int {
 func runFileDebugMode(opts *options, files []string, cfg config.Config, stdout, stderr io.Writer) int {
 	errColors := colorsFor(opts.Color, stderr)
 	if len(files) != 1 {
-		writeErrorf(stderr, errColors, "--debug-tokens/--debug-cst/--debug-format-doc require exactly one input file")
+		writeOptionErrorf(opts, stderr, errColors, "cli", "", "--debug-tokens/--debug-cst/--debug-format-doc require exactly one input file")
 		return exitConfigError
 	}
 
 	source, err := os.ReadFile(files[0])
 	if err != nil {
-		writeErrorf(stderr, errColors, "%v", err)
+		writeOptionErrorf(opts, stderr, errColors, "io", files[0], "%v", err)
 		return exitFormatError
 	}
 
@@ -90,7 +90,7 @@ func reportFileResults(opts *options, files []string, results []fileResult, stdo
 
 	for _, r := range results {
 		if r.err != nil {
-			writeErrorf(stderr, errColors, "%s: %v", r.path, r.err)
+			writeOptionErrorf(opts, stderr, errColors, "format", r.path, "%v", r.err)
 
 			anyError = true
 
@@ -102,7 +102,7 @@ func reportFileResults(opts *options, files []string, results []fileResult, stdo
 				formatted: r.formatted, cursorOffset: r.cursorOffset, formattedRange: r.formattedRange,
 			}, opts.OutputFormat)
 			if err != nil {
-				writeErrorf(stderr, errColors, "write stdout: %v", err)
+				writeOptionErrorf(opts, stderr, errColors, "io", "", "write stdout: %v", err)
 				anyError = true
 			}
 			continue
@@ -121,12 +121,12 @@ func reportFileResults(opts *options, files []string, results []fileResult, stdo
 			_, _ = fmt.Fprint(stdout, unifiedDiffColored(r.path, r.source, r.formatted, stdoutColors))
 		case opts.Write:
 			if err := atomicWrite(r.path, r.formatted); err != nil {
-				writeErrorf(stderr, errColors, "%s: %v", r.path, err)
+				writeOptionErrorf(opts, stderr, errColors, "io", r.path, "%v", err)
 
 				anyError = true
 			}
 		default:
-			writeErrorf(stderr, errColors, "%s: pass --write, --check, or --diff when formatting more than one file", r.path)
+			writeOptionErrorf(opts, stderr, errColors, "cli", r.path, "pass --write, --check, or --diff when formatting more than one file")
 			anyError = true
 		}
 	}

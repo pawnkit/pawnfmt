@@ -41,6 +41,7 @@ Other handy flags:
 - `--stdin` reads source from stdin and writes formatted source to stdout.
 - `--range-start N --range-end M` formats the smallest safe syntax unit containing the half-open byte range `[N,M)`. Range formatting requires exactly one file or stdin and preserves all bytes outside the expanded unit.
 - `--cursor-offset N --output-format=json` preserves a byte cursor position and returns the adjusted offset with the formatted source. JSON range requests also return the expanded `formatted_range`.
+- `--error-format=human|json|github` selects human-readable diagnostics, newline-delimited JSON objects, or GitHub Actions workflow commands. Located parse errors include path, line, column, and byte offset.
 - `--color=auto|always|never` controls colour in output. `auto` colours terminal output and keeps redirected output plain.
 - `--debug-tokens` prints the lexer token stream for one input.
 - `--debug-cst` prints the parsed CST for one input.

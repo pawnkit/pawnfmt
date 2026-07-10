@@ -30,6 +30,7 @@ type options struct {
 	RangeEnd       int              `default:"-1" help:"exclusive end byte offset for range formatting (requires --range-start)"`
 	CursorOffset   int              `default:"-1" help:"cursor byte offset to preserve; requires --output-format=json"`
 	OutputFormat   string           `default:"text" enum:"text,json" help:"formatter output format"`
+	ErrorFormat    string           `default:"human" enum:"human,json,github" help:"diagnostic output format"`
 	PrintConfig    bool             `help:"print the resolved configuration and exit"`
 	InitConfig     bool             `help:"write a fully-commented pawnfmt.toml with default values and exit (pass a path as the first argument to write elsewhere)"`
 	DebugTokens    bool             `help:"print the lexer token stream for the input instead of formatting"`
@@ -45,16 +46,19 @@ func main() {
 
 func run(args []string, stdin io.Reader, stdout, stderr io.Writer) (code int) {
 	colors := colorsFor("auto", stderr)
+	var opts *options
 
 	defer func() {
 		if r := recover(); r != nil {
-			writeErrorf(stderr, colors, "internal error: %v", r)
+			writeOptionErrorf(opts, stderr, colors, "internal", "", "internal error: %v", r)
 
 			code = exitInternalError
 		}
 	}()
 
-	opts, exitCode, done := parseCLI(args, stdout, stderr)
+	var exitCode int
+	var done bool
+	opts, exitCode, done = parseCLI(args, stdout, stderr)
 	if opts != nil {
 		colors = colorsFor(opts.Color, stderr)
 	}
@@ -98,7 +102,7 @@ func parseCLI(args []string, stdout, stderr io.Writer) (opts *options, code int,
 	}()
 
 	if _, err := parser.Parse(args); err != nil {
-		writeErrorf(stderr, colorsFor(opts.Color, stderr), "%v", err)
+		writeOptionErrorf(opts, stderr, colorsFor(opts.Color, stderr), "cli", "", "%v", err)
 		return opts, exitConfigError, true
 	}
 

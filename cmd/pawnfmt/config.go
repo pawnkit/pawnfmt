@@ -174,9 +174,9 @@ func runInitConfig(opts *options, stdout, stderr io.Writer) int {
 	f, err := os.OpenFile(target, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o644) //nolint:gosec // config file is meant to be readable/committed, not a secret
 	if err != nil {
 		if os.IsExist(err) {
-			writeErrorf(stderr, errColors, "%s already exists; remove it or pass a different path", target)
+			writeOptionErrorf(opts, stderr, errColors, "config", target, "already exists; remove it or pass a different path")
 		} else {
-			writeErrorf(stderr, errColors, "%v", err)
+			writeOptionErrorf(opts, stderr, errColors, "io", target, "%v", err)
 		}
 
 		return exitConfigError
@@ -185,7 +185,7 @@ func runInitConfig(opts *options, stdout, stderr io.Writer) int {
 	defer func() { _ = f.Close() }()
 
 	if _, err := f.WriteString(config.DefaultTOML()); err != nil {
-		writeErrorf(stderr, errColors, "write %s: %v", target, err)
+		writeOptionErrorf(opts, stderr, errColors, "io", target, "write: %v", err)
 		return exitInternalError
 	}
 
