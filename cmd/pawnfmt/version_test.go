@@ -26,7 +26,7 @@ func TestRunVersionFlagPrintsVersionAndExitsOK(t *testing.T) {
 func TestRunVersionFlagTakesPrecedenceOverOtherFlags(t *testing.T) {
 	t.Parallel()
 
-	code, stdout, stderr := runCLI([]string{"--version", "--write", "--check"}, "")
+	code, stdout, stderr := runCLI([]string{"--version", "--write", flagCheck}, "")
 	if code != exitOK {
 		t.Fatalf("exit code = %d, want %d (stderr: %s)", code, exitOK, stderr)
 	}

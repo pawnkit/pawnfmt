@@ -2,6 +2,7 @@ package config
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -15,13 +16,57 @@ import (
 
 // LoadFile reads, decodes, defaults, and validates a config file.
 func LoadFile(path string) (Config, error) {
-	data, err := os.ReadFile(path)
+	return LoadFileWithBase(path, Default())
+}
+
+// LoadFileWithBase loads path over base, including any inherited configs.
+// Values explicitly provided by config files override the base values.
+func LoadFileWithBase(path string, base Config) (Config, error) {
+	return loadFile(path, base, nil, make(map[string]int))
+}
+
+func loadFile(path string, base Config, chain []string, visiting map[string]int) (Config, error) {
+	canonical, err := canonicalConfigPath(path)
 	if err != nil {
-		return Config{}, fmt.Errorf("read config: %w", err)
+		return Config{}, err
 	}
 
-	cfg := Default()
-	if err := decodeFile(path, data, &cfg); err != nil {
+	if start, exists := visiting[canonical]; exists {
+		cycle := append(append([]string(nil), chain[start:]...), canonical)
+		return Config{}, fmt.Errorf("config inheritance cycle: %s", strings.Join(cycle, " -> "))
+	}
+
+	visiting[canonical] = len(chain)
+
+	chain = append(chain, canonical)
+	defer delete(visiting, canonical)
+
+	data, err := os.ReadFile(canonical)
+	if err != nil {
+		return Config{}, fmt.Errorf("read config %s: %w", canonical, err)
+	}
+
+	child := Config{}
+	if err := decodeFile(canonical, data, &child); err != nil {
+		return Config{}, err
+	}
+
+	cfg := base
+
+	if child.Extends != "" {
+		parentPath := child.Extends
+		if !filepath.IsAbs(parentPath) {
+			parentPath = filepath.Join(filepath.Dir(canonical), parentPath)
+		}
+
+		cfg, err = loadFile(parentPath, base, chain, visiting)
+		if err != nil {
+			return Config{}, fmt.Errorf("extend %s: %w", canonical, err)
+		}
+	}
+
+	cfg.Extends = ""
+	if err := decodeFile(canonical, data, &cfg); err != nil {
 		return Config{}, err
 	}
 
@@ -34,6 +79,19 @@ func LoadFile(path string) (Config, error) {
 	return cfg, nil
 }
 
+func canonicalConfigPath(path string) (string, error) {
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		return "", fmt.Errorf("resolve config path: %w", err)
+	}
+
+	if resolved, err := filepath.EvalSymlinks(abs); err == nil {
+		return resolved, nil
+	}
+
+	return filepath.Clean(abs), nil
+}
+
 func decodeFile(path string, data []byte, out *Config) error {
 	ext := strings.ToLower(filepath.Ext(path))
 	switch ext {
@@ -41,17 +99,48 @@ func decodeFile(path string, data []byte, out *Config) error {
 		return decodeTOMLStrict(data, out)
 	case ".yaml", ".yml":
 		return decodeYAMLStrict(data, out)
+	case ".json":
+		return decodeJSONStrict(data, out)
 	default:
-		if err := decodeTOMLStrict(data, out); err == nil {
+		candidate := *out
+		if err := decodeTOMLStrict(data, &candidate); err == nil {
+			*out = candidate
 			return nil
 		}
 
-		if err := decodeYAMLStrict(data, out); err == nil {
+		candidate = *out
+		if err := decodeJSONStrict(data, &candidate); err == nil {
+			*out = candidate
+			return nil
+		}
+
+		candidate = *out
+		if err := decodeYAMLStrict(data, &candidate); err == nil {
+			*out = candidate
 			return nil
 		}
 
 		return fmt.Errorf("unsupported config file extension %q", ext)
 	}
+}
+
+func decodeJSONStrict(data []byte, out *Config) error {
+	dec := json.NewDecoder(bytes.NewReader(data))
+	dec.DisallowUnknownFields()
+
+	if err := dec.Decode(out); err != nil {
+		return fmt.Errorf("decode json config: %w", err)
+	}
+
+	if err := dec.Decode(&struct{}{}); !errors.Is(err, io.EOF) {
+		if err == nil {
+			return errors.New("decode json config: multiple JSON values are not allowed")
+		}
+
+		return fmt.Errorf("decode json config: %w", err)
+	}
+
+	return nil
 }
 
 func decodeTOMLStrict(data []byte, out *Config) error {
@@ -83,7 +172,7 @@ func decodeYAMLStrict(data []byte, out *Config) error {
 }
 
 // ConfigFileNames lists the config file names pawnfmt looks for.
-var ConfigFileNames = []string{"pawnfmt.toml", "pawnfmt.yaml", "pawnfmt.yml"}
+var ConfigFileNames = []string{"pawnfmt.toml", "pawnfmt.yaml", "pawnfmt.yml", "pawnfmt.json"}
 
 // Discover walks upward from startDir looking for a config file.
 func Discover(startDir string) (string, error) {

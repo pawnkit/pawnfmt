@@ -1,8 +1,12 @@
 # Configuration
 
-`pawnfmt` looks for config files named `pawnfmt.toml`, `pawnfmt.yaml`, or `pawnfmt.yml`.
+`pawnfmt` looks for config files named `pawnfmt.toml`, `pawnfmt.yaml`, `pawnfmt.yml`, or `pawnfmt.json`.
 
-By default it starts from the first input path, walks upward, and stops at the first config it finds. If it reaches a Git root without finding one, it uses the built-in defaults.
+By default it resolves configuration independently for each input file, walking upward from that file and stopping at the nearest config. If it reaches a Git root without finding one, it uses the built-in defaults. Explicit `--config` and `--no-config` choices apply uniformly to every input file.
+
+EditorConfig is applied for each input file before pawnfmt configuration. Supported properties are `indent_style`, `indent_size`, `end_of_line` (`lf` or `crlf`), `insert_final_newline`, `trim_trailing_whitespace`, and `max_line_length`. Pawnfmt configuration overrides EditorConfig. `--no-config` disables both EditorConfig and pawnfmt configuration discovery.
+
+Precedence, from lowest to highest, is: built-in defaults, matching `.editorconfig` files, inherited pawnfmt configs, the nearest pawnfmt config, and explicit CLI policy.
 
 Useful flags:
 
@@ -13,6 +17,21 @@ Useful flags:
 - `--stdin-filename path/to/file.pwn` gives `--stdin` a location to use for config discovery.
 
 Config files are strict. Unknown keys fail fast instead of being ignored.
+
+TOML takes discovery precedence when more than one supported config file exists in the same directory, followed by YAML and then JSON.
+
+## Inheriting configuration
+
+Use `extends` to build a config from another TOML, YAML, or JSON config. Relative paths are resolved from the child config's directory. Child values override inherited values, including explicit `false`, `0`, and empty lists.
+
+```toml
+extends = "../pawnfmt.toml"
+
+line_width = 120
+indent_width = 2
+```
+
+Inheritance may cross config formats and span multiple levels. Cycles and missing parents are configuration errors.
 
 ## Example
 
@@ -31,6 +50,8 @@ exclude = ["vendor/*", "generated/*"]
 
 | Option | Default | Values | Notes |
 | --- | --- | --- | --- |
+| `extends` | `""` | path string | Optional parent configuration, resolved relative to the current config file. |
+| `parse_mode` | `"strict"` | `"strict"`, `"tolerant"` | `strict` rejects parser-broken input. `tolerant` formats clean syntax regions while preserving raw/error regions byte-for-byte. |
 | `line_width` | `100` | integer, at least `20` | Target wrap width. |
 | `indent_style` | `"space"` | `"space"`, `"tab"` | Uses tabs for indentation when set to `"tab"`. |
 | `indent_width` | `4` | integer, at least `1` | Spaces per indent level. Ignored for tab indentation. |
@@ -70,7 +91,7 @@ exclude = ["vendor/*", "generated/*"]
 | `format_disabled_regions` | `false` | boolean | Formats code inside `// pawnfmt off` and `// pawnfmt on` regions anyway. |
 | `blank_lines_after_include_block` | `true` | boolean | Keeps one blank line after the top include block. |
 | `blank_lines_between_publics` | `true` | boolean | Keeps adjacent `public` functions separated. |
-| `sort_includes` | `false` | boolean | Sorts contiguous top-level include runs by path. |
+| `sort_includes` | `false` | boolean | Sorts safe contiguous top-level include runs by path. Runs stop at blank lines, non-include directives, conditional regions, and disabled regions; runs containing duplicate paths are preserved. |
 | `group_includes_by_brackets` | `false` | boolean | With `sort_includes`, puts angle-bracket includes before quoted includes. |
 | `collapse_blank_lines` | `true` | boolean | Caps long blank-line runs. |
 | `max_blank_lines` | `2` | integer, at least `0` | Maximum blank lines kept when collapsing is enabled. |

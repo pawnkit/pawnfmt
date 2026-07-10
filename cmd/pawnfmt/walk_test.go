@@ -341,7 +341,7 @@ func TestGitignoreGlobToRegexp(t *testing.T) {
 		{"*.log", "foo.log.txt", false},
 		{"foo?bar", "fooxbar", true},
 		{"foo?bar", "foobar", false},
-		{"[abc].pwn", "a.pwn", true},
+		{"[abc].pwn", testFileA, true},
 		{"[abc].pwn", "d.pwn", false},
 		{"[!abc].pwn", "d.pwn", true},
 	}

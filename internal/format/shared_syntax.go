@@ -1,6 +1,7 @@
 package format
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/pawnkit/pawn-parser/lexer"
@@ -382,8 +383,8 @@ func normalizeSharedComments(line string) string {
 		collect(tok.TrailingTrivia)
 	}
 
-	for i := len(offsets) - 1; i >= 0; i-- {
-		at := offsets[i]
+	for _, v := range slices.Backward(offsets) {
+		at := v
 		line = line[:at] + " " + line[at:]
 	}
 

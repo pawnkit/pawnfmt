@@ -29,7 +29,7 @@ func TestRunExplicitConfigPathIsApplied(t *testing.T) {
 func TestRunExplicitConfigPathThatDoesNotExistIsAConfigError(t *testing.T) {
 	t.Parallel()
 
-	code, _, stderr := runCLI([]string{"--config", filepath.Join(t.TempDir(), "missing.toml"), "a.pwn"}, "")
+	code, _, stderr := runCLI([]string{"--config", filepath.Join(t.TempDir(), "missing.toml"), testFileA}, "")
 	if code != exitConfigError {
 		t.Fatalf("exit code = %d, want %d (exitConfigError)", code, exitConfigError)
 	}
@@ -56,6 +56,41 @@ func TestRunNoConfigFlagIgnoresADiscoverableConfigFile(t *testing.T) {
 	}
 }
 
+func TestRunAppliesEditorConfigBeforePawnConfig(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	writeCLIFixture(t, filepath.Join(dir, ".editorconfig"), "root = true\n\n[*.pwn]\nindent_size = 2\nmax_line_length = 120\n")
+	writeCLIFixture(t, filepath.Join(dir, "pawnfmt.toml"), "indent_width = 6\n")
+	srcPath := filepath.Join(dir, "a.pwn")
+	writeCLIFixture(t, srcPath, "stock F() {\n\tnew x;\n}\n")
+
+	code, stdout, stderr := runCLI([]string{srcPath}, "")
+	if code != exitOK {
+		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitOK, stderr)
+	}
+
+	if !strings.Contains(stdout, "\n      new x;") {
+		t.Fatalf("pawn config should override EditorConfig indentation:\n%s", stdout)
+	}
+}
+
+func TestRunNoConfigIgnoresEditorConfig(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	writeCLIFixture(t, filepath.Join(dir, ".editorconfig"), "root = true\n[*]\nindent_size = 2\n")
+	srcPath := filepath.Join(dir, "a.pwn")
+	writeCLIFixture(t, srcPath, "stock F() {\n\tnew x;\n}\n")
+
+	code, stdout, stderr := runCLI([]string{"--no-config", srcPath}, "")
+	if code != exitOK {
+		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitOK, stderr)
+	}
+
+	if !strings.Contains(stdout, "\n    new x;") {
+		t.Fatalf("--no-config should retain the default indent width:\n%s", stdout)
+	}
+}
+
 func TestRunDiscoversNearestConfigFileAutomatically(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()
@@ -73,19 +108,132 @@ func TestRunDiscoversNearestConfigFileAutomatically(t *testing.T) {
 	}
 }
 
+func TestRunDiscoversJSONConfigFileAutomatically(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	writeCLIFixture(t, filepath.Join(dir, "pawnfmt.json"), "{\"indent_width\": 2}\n")
+	srcPath := filepath.Join(dir, "a.pwn")
+	writeCLIFixture(t, srcPath, "stock F() {\n\tnew x;\n}\n")
+
+	code, stdout, stderr := runCLI([]string{srcPath}, "")
+	if code != exitOK {
+		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitOK, stderr)
+	}
+
+	if !strings.Contains(stdout, "  new x;") || strings.Contains(stdout, "    new x;") {
+		t.Fatalf("automatically discovered pawnfmt.json was not applied:\n%s", stdout)
+	}
+}
+
+func TestRunDiscoveredConfigExtendsParent(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	nested := filepath.Join(root, "nested")
+	writeCLIFixture(t, filepath.Join(root, "base.toml"), "indent_width = 2\nline_width = 120\n")
+	writeCLIFixture(t, filepath.Join(nested, "pawnfmt.json"), "{\"extends\": \"../base.toml\", \"indent_width\": 6}\n")
+	srcPath := filepath.Join(nested, "a.pwn")
+	writeCLIFixture(t, srcPath, "stock F() {\n\tnew x;\n}\n")
+
+	code, stdout, stderr := runCLI([]string{srcPath}, "")
+	if code != exitOK {
+		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitOK, stderr)
+	}
+
+	if !strings.Contains(stdout, "\n      new x;") {
+		t.Fatalf("child override from inherited config was not applied:\n%s", stdout)
+	}
+}
+
+func TestRunDiscoversConfigIndependentlyForEachFile(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	left := filepath.Join(root, "left")
+	right := filepath.Join(root, "right")
+	writeCLIFixture(t, filepath.Join(left, "pawnfmt.toml"), "indent_width = 2\n")
+	writeCLIFixture(t, filepath.Join(right, "pawnfmt.toml"), "indent_width = 6\n")
+
+	leftPath := filepath.Join(left, "a.pwn")
+	rightPath := filepath.Join(right, "b.pwn")
+	source := "stock F() {\n\tnew x;\n}\n"
+	writeCLIFixture(t, leftPath, source)
+	writeCLIFixture(t, rightPath, source)
+
+	code, _, stderr := runCLI([]string{"--write", leftPath, rightPath}, "")
+	if code != exitOK {
+		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitOK, stderr)
+	}
+
+	leftFormatted, err := os.ReadFile(leftPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rightFormatted, err := os.ReadFile(rightPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !strings.Contains(string(leftFormatted), "\n  new x;") {
+		t.Fatalf("left file did not use its indent_width=2 config:\n%s", leftFormatted)
+	}
+
+	if !strings.Contains(string(rightFormatted), "\n      new x;") {
+		t.Fatalf("right file did not use its indent_width=6 config:\n%s", rightFormatted)
+	}
+}
+
+func TestRunReportsInvalidNestedConfigAsConfigError(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	good := filepath.Join(root, "good")
+	bad := filepath.Join(root, "bad")
+	writeCLIFixture(t, filepath.Join(good, "pawnfmt.toml"), "indent_width = 2\n")
+	writeCLIFixture(t, filepath.Join(bad, "pawnfmt.toml"), "unknown_option = true\n")
+	goodPath := filepath.Join(good, "a.pwn")
+	badPath := filepath.Join(bad, "b.pwn")
+
+	writeCLIFixture(t, goodPath, "new x;\n")
+	writeCLIFixture(t, badPath, "new y;\n")
+
+	code, _, stderr := runCLI([]string{flagCheck, goodPath, badPath}, "")
+	if code != exitConfigError {
+		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitConfigError, stderr)
+	}
+
+	if !strings.Contains(stderr, "unknown_option") {
+		t.Fatalf("stderr should identify the invalid nested config:\n%s", stderr)
+	}
+}
+
 func TestRunStdinFilenameDrivesConfigDiscoveryForStdinMode(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()
 	writeCLIFixture(t, filepath.Join(dir, "pawnfmt.toml"), "indent_width = 2\n")
 	stdinFilename := filepath.Join(dir, "virtual.pwn")
 
-	code, stdout, stderr := runCLI([]string{"--stdin", "--stdin-filename", stdinFilename}, "stock F() {\n\tnew x;\n}\n")
+	code, stdout, stderr := runCLI([]string{flagStdin, flagStdinFilename, stdinFilename}, "stock F() {\n\tnew x;\n}\n")
 	if code != exitOK {
 		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitOK, stderr)
 	}
 
 	if !strings.Contains(stdout, "  new x;") || strings.Contains(stdout, "    new x;") {
 		t.Fatalf("-stdin-filename should drive config discovery to the sibling pawnfmt.toml (indent_width=2):\n%s", stdout)
+	}
+}
+
+func TestRunStdinFilenameAppliesEditorConfig(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	writeCLIFixture(t, filepath.Join(dir, ".editorconfig"), "root = true\n[*.pwn]\nindent_size = 2\n")
+	stdinFilename := filepath.Join(dir, "virtual.pwn")
+
+	code, stdout, stderr := runCLI([]string{flagStdin, flagStdinFilename, stdinFilename}, "stock F() {\n\tnew x;\n}\n")
+	if code != exitOK {
+		t.Fatalf("exit code = %d, want %d; stderr:\n%s", code, exitOK, stderr)
+	}
+
+	if !strings.Contains(stdout, "\n  new x;") {
+		t.Fatalf("--stdin-filename should apply matching EditorConfig properties:\n%s", stdout)
 	}
 }
 
@@ -116,8 +264,10 @@ func TestRunDebugFormatDocReportsUnparseableSourceAsAFormatError(t *testing.T) {
 		t.Fatalf("exit code = %d, want %d (exitFormatError)", code, exitFormatError)
 	}
 
-	if stderr == "" {
-		t.Fatal("stderr should explain the parse failure")
+	for _, want := range []string{"line 1, column 1", "1 | }", "| ^"} {
+		if !strings.Contains(stderr, want) {
+			t.Fatalf("stderr missing %q:\n%s", want, stderr)
+		}
 	}
 }
 

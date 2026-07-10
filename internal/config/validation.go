@@ -37,6 +37,10 @@ func (cfg Config) validateNumbers() error {
 }
 
 func (cfg Config) validateEnums() error {
+	if err := oneOf("parse_mode", string(cfg.ParseMode), string(ParseModeStrict), string(ParseModeTolerant)); err != nil {
+		return err
+	}
+
 	if err := oneOf("indent_style", string(cfg.IndentStyle), string(IndentStyleSpace), string(IndentStyleTab)); err != nil {
 		return err
 	}

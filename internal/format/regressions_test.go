@@ -146,8 +146,8 @@ func TestNestedConditionalDirectivesAlignWithEnclosingBrace(t *testing.T) {
 		"#if OUTER",
 		"#if INNER",
 		"new x = 1;",
-		"#endif",
-		"#endif",
+		endifDirective,
+		endifDirective,
 		"",
 	}, "\n"))
 	formatted := mustFormat(t, topLevel, config.Default())
@@ -163,7 +163,7 @@ func TestNestedConditionalDirectivesAlignWithEnclosingBrace(t *testing.T) {
 	}
 
 	nested := []byte(strings.Join([]string{
-		"stock F() {",
+		stockFuncOpen,
 		"\tif (cond) {",
 		"\t\t#if OUTER",
 		"\t\tnew x;",
@@ -178,16 +178,16 @@ func TestNestedConditionalDirectivesAlignWithEnclosingBrace(t *testing.T) {
 	nestedFormatted := mustFormat(t, nested, config.Default())
 
 	nestedWant := strings.Join([]string{
-		"stock F()",
+		stockFuncSig,
 		"{",
 		"    if (cond)",
-		"    {",
+		openBraceIndented,
 		"    #if OUTER",
 		"        new x;",
 		"    #if INNER",
 		"        new y;",
-		"    #endif",
-		"    #endif",
+		endifDirectiveIndented,
+		endifDirectiveIndented,
 		closingBraceIndented,
 		"}",
 		"",
@@ -277,7 +277,7 @@ func TestAlignConsecutiveDeclarationsAlignsWithinARun(t *testing.T) {
 		"",
 		"new gUnrelated = 1;",
 		"",
-		"stock F() {",
+		stockFuncOpen,
 		"    new x = 1;",
 		"    static Float:yyyy = 2.0;",
 		"    new zz = 3;",
@@ -293,7 +293,7 @@ func TestAlignConsecutiveDeclarationsAlignsWithinARun(t *testing.T) {
 		"",
 		"new gUnrelated = 1;",
 		"",
-		"stock F()",
+		stockFuncSig,
 		"{",
 		"    new x             = 1;",
 		"    static Float:yyyy = 2.0;",
@@ -399,7 +399,7 @@ func TestAssignmentChainWrapsOneAssignmentPerLineWhenTooLong(t *testing.T) {
 	cfg.LineWidth = 40
 	source := []byte("stock F() {\n    firstVariable = secondVariable = thirdVariable = 1;\n}\n")
 	want := strings.Join([]string{
-		"stock F()",
+		stockFuncSig,
 		"{",
 		"    firstVariable =",
 		"        secondVariable =",
@@ -550,10 +550,10 @@ func TestIndentNestedDirectivesIndentsTopLevelBranchContents(t *testing.T) {
 		"stock F() {}",
 		elseDirective,
 		"stock F() {}",
-		"#endif",
+		endifDirective,
 		elseDirective,
 		"stock F() {}",
-		"#endif",
+		endifDirective,
 		"",
 	}, "\n"))
 	want := strings.Join([]string{
@@ -564,11 +564,11 @@ func TestIndentNestedDirectivesIndentsTopLevelBranchContents(t *testing.T) {
 		elseDirectiveIndented,
 		"        stock F()",
 		"        {}",
-		"    #endif",
+		endifDirectiveIndented,
 		elseDirective,
 		"    stock F()",
 		"    {}",
-		"#endif",
+		endifDirective,
 		"",
 	}, "\n")
 
@@ -593,16 +593,16 @@ func TestIndentNestedDirectivesIndentsTopLevelBranchContents(t *testing.T) {
 	offWant := strings.Join([]string{
 		"#if defined _INC_y_va",
 		"#if defined _INC_open_mp",
-		"stock F()",
+		stockFuncSig,
 		emptyBraceBody,
 		elseDirective,
-		"stock F()",
+		stockFuncSig,
 		emptyBraceBody,
-		"#endif",
+		endifDirective,
 		elseDirective,
-		"stock F()",
+		stockFuncSig,
 		emptyBraceBody,
-		"#endif",
+		endifDirective,
 		"",
 	}, "\n")
 	if string(offFormatted) != offWant {

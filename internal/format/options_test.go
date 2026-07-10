@@ -107,6 +107,47 @@ func TestSortIncludesKeepsFileHeaderAtTop(t *testing.T) {
 	}
 }
 
+func TestSortIncludesPreservesBlankLineGroups(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("#include <zeta>\n#include <beta>\n\n// local group\n#include \"z.inc\"\n#include \"a.inc\"\n")
+	cfg := config.Default()
+	cfg.SortIncludes = true
+	formatted := mustFormat(t, source, cfg)
+
+	want := "#include <beta>\n#include <zeta>\n\n// local group\n#include \"a.inc\"\n#include \"z.inc\"\n"
+	if string(formatted) != want {
+		t.Fatalf("include sorting crossed a blank-line group boundary\nexpected:\n%s\nactual:\n%s", want, formatted)
+	}
+}
+
+func TestSortIncludesPreservesRunsContainingDuplicatePaths(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("#include <zeta>\n#include <alpha>\n#include <zeta>\n")
+	cfg := config.Default()
+	cfg.SortIncludes = true
+	formatted := mustFormat(t, source, cfg)
+
+	if string(formatted) != string(source) {
+		t.Fatalf("include sorting reordered a run containing duplicates\nexpected:\n%s\nactual:\n%s", source, formatted)
+	}
+}
+
+func TestSortIncludesDoesNotCrossPreprocessorBoundary(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("#include <zeta>\n#include <beta>\n#define FEATURE 1\n#include <delta>\n#include <alpha>\n")
+	cfg := config.Default()
+	cfg.SortIncludes = true
+	formatted := mustFormat(t, source, cfg)
+
+	want := "#include <beta>\n#include <zeta>\n\n#define FEATURE 1\n#include <alpha>\n#include <delta>\n"
+	if string(formatted) != want {
+		t.Fatalf("include sorting crossed a preprocessor boundary\nexpected:\n%s\nactual:\n%s", want, formatted)
+	}
+}
+
 func TestDisabledRegionIsNotSortedOrSeparated(t *testing.T) {
 	t.Parallel()
 
@@ -288,14 +329,14 @@ func TestDirectiveIndentNone(t *testing.T) {
 		"    label_a: return 1;",
 		"#elseif defined ALT",
 		"    while (value > 0)",
-		"    {",
+		openBraceIndented,
 		"#if defined INNER",
 		"        retry: continue;",
-		"#endif",
+		endifDirective,
 		closingBraceIndented,
 		elseDirective,
 		"    guard: #warning fallback branch",
-		"#endif",
+		endifDirective,
 		"}",
 	}, "\n")))
 	if string(formatted) != string(expected) {
@@ -312,13 +353,13 @@ func TestDirectiveIndentNoneAcrossNestedContainers(t *testing.T) {
 		"        case 1: return 1;",
 		"#if FEATURE",
 		"        case 2: return 2;",
-		"#endif",
+		endifDirective,
 		closingBraceIndented,
 		"#if OUTER",
 		"    if (value) {",
 		elseDirective,
 		"    if (!value) {",
-		"#endif",
+		endifDirective,
 		"        return 3;",
 		closingBraceIndented,
 		"}",
@@ -625,7 +666,78 @@ func TestRejectsParseInvalidInput(t *testing.T) {
 		t.Fatal("expected parse-invalid input to be rejected")
 	}
 
-	if !strings.Contains(err.Error(), "source does not parse cleanly") {
-		t.Fatalf("unexpected error: %v", err)
+	for _, want := range []string{
+		"source does not parse cleanly at line 1, column 1 near token \"}\"",
+		"1 | }",
+		"| ^",
+	} {
+		if !strings.Contains(err.Error(), want) {
+			t.Fatalf("error missing %q:\n%v", want, err)
+		}
+	}
+}
+
+func TestParseDiagnosticReportsMultilineLocation(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("new valid;\n    }\n")
+
+	_, err := formatter.Source(source, config.Default())
+	if err == nil {
+		t.Fatal("expected parse-invalid input to be rejected")
+	}
+
+	for _, want := range []string{
+		"line 2, column 5",
+		"2 |     }",
+		"|     ^",
+	} {
+		if !strings.Contains(err.Error(), want) {
+			t.Fatalf("error missing %q:\n%v", want, err)
+		}
+	}
+}
+
+func TestTolerantParseModeFormatsCleanRegionsAndPreservesBrokenRegion(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("new   first=1;\n}\nnew   second=2;\n")
+	cfg := config.Default()
+	cfg.ParseMode = config.ParseModeTolerant
+
+	formatted, err := formatter.Source(source, cfg)
+	if err != nil {
+		t.Fatalf("tolerant formatting failed: %v", err)
+	}
+
+	for _, want := range []string{"new first = 1;", "\n}\n", "new second = 2;"} {
+		if !strings.Contains(string(formatted), want) {
+			t.Fatalf("tolerant output missing %q:\n%s", want, formatted)
+		}
+	}
+
+	second, err := formatter.Source(formatted, cfg)
+	if err != nil {
+		t.Fatalf("second tolerant format failed: %v", err)
+	}
+
+	if string(second) != string(formatted) {
+		t.Fatalf("tolerant formatting is not idempotent\nfirst:\n%s\nsecond:\n%s", formatted, second)
+	}
+}
+
+func TestStrictParseModeRejectsInputAcceptedByTolerantMode(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("new first;\n}\nnew second;\n")
+
+	cfg := config.Default()
+	if _, err := formatter.Source(source, cfg); err == nil {
+		t.Fatal("strict mode should reject parser-broken input")
+	}
+
+	cfg.ParseMode = config.ParseModeTolerant
+	if _, err := formatter.Source(source, cfg); err != nil {
+		t.Fatalf("tolerant mode should preserve the broken region: %v", err)
 	}
 }

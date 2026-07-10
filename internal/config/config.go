@@ -107,8 +107,19 @@ const (
 	BinaryOperatorBreakBefore BinaryOperatorBreak = "before"
 )
 
+// ParseMode controls how the formatter handles parser-broken input.
+type ParseMode string
+
+// Values for ParseMode.
+const (
+	ParseModeStrict   ParseMode = "strict"
+	ParseModeTolerant ParseMode = "tolerant"
+)
+
 // Config holds all formatting options.
 type Config struct {
+	Extends                        string                `json:"extends" yaml:"extends" toml:"extends"`
+	ParseMode                      ParseMode             `json:"parse_mode" yaml:"parse_mode" toml:"parse_mode"`
 	LineWidth                      int                   `json:"line_width" yaml:"line_width" toml:"line_width"`
 	IndentStyle                    IndentStyle           `json:"indent_style" yaml:"indent_style" toml:"indent_style"`
 	IndentWidth                    int                   `json:"indent_width" yaml:"indent_width" toml:"indent_width"`
