@@ -38,6 +38,11 @@ jobs:
       - name: Test
         run: go test -race ./...
 
+      - name: Test real-world corpus
+        env:
+          PAWNFMT_CORPUS: "1"
+        run: go test ./internal/format -run=TestCorpusReport
+
   lint:
     name: Lint
     runs-on: ubuntu-latest
@@ -53,8 +58,7 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v9
         with:
-          version: latest
-          only-new-issues: true
+          version: v2.11.4
 
   security:
     name: Vulnerability scan

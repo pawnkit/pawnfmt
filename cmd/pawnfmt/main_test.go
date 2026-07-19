@@ -37,6 +37,23 @@ func runCLI(args []string, stdin string) (code int, stdout, stderr string) {
 	return code, out.String(), errBuf.String()
 }
 
+func TestRunDiscoversProjectWhenPathsAreOmitted(t *testing.T) { //nolint:paralleltest // changes the process working directory
+	dir := t.TempDir()
+	writeCLIFixture(t, filepath.Join(dir, "pawn.json"), "{}\n")
+	path := filepath.Join(dir, "main.pwn")
+	writeCLIFixture(t, path, "new   x=1;\n")
+	t.Chdir(dir)
+
+	code, stdout, stderr := runCLI([]string{flagCheck}, "")
+	if code != exitCheckChanges {
+		t.Fatalf("exit code = %d, want %d; stderr: %s", code, exitCheckChanges, stderr)
+	}
+
+	if !strings.Contains(stdout, path) {
+		t.Fatalf("stdout = %q, want discovered file %q", stdout, path)
+	}
+}
+
 func TestRunDefaultModePrintsFormattedOutputForOneFile(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()

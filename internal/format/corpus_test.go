@@ -1,6 +1,7 @@
 package format_test
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -10,6 +11,10 @@ import (
 
 func TestCorpusReport(t *testing.T) {
 	t.Parallel()
+
+	if os.Getenv("PAWNFMT_CORPUS") != "1" {
+		t.Skip("set PAWNFMT_CORPUS=1 to run the downloaded corpus")
+	}
 
 	root := filepath.Join(testdataDir(), "real-world")
 

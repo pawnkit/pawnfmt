@@ -3,22 +3,8 @@
 A fast, deterministic formatter for Pawn (SA-MP / open.mp) source: `.pwn`
 and `.inc` files.
 
-## Documentation
-
-These docs cover the parts of `pawnfmt` people usually need once they move
-past the quick start:
-
-- [Configuration reference](docs/configuration.md)
-- [Project notes](docs/project-notes.md)
-
-For a ready-to-edit config file, run:
-
-```sh
-pawnfmt --init-config
-```
-
-That writes a commented `pawnfmt.toml` with every option set to its default
-value.
+With no paths, `pawnfmt` discovers the nearest Pawn project and formats it.
+Explicit files and stdin remain project-independent.
 
 ## Install
 
@@ -58,7 +44,7 @@ Print a diff:
 pawnfmt --diff script.pwn
 ```
 
-## Editor / CI Integration
+## Editor and CI integration
 
 Call `pawnfmt` directly from your editor or CI:
 
@@ -112,3 +98,28 @@ pawnfmt --check gamemodes includes
 ```
 
 Save it as `.git/hooks/pre-commit` and make it executable.
+
+## Configuration
+
+Create a commented config with every default:
+
+```sh
+pawnfmt --init-config
+```
+
+See the [configuration reference](docs/configuration.md) for discovery, inheritance, EditorConfig, and available options. Development and less common CLI behavior are covered in [project notes](docs/project-notes.md).
+
+## Go package
+
+Tools can format source without running the CLI:
+
+```go
+formatted, err := pawnfmt.Format(source, pawnfmt.Options{TabSize: 4})
+```
+
+The zero options use pawnfmt's defaults. Set `UseTabs` to use tab indentation.
+
+## Contributing
+
+Formatting reports with a short input and expected output are especially
+useful. See [CONTRIBUTING.md](CONTRIBUTING.md).

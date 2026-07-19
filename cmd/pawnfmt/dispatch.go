@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 
+	"github.com/pawnkit/pawn-project/fsx"
+	"github.com/pawnkit/pawn-project/workspace"
 	"github.com/pawnkit/pawnfmt/internal/config"
 	formatter "github.com/pawnkit/pawnfmt/internal/format"
 )
@@ -30,11 +33,35 @@ func dispatch(opts *options, stdin io.Reader, stdout, stderr io.Writer) int {
 	}
 
 	if len(opts.Paths) == 0 {
-		writeOptionErrorf(opts, stderr, errColors, "cli", "", "no input; pass file/directory paths or use --stdin")
-		return exitConfigError
+		root, err := discoverProjectRoot()
+		if err != nil {
+			writeOptionErrorf(opts, stderr, errColors, "cli", "", "no input; pass file/directory paths, use --stdin, or run inside a Pawn project")
+			return exitConfigError
+		}
+
+		opts.Paths = []string{root}
 	}
 
 	return runFiles(opts, stdout, stderr)
+}
+
+func discoverProjectRoot() (string, error) {
+	wd, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+
+	abs, err := filepath.Abs(wd)
+	if err != nil {
+		return "", err
+	}
+
+	root, err := workspace.FindRoot(fsx.OS{}, abs)
+	if err != nil {
+		return "", err
+	}
+
+	return root.Dir, nil
 }
 
 func wantsDebugMode(opts *options) bool {

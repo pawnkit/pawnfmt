@@ -16,6 +16,20 @@ tasks:
     cmds:
       - golangci-lint run ./...
 
+  check:
+    deps: [vet, lint]
+    cmds:
+      - |
+        fmt_out="$(gofmt -l .)"
+        test -z "$fmt_out" || { echo "$fmt_out"; exit 1; }
+      - go build ./...
+      - CGO_ENABLED=1 go test -race -shuffle=on ./...
+
   bench:
     cmds:
       - go test ./internal/bench/... -bench=. -benchmem -run=^$
+
+  corpus:
+    cmds:
+      - testdata/real-world/fetch.sh
+      - PAWNFMT_CORPUS=1 go test ./internal/format -run=TestCorpusReport
