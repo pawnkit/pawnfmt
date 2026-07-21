@@ -2,6 +2,12 @@
 
 Notable changes are recorded here.
 
+## 1.3.0 - 2026-07-21
+
+### Added
+
+- Added a public API for formatting a selected top-level syntax unit.
+
 ## Unreleased
 
 ### Added

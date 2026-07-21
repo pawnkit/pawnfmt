@@ -32,3 +32,27 @@ func TestFormatZeroOptionsUseDefaults(t *testing.T) {
 		t.Fatalf("zero options produced tab indentation: %q", formatted)
 	}
 }
+
+func TestFormatRange(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("stock First(){new value=1;}\nstock Second(){new value=2;}\n")
+	start := bytes.Index(source, []byte("value=2"))
+
+	result, err := pawnfmt.FormatRange(source, start, start+len("value=2"), pawnfmt.Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !bytes.Contains(result.Source, []byte("new value = 2;")) {
+		t.Fatalf("selected function was not formatted: %s", result.Source)
+	}
+
+	if !bytes.Contains(result.Source, []byte("First(){new value=1;}")) {
+		t.Fatalf("unselected function changed: %s", result.Source)
+	}
+
+	if result.FormattedRange.Start > start || result.FormattedRange.End <= start {
+		t.Fatalf("formatted range = %+v", result.FormattedRange)
+	}
+}
