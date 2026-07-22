@@ -2,6 +2,14 @@
 
 Notable changes are recorded here.
 
+## 1.3.3 - 2026-07-22
+
+### Fixed
+
+- Format legacy statement macros and inline operator blocks.
+- Preserve timer dimensions, iterator capacities, generic suffixes, and postfix `char` operators.
+- Format compact modulo expressions without changing their meaning.
+
 ## 1.3.2 - 2026-07-22
 
 ### Fixed

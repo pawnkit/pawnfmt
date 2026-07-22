@@ -52,6 +52,74 @@ func TestGenericExpressionTagHasOneColon(t *testing.T) {
 	}
 }
 
+func TestPawnMacroSyntaxKeepsRequiredSpacing(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("main() { call OnReady(); defer Update[50](); Use(using inline Response); }\n")
+
+	formatted := mustFormat(t, source, config.Default())
+	for _, want := range []string{"call OnReady", "defer Update", "using inline Response"} {
+		if !strings.Contains(string(formatted), want) {
+			t.Fatalf("formatted source missing %q:\n%s", want, formatted)
+		}
+	}
+}
+
+func TestTimerDimensionStaysAfterName(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("timer Update[50](playerid) { return playerid; }\n")
+
+	formatted := mustFormat(t, source, config.Default())
+	if !strings.Contains(string(formatted), "timer Update[50](playerid)") {
+		t.Fatalf("timer dimension moved:\n%s", formatted)
+	}
+}
+
+func TestParameterGenericSuffixIsPreserved(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("stock Format(va_args<>) { return 1; }\n")
+
+	formatted := mustFormat(t, source, config.Default())
+	if !strings.Contains(string(formatted), "Format(va_args<>)") {
+		t.Fatalf("parameter generic suffix was changed:\n%s", formatted)
+	}
+}
+
+func TestPostfixCharOperatorIsPreserved(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("main() { strpack(output, input, 32 char); }\n")
+
+	formatted := mustFormat(t, source, config.Default())
+	if !strings.Contains(string(formatted), "32 char") {
+		t.Fatalf("postfix char operator was changed:\n%s", formatted)
+	}
+}
+
+func TestVariableDimensionBeforeCapacityIsPreserved(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("new Iterator:members[MAX_GROUPS]<MAX_PLAYERS>;\n")
+
+	formatted := mustFormat(t, source, config.Default())
+	if !strings.Contains(string(formatted), "members[MAX_GROUPS]<MAX_PLAYERS>") {
+		t.Fatalf("variable suffix order changed:\n%s", formatted)
+	}
+}
+
+func TestCompactModuloExpressionFormatsCleanly(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("main() { if (value%4 == 0) value++; }\n")
+
+	formatted := mustFormat(t, source, config.Default())
+	if !strings.Contains(string(formatted), "value % 4") {
+		t.Fatalf("compact modulo expression was not formatted:\n%s", formatted)
+	}
+}
+
 func TestSubscriptPreservesWildcardBraceDelimiter(t *testing.T) {
 	t.Parallel()
 

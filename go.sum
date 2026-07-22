@@ -18,8 +18,8 @@ github.com/google/renameio v0.1.0 h1:GOZbcHa3HfsPKPlmyPyN2KEohoMXOhdMbHrvbpl2QaA
 github.com/google/renameio v0.1.0/go.mod h1:KWCgfxg9yswjAJkECMjeO8J8rahYeXnNhOm40UhjYkI=
 github.com/hexops/gotextdiff v1.0.3 h1:gitA9+qJrrTCsiCl7+kh75nPqQt1cx4ZkudSTLoUqJM=
 github.com/hexops/gotextdiff v1.0.3/go.mod h1:pSWU5MAI3yDq+fZBTazCSJysOMbxWL1BSow5/V2vxeg=
-github.com/pawnkit/pawn-parser v1.1.8 h1:RMjcImGM54AmhBvHnWQcPV4LeN9zHOB6SM0yEXLpOAg=
-github.com/pawnkit/pawn-parser v1.1.8/go.mod h1:6iG1RfoTtroAadrF5A60QZc/zwalxBwn2gbgCQ/QO8Y=
+github.com/pawnkit/pawn-parser v1.1.9 h1:LbhFV4XOLdi8/UXv2HTmZcTC2fGaHGms83ZSM2bcNuw=
+github.com/pawnkit/pawn-parser v1.1.9/go.mod h1:6iG1RfoTtroAadrF5A60QZc/zwalxBwn2gbgCQ/QO8Y=
 github.com/pawnkit/pawn-project v0.1.0 h1:+1Gxp2U8EhFEQJuZNPZRtGoB7Ge92j3L2pSbryN9TMo=
 github.com/pawnkit/pawn-project v0.1.0/go.mod h1:YpfzOLsIYMyp9ztXNC5DbNOOIFhMYUxrk/epKb3rPlg=
 github.com/pawnkit/pawnkit-core v0.1.0 h1:clhoN/nr+JyNMAcFTlubStPd3q4VeCNf44MJgYmFaDM=

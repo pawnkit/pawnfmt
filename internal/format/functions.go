@@ -6,7 +6,7 @@ import (
 	"github.com/pawnkit/pawnfmt/internal/doc"
 )
 
-func (s *state) formatFunction(n *parser.Node) doc.Doc {
+func (s *state) formatFunction(n *parser.Node) doc.Doc { //nolint:gocyclo // Function syntax has several optional parts.
 	var parts []doc.Doc
 
 	for _, c := range n.Children {
@@ -25,9 +25,22 @@ func (s *state) formatFunction(n *parser.Node) doc.Doc {
 		parts = append(parts, s.formatTagPrefix(tag, false))
 	}
 
-	parts = append(parts, s.formatDimensions(dimsOf(n)))
+	name := n.Field("name")
 
-	parts = append(parts, doc.Text(n.Field("name").Text(s.source)))
+	dimensions := dimsOf(n)
+	for _, dimension := range dimensions {
+		if dimension.Start < name.Start {
+			parts = append(parts, s.formatDimensions([]*parser.Node{dimension}))
+		}
+	}
+
+	parts = append(parts, doc.Text(name.Text(s.source)))
+	for _, dimension := range dimensions {
+		if dimension.Start >= name.End {
+			parts = append(parts, s.formatDimensions([]*parser.Node{dimension}))
+		}
+	}
+
 	if s.config.SpaceBeforeFunctionParen {
 		parts = append(parts, doc.Text(" "))
 	}
@@ -224,6 +237,10 @@ func (s *state) formatParameter(n *parser.Node) doc.Doc {
 	}
 
 	parts = append(parts, s.formatDimensions(dimsOf(n)))
+	if generic := n.Field("generic"); generic != nil {
+		parts = append(parts, s.formatStateSelector(generic))
+	}
+
 	if def := n.Field("default_value"); def != nil {
 		parts = append(parts, s.assignmentSeparator(), s.formatNode(def))
 	}

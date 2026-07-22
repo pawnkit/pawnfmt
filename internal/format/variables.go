@@ -73,11 +73,7 @@ func (s *state) formatVariableDeclarator(n *parser.Node) doc.Doc {
 		parts = append(parts, doc.Text(name.Text(s.source)))
 	}
 
-	if capacity := n.Field("capacity"); capacity != nil {
-		parts = append(parts, s.formatStateSelector(capacity))
-	}
-
-	parts = append(parts, s.formatDimensions(dimsOf(n)))
+	parts = append(parts, s.formatVariableSuffix(n)...)
 	if init := n.Field("initializer"); init != nil {
 		parts = append(parts, s.assignmentSeparator(), s.formatNode(init))
 	}
@@ -128,13 +124,35 @@ func (s *state) formatVariableDeclarationPrefix(n, decl *parser.Node) doc.Doc {
 		parts = append(parts, doc.Text(name.Text(s.source)))
 	}
 
-	if capacity := decl.Field("capacity"); capacity != nil {
-		parts = append(parts, s.formatStateSelector(capacity))
-	}
-
-	parts = append(parts, s.formatDimensions(dimsOf(decl)))
+	parts = append(parts, s.formatVariableSuffix(decl)...)
 
 	return doc.Concat(parts...)
+}
+
+func (s *state) formatVariableSuffix(n *parser.Node) []doc.Doc {
+	dimensions := dimsOf(n)
+
+	capacity := n.Field("capacity")
+	if capacity == nil {
+		return []doc.Doc{s.formatDimensions(dimensions)}
+	}
+
+	var parts []doc.Doc
+
+	for _, dimension := range dimensions {
+		if dimension.Start < capacity.Start {
+			parts = append(parts, s.formatDimensions([]*parser.Node{dimension}))
+		}
+	}
+
+	parts = append(parts, s.formatStateSelector(capacity))
+	for _, dimension := range dimensions {
+		if dimension.Start >= capacity.End {
+			parts = append(parts, s.formatDimensions([]*parser.Node{dimension}))
+		}
+	}
+
+	return parts
 }
 
 func (s *state) formatAlignedSingleDeclaration(n, decl *parser.Node, width int) doc.Doc {

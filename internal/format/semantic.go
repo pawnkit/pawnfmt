@@ -48,19 +48,42 @@ func verifySemanticTokensWithSortedIncludes(beforeSource, afterSource []byte, be
 }
 
 func compareSemanticTokenSlices(want, got []semanticToken) error {
-	limit := min(len(got), len(want))
-	for i := range limit {
-		if want[i].kind != got[i].kind || !equalSemanticText(want[i].kind, want[i].text, got[i].text) {
-			return fmt.Errorf("semantic token %d changed from %s %q to %s %q", i+1,
-				want[i].kind, want[i].text, got[i].kind, got[i].text)
+	wi, gi := 0, 0
+	for wi < len(want) && gi < len(got) {
+		if sameSemanticToken(want[wi], got[gi]) {
+			wi++
+			gi++
+
+			continue
 		}
+
+		if compactModuloMatches(want[wi], got[gi:]) {
+			wi++
+			gi += 2
+
+			continue
+		}
+
+		return fmt.Errorf("semantic token %d changed from %s %q to %s %q", wi+1,
+			want[wi].kind, want[wi].text, got[gi].kind, got[gi].text)
 	}
 
-	if len(want) != len(got) {
+	if wi != len(want) || gi != len(got) {
 		return fmt.Errorf("semantic token count changed from %d to %d", len(want), len(got))
 	}
 
 	return nil
+}
+
+func sameSemanticToken(want, got semanticToken) bool {
+	return want.kind == got.kind && equalSemanticText(want.kind, want.text, got.text)
+}
+
+func compactModuloMatches(want semanticToken, got []semanticToken) bool {
+	return want.kind == token.MacroParam && len(want.text) == 2 && want.text[0] == '%' &&
+		want.text[1] >= '0' && want.text[1] <= '9' && len(got) >= 2 &&
+		got[0].kind == token.Percent && bytes.Equal(got[0].text, []byte("%")) &&
+		got[1].kind == token.IntLiteral && bytes.Equal(got[1].text, want.text[1:])
 }
 
 func semanticTokensOutsideIncludes(source []byte, file *parser.File) []semanticToken {
@@ -139,7 +162,7 @@ func compareSemanticNodes(before, after *parser.Node, path string) error {
 		return compareMismatchedKindNodes(before, after, path)
 	}
 
-	if before.Tok.Kind != after.Tok.Kind {
+	if before.Tok.Kind != after.Tok.Kind && !equivalentOperatorKinds(before, after) {
 		return fmt.Errorf("operator at %s changed from %s to %s", path, before.Tok.Kind, after.Tok.Kind)
 	}
 
@@ -153,6 +176,11 @@ func compareSemanticNodes(before, after *parser.Node, path string) error {
 	}
 
 	return compareChildNodes(before, after, path)
+}
+
+func equivalentOperatorKinds(before, after *parser.Node) bool {
+	return before.Kind == parser.KindBinaryExpression && after.Kind == parser.KindBinaryExpression &&
+		before.Tok.Kind == token.MacroParam && after.Tok.Kind == token.Percent
 }
 
 func compareMismatchedKindNodes(before, after *parser.Node, path string) error {

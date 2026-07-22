@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	parser "github.com/pawnkit/pawn-parser"
+	"github.com/pawnkit/pawn-parser/token"
 	"github.com/pawnkit/pawnfmt/internal/config"
 	"github.com/pawnkit/pawnfmt/internal/doc"
 )
@@ -128,12 +129,17 @@ func (s *state) formatUnaryExpression(n *parser.Node) doc.Doc {
 
 	op := s.binaryOperatorText(n)
 
+	expression := n.Field("expression")
+	if n.Tok.Start.Offset >= expression.End {
+		return doc.Concat(s.formatNode(expression), doc.Text(" "+op))
+	}
+
 	sep := doc.Text("")
-	if s.config.SpaceAfterUnaryOperator {
+	if s.config.SpaceAfterUnaryOperator || n.Tok.Kind == token.Identifier {
 		sep = doc.Text(" ")
 	}
 
-	return doc.Concat(doc.Text(op), sep, s.formatNode(n.Field("expression")))
+	return doc.Concat(doc.Text(op), sep, s.formatNode(expression))
 }
 
 func (s *state) formatUpdateExpression(n *parser.Node) doc.Doc {
