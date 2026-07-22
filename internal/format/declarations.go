@@ -25,6 +25,10 @@ func (s *state) formatTagPrefix(tag *parser.Node, forceTight bool) doc.Doc {
 		return s.formatWildcardTag(tag)
 	}
 
+	if tag.Field("generic") != nil {
+		return doc.Text(tag.Text(s.source))
+	}
+
 	if len(tag.Children) == 0 {
 		return doc.Text(tag.Text(s.source))
 	}

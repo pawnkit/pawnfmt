@@ -2,6 +2,14 @@
 
 Notable changes are recorded here.
 
+## 1.3.2 - 2026-07-22
+
+### Fixed
+
+- Updated parser compatibility for packed dimensions and conditional arguments.
+- Preserved PawnPlus generic tags while formatting.
+- Kept one-line `do ... while` macros on one line.
+
 ## 1.3.1 - 2026-07-22
 
 ### Added

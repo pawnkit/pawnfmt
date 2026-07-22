@@ -30,6 +30,28 @@ func TestMacroBodyFallbackPreservesOwnBackslashes(t *testing.T) {
 	}
 }
 
+func TestGenericParameterTagIsPreserved(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("stock F(Task<_>:value) { return value; }\n")
+
+	formatted := mustFormat(t, source, config.Default())
+	if !strings.Contains(string(formatted), "Task<_>:value") {
+		t.Fatalf("generic parameter tag was changed:\n%s", formatted)
+	}
+}
+
+func TestGenericExpressionTagHasOneColon(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("stock F() { return Ref<String>:value; }\n")
+
+	formatted := mustFormat(t, source, config.Default())
+	if !strings.Contains(string(formatted), "Ref<String>:value") || strings.Contains(string(formatted), "Ref<String>::value") {
+		t.Fatalf("generic expression tag was changed:\n%s", formatted)
+	}
+}
+
 func TestSubscriptPreservesWildcardBraceDelimiter(t *testing.T) {
 	t.Parallel()
 

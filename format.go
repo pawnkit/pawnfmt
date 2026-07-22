@@ -16,6 +16,7 @@ type Options struct {
 // ParseMode controls how formatting handles parser errors.
 type ParseMode string
 
+// Parse modes accepted by Options.
 const (
 	ParseModeStrict   ParseMode = "strict"
 	ParseModeTolerant ParseMode = "tolerant"
@@ -61,6 +62,7 @@ func optionsConfig(opts Options) config.Config {
 	if opts.UseTabs {
 		cfg.IndentStyle = config.IndentStyleTab
 	}
+
 	if opts.ParseMode != "" {
 		cfg.ParseMode = config.ParseMode(opts.ParseMode)
 	}

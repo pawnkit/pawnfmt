@@ -133,6 +133,11 @@ func (s *state) formatMacroValue(value *parser.Node) doc.Doc {
 
 	rendered := s.formatNode(value)
 	if containsHardLine(rendered) {
+		original := strings.TrimRight(value.Text(s.source), " \t")
+		if value.Kind == parser.KindDoWhileStatement && !strings.Contains(original, "\n") {
+			return doc.RawTextBlock(original)
+		}
+
 		return doc.RawTextBlock(backslashContinue(s.renderDoc(rendered)))
 	}
 

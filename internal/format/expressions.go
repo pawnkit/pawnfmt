@@ -1,6 +1,8 @@
 package format
 
 import (
+	"strings"
+
 	parser "github.com/pawnkit/pawn-parser"
 	"github.com/pawnkit/pawnfmt/internal/config"
 	"github.com/pawnkit/pawnfmt/internal/doc"
@@ -185,7 +187,13 @@ func (s *state) formatDefinedExpression(n *parser.Node) doc.Doc {
 
 func (s *state) formatTaggedExpression(n *parser.Node) doc.Doc {
 	tag := n.Field("tag")
-	return doc.Concat(doc.Text(tag.Text(s.source)), doc.Text(":"), s.formatNode(n.Field("expression")))
+
+	tagText := tag.Text(s.source)
+	if !strings.HasSuffix(tagText, ":") {
+		tagText += ":"
+	}
+
+	return doc.Concat(doc.Text(tagText), s.formatNode(n.Field("expression")))
 }
 
 func (s *state) formatParenthesizedExpression(n *parser.Node) doc.Doc {

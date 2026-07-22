@@ -88,7 +88,9 @@ func TestParseAfterFormat(t *testing.T) {
 
 func TestFormatIncludeWithBackslashPath(t *testing.T) {
 	t.Parallel()
+
 	source := []byte("#include <YSI_Server\\y_flooding>\n")
+
 	formatted := mustFormat(t, source, config.Default())
 	if string(formatted) != string(source) {
 		t.Fatalf("formatted include = %q", formatted)

@@ -25,10 +25,12 @@ func TestFormatToleratesBrokenRegions(t *testing.T) {
 	t.Parallel()
 
 	source := []byte("new   first=1;\n}\n#include <YSI_Server\\y_flooding>\nnew   second=2;\n")
+
 	formatted, err := pawnfmt.Format(source, pawnfmt.Options{ParseMode: pawnfmt.ParseModeTolerant})
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	for _, want := range []string{"new first = 1;", "\n}\n", "#include <YSI_Server\\y_flooding>", "new second = 2;"} {
 		if !strings.Contains(string(formatted), want) {
 			t.Fatalf("formatted source missing %q:\n%s", want, formatted)
