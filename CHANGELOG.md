@@ -2,6 +2,12 @@
 
 Notable changes are recorded here.
 
+## 1.3.1 - 2026-07-22
+
+### Added
+
+- Added tolerant formatting to the public Go API for editor clients.
+
 ## 1.3.0 - 2026-07-21
 
 ### Added

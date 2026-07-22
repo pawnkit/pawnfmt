@@ -8,9 +8,18 @@ import (
 
 // Options controls library formatting.
 type Options struct {
-	TabSize int
-	UseTabs bool
+	TabSize   int
+	UseTabs   bool
+	ParseMode ParseMode
 }
+
+// ParseMode controls how formatting handles parser errors.
+type ParseMode string
+
+const (
+	ParseModeStrict   ParseMode = "strict"
+	ParseModeTolerant ParseMode = "tolerant"
+)
 
 // Range is a byte range in the original source.
 type Range struct {
@@ -51,6 +60,9 @@ func optionsConfig(opts Options) config.Config {
 
 	if opts.UseTabs {
 		cfg.IndentStyle = config.IndentStyleTab
+	}
+	if opts.ParseMode != "" {
+		cfg.ParseMode = config.ParseMode(opts.ParseMode)
 	}
 
 	return cfg
