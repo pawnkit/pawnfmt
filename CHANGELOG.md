@@ -2,6 +2,12 @@
 
 Notable changes are recorded here.
 
+## 1.3.4 - 2026-07-23
+
+### Fixed
+
+- Updated project loading for consistent paths on Windows.
+
 ## 1.3.3 - 2026-07-22
 
 ### Fixed
