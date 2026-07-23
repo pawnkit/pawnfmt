@@ -2,6 +2,12 @@
 
 Notable changes are recorded here.
 
+## 1.3.5 - 2026-07-23
+
+### Changed
+
+- Updated to the current Pawn project release.
+
 ## 1.3.4 - 2026-07-23
 
 ### Fixed

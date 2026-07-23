@@ -20,8 +20,8 @@ github.com/hexops/gotextdiff v1.0.3 h1:gitA9+qJrrTCsiCl7+kh75nPqQt1cx4ZkudSTLoUq
 github.com/hexops/gotextdiff v1.0.3/go.mod h1:pSWU5MAI3yDq+fZBTazCSJysOMbxWL1BSow5/V2vxeg=
 github.com/pawnkit/pawn-parser v1.1.9 h1:LbhFV4XOLdi8/UXv2HTmZcTC2fGaHGms83ZSM2bcNuw=
 github.com/pawnkit/pawn-parser v1.1.9/go.mod h1:6iG1RfoTtroAadrF5A60QZc/zwalxBwn2gbgCQ/QO8Y=
-github.com/pawnkit/pawn-project v0.1.4 h1:K+GmvXl1vpB4pWA52+w9eHTPfT24RFODM0CAAj2sb8c=
-github.com/pawnkit/pawn-project v0.1.4/go.mod h1:YpfzOLsIYMyp9ztXNC5DbNOOIFhMYUxrk/epKb3rPlg=
+github.com/pawnkit/pawn-project v0.1.5 h1:iPqtblD6zfe+lNjuhOgvGwg+38inyKlPXudGbrqv0sM=
+github.com/pawnkit/pawn-project v0.1.5/go.mod h1:YpfzOLsIYMyp9ztXNC5DbNOOIFhMYUxrk/epKb3rPlg=
 github.com/pawnkit/pawnkit-core v0.1.0 h1:clhoN/nr+JyNMAcFTlubStPd3q4VeCNf44MJgYmFaDM=
 github.com/pawnkit/pawnkit-core v0.1.0/go.mod h1:jGhXHEEzr8juezaRhh/AkGzX6S4eGQnprB83vrI1peU=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=

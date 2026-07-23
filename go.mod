@@ -5,7 +5,7 @@ go 1.26.5
 require (
 	github.com/BurntSushi/toml v1.6.0
 	github.com/pawnkit/pawn-parser v1.1.9
-	github.com/pawnkit/pawn-project v0.1.4
+	github.com/pawnkit/pawn-project v0.1.5
 	gopkg.in/yaml.v3 v3.0.1
 )
 
