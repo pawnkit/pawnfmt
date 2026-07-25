@@ -2,6 +2,14 @@
 
 Notable changes are recorded here.
 
+## 1.3.6 - 2026-07-25
+
+### Fixed
+
+- Stopped re-tokenizing the source and formatted output a second time
+  during semantic verification; it now reuses the tokens each parse
+  already produced.
+
 ## 1.3.5 - 2026-07-23
 
 ### Changed

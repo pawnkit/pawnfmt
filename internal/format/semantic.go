@@ -23,6 +23,13 @@ func verifySemanticTokens(before, after []byte) error {
 	return compareSemanticTokenSlices(want, got)
 }
 
+func verifySemanticTokensFromFiles(before, after *parser.File, beforeSource, afterSource []byte) error {
+	want := semanticTokensFromFile(before, beforeSource)
+	got := semanticTokensFromFile(after, afterSource)
+
+	return compareSemanticTokenSlices(want, got)
+}
+
 func verifySemanticTokensWithSortedIncludes(beforeSource, afterSource []byte, before, after *parser.File) error {
 	want := semanticTokensOutsideIncludes(beforeSource, before)
 
@@ -99,7 +106,7 @@ func semanticTokensOutsideIncludes(source []byte, file *parser.File) []semanticT
 		}
 	}
 
-	tokens := lexer.Tokenize(source)
+	tokens := file.Tokens
 
 	out := make([]semanticToken, 0, len(tokens))
 	for _, tok := range tokens {
@@ -274,8 +281,18 @@ func equalSemanticText(kind token.Kind, want, got []byte) bool {
 }
 
 func semanticTokens(source []byte) []semanticToken {
-	tokens := lexer.Tokenize(source)
+	return filterSemanticTokens(lexer.Tokenize(source), source)
+}
 
+func semanticTokensFromFile(file *parser.File, source []byte) []semanticToken {
+	if file == nil {
+		return semanticTokens(source)
+	}
+
+	return filterSemanticTokens(file.Tokens, source)
+}
+
+func filterSemanticTokens(tokens []token.Token, source []byte) []semanticToken {
 	out := make([]semanticToken, 0, len(tokens))
 	for _, tok := range tokens {
 		if nonSemanticFormattingToken(tok.Kind) {

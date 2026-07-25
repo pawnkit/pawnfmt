@@ -105,7 +105,7 @@ func verifyRangeOutput(source, out []byte, parsed *parser.File) error {
 		return parseDiagnostic(out, verified, "range-formatted output")
 	}
 
-	if err := verifySemanticTokens(source, out); err != nil {
+	if err := verifySemanticTokensFromFiles(parsed, verified, source, out); err != nil {
 		return fmt.Errorf("range-formatted output changed source semantics: %w", err)
 	}
 

@@ -69,7 +69,7 @@ func (formatter *Formatter) formatOnce(source []byte) ([]byte, error) {
 			return nil, fmt.Errorf("formatted output changed source semantics: %w", err)
 		}
 	} else {
-		if err := verifySemanticTokens(source, []byte(formatted)); err != nil {
+		if err := verifySemanticTokensFromFiles(parsed, verified, source, []byte(formatted)); err != nil {
 			return nil, fmt.Errorf("formatted output changed source semantics: %w", err)
 		}
 	}
