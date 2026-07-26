@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "repository": "pawnkit/pawnfmt",
+  "maturity": "preview",
+  "platforms": ["linux-amd64", "windows-amd64", "darwin-arm64"],
+  "profiles": ["samp-037", "openmp"],
+  "compilers": [],
+  "contracts": [
+    { "name": "pawnfmt", "major": 1 },
+    { "name": "pawn-project", "major": 1 }
+  ],
+  "limitations": [
+    "Malformed source is preserved where formatting would be unsafe."
+  ]
+}

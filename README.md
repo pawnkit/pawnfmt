@@ -1,5 +1,7 @@
 # pawnfmt
 
+[![Maturity: preview](https://img.shields.io/badge/maturity-preview-blue)](.pawnkit/support.json)
+
 A fast, deterministic formatter for Pawn (SA-MP / open.mp) source: `.pwn`
 and `.inc` files.
 

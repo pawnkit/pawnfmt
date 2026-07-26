@@ -10,6 +10,10 @@ Notable changes are recorded here.
   during semantic verification; it now reuses the tokens each parse
   already produced.
 
+### Changed
+
+- Added the repository support record with CI validation.
+
 ## 1.3.5 - 2026-07-23
 
 ### Changed
