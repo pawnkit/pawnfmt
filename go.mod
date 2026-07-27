@@ -4,19 +4,19 @@ go 1.26.5
 
 require (
 	github.com/BurntSushi/toml v1.6.0
-	github.com/pawnkit/pawn-parser v1.1.9
-	github.com/pawnkit/pawn-project v0.1.5
+	github.com/pawnkit/pawn-parser v1.4.1
+	github.com/pawnkit/pawn-project v0.3.1
 	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
-	github.com/alecthomas/kong v1.15.0
+	github.com/alecthomas/kong v1.16.0
 	github.com/editorconfig/editorconfig-core-go/v2 v2.6.4
 )
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/pawnkit/pawnkit-core v0.1.0 // indirect
+	github.com/pawnkit/pawnkit-core v0.2.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	golang.org/x/mod v0.38.0 // indirect
 	golang.org/x/sync v0.22.0 // indirect
