@@ -91,6 +91,31 @@ func TestFormatRangeExpandsAcrossAlignedMacroGroup(t *testing.T) {
 	}
 }
 
+func TestFormatRangeDoesNotDuplicateLeadingHeader(t *testing.T) {
+	t.Parallel()
+
+	header := "/*\n * Project header.\n */\n"
+	source := []byte(header + "#define SHORT 1\n#define MUCH_LONGER 2\n")
+
+	result, err := formatter.SourceRange(source, config.Default(), len(header), len(source))
+	if err != nil {
+		t.Fatalf("SourceRange: %v", err)
+	}
+
+	if count := bytes.Count(result.Source, []byte("Project header.")); count != 1 {
+		t.Fatalf("header count = %d:\n%s", count, result.Source)
+	}
+
+	second, err := formatter.SourceRange(result.Source, config.Default(), 0, len(result.Source))
+	if err != nil {
+		t.Fatalf("second SourceRange: %v", err)
+	}
+
+	if count := bytes.Count(second.Source, []byte("Project header.")); count != 1 {
+		t.Fatalf("header count after second format = %d:\n%s", count, second.Source)
+	}
+}
+
 func TestFormatRangeMapsIntentionalControlBodyBraces(t *testing.T) {
 	t.Parallel()
 

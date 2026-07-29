@@ -80,7 +80,7 @@ func (formatter *Formatter) renderTopLevelRange(source []byte, parsed *parser.Fi
 	options := st.printerOptions()
 	options.InsertFinalNewline = false
 	replacement := []byte(printer.Print(doc.Concat(parts...), options))
-	replaceStart := indentationStart(source, nodes[0].Start)
+	replaceStart := rangeReplacementStart(source, nodes[0])
 	replaceEnd := nodes[len(nodes)-1].End
 	original := source[replaceStart:replaceEnd]
 
@@ -101,6 +101,17 @@ func (formatter *Formatter) renderTopLevelRange(source []byte, parsed *parser.Fi
 	out = append(out, source[replaceEnd:]...)
 
 	return RangeResult{Source: out, FormattedRange: Range{Start: replaceStart, End: replaceEnd}}, nil
+}
+
+func rangeReplacementStart(source []byte, node *parser.Node) int {
+	start := indentationStart(source, node.Start)
+	for _, item := range node.LeadingTrivia() {
+		if item.Start.Offset >= 0 && item.Start.Offset < start {
+			start = item.Start.Offset
+		}
+	}
+
+	return start
 }
 
 func (formatter *Formatter) locateRangeTargets(source []byte, start, end int) (*parser.File, []*parser.Node, error) {

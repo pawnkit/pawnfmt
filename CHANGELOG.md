@@ -2,6 +2,12 @@
 
 Notable changes are recorded here.
 
+## 1.4.2 - 2026-07-29
+
+### Fixed
+
+- Do not duplicate a leading file header during range formatting.
+
 ## 1.4.1 - 2026-07-29
 
 ### Fixed
