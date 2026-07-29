@@ -2,6 +2,12 @@
 
 Notable changes are recorded here.
 
+## 1.4.0 - 2026-07-29
+
+### Changed
+
+- Align values in consecutive `#define` groups by default.
+
 ## 1.3.9 - 2026-07-29
 
 ### Fixed

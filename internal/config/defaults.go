@@ -28,7 +28,7 @@ func Default() Config {
 		IndentNestedDirectives:         true,
 		AlignEnumFields:                false,
 		AlignConsecutiveDeclarations:   false,
-		AlignConsecutiveMacros:         false,
+		AlignConsecutiveMacros:         true,
 		AlignTrailingComments:          false,
 		EnumTrailingComma:              EnumTrailingCommaAlways,
 		TagColonSpacing:                TagColonSpacingCompact,

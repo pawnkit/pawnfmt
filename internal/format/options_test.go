@@ -484,9 +484,9 @@ func configOptionCases() []configOptionCase {
 			mutate: func(c *config.Config) { c.CollapseBlankLines = false },
 		},
 		{
-			name:   "align_consecutive_macros_true",
+			name:   "align_consecutive_macros_false",
 			source: "#define SHORT 1\n#define MUCH_LONGER 2\n",
-			mutate: func(c *config.Config) { c.AlignConsecutiveMacros = true },
+			mutate: func(c *config.Config) { c.AlignConsecutiveMacros = false },
 		},
 		{
 			name:   "align_trailing_comments_true",
