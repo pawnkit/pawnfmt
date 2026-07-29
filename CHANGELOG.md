@@ -2,6 +2,13 @@
 
 Notable changes are recorded here.
 
+## 1.3.7 - 2026-07-29
+
+### Performance
+
+- Format selected syntax units without formatting the full file first.
+- Added file and range benchmarks for large projects.
+
 ## 1.3.6 - 2026-07-25
 
 ### Fixed

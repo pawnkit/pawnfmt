@@ -1,12 +1,15 @@
 package format
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 
 	parser "github.com/pawnkit/pawn-parser"
 
 	"github.com/pawnkit/pawnfmt/internal/config"
+	"github.com/pawnkit/pawnfmt/internal/printer"
+	"github.com/pawnkit/pawnfmt/internal/trivia"
 )
 
 // Range is a half-open byte range in Pawn source.
@@ -68,35 +71,74 @@ func (formatter *Formatter) renderRangeReplacement(source []byte, parsed *parser
 	rangeFormatter := *formatter
 	rangeFormatter.config.SortIncludes = false
 
-	fullyFormatted, err := rangeFormatter.FormatSource(source)
-	if err != nil {
-		return nil, 0, err
+	parent := topLevelRangeParent(parsed.Root, node)
+	if parent == nil {
+		return nil, 0, errors.New("could not locate selected syntax unit")
 	}
 
-	formattedParsed := parser.Parse(fullyFormatted)
-	if formattedParsed.Root == nil {
+	replaceStart := indentationStart(source, node.Start)
+	st := newState(parsed, rangeFormatter.config, trivia.Scan(source))
+	formattedParentSource := []byte(printer.Print(st.formatNode(parent), st.printerOptions()))
+
+	formattedParsed := parser.Parse(formattedParentSource)
+	if formattedParsed.Root == nil || len(formattedParsed.Root.Children) == 0 {
 		return nil, 0, errors.New("formatted syntax tree no longer matches the selected range")
 	}
 
-	formattedNode := correspondingRangeNode(parsed.Root, formattedParsed.Root, node)
+	formattedNode := correspondingRangeNode(parent, formattedParsed.Root.Children[0], node)
 	if formattedNode == nil {
 		return nil, 0, errors.New("could not locate selected syntax in formatted output")
 	}
 
-	replaceStart := indentationStart(source, node.Start)
-
-	formattedStart := indentationStart(fullyFormatted, formattedNode.Start)
+	formattedStart := indentationStart(formattedParentSource, formattedNode.Start)
 	if replaceStart == node.Start {
 		formattedStart = formattedNode.Start
 	}
 
-	replacement := fullyFormatted[formattedStart:formattedNode.End]
+	replacement := formattedParentSource[formattedStart:formattedNode.End]
+	if replaceStart < node.Start {
+		replacement = indentReplacement(replacement, source[replaceStart:node.Start])
+	}
+
 	out := make([]byte, 0, len(source)-(node.End-replaceStart)+len(replacement))
 	out = append(out, source[:replaceStart]...)
 	out = append(out, replacement...)
 	out = append(out, source[node.End:]...)
 
 	return out, replaceStart, nil
+}
+
+func topLevelRangeParent(root, selected *parser.Node) *parser.Node {
+	if root == nil || selected == nil {
+		return nil
+	}
+
+	for _, child := range root.Children {
+		if child.Start <= selected.Start && selected.End <= child.End {
+			return child
+		}
+	}
+
+	return nil
+}
+
+func indentReplacement(source, indent []byte) []byte {
+	if len(indent) == 0 || len(source) == 0 {
+		return source
+	}
+
+	out := make([]byte, 0, len(source)+bytes.Count(source, []byte{'\n'})*len(indent)+len(indent))
+
+	out = append(out, indent...)
+
+	for index, value := range source {
+		out = append(out, value)
+		if value == '\n' && index+1 < len(source) {
+			out = append(out, indent...)
+		}
+	}
+
+	return out
 }
 
 func verifyRangeOutput(source, out []byte, parsed *parser.File) error {

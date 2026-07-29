@@ -1,6 +1,8 @@
 package bench
 
 import (
+	"os"
+	"strconv"
 	"testing"
 
 	"github.com/pawnkit/pawn-parser"
@@ -81,4 +83,44 @@ func BenchmarkMacroHeavy(b *testing.B) {
 
 func BenchmarkPreprocessorHeavy(b *testing.B) {
 	benchFormat(b, preprocessorHeavySource)
+}
+
+func BenchmarkFormatFile(b *testing.B) {
+	path := os.Getenv("PAWNFMT_BENCH_FILE")
+	if path == "" {
+		b.Skip("PAWNFMT_BENCH_FILE is not set")
+	}
+
+	source, err := os.ReadFile(path)
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	benchFormat(b, source)
+}
+
+func BenchmarkFormatFileRange(b *testing.B) {
+	path := os.Getenv("PAWNFMT_BENCH_FILE")
+
+	offset, err := strconv.Atoi(os.Getenv("PAWNFMT_BENCH_OFFSET"))
+	if path == "" || err != nil {
+		b.Skip("PAWNFMT_BENCH_FILE and PAWNFMT_BENCH_OFFSET are required")
+	}
+
+	source, err := os.ReadFile(path)
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	cfg := config.Default()
+
+	b.SetBytes(int64(len(source)))
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for range b.N {
+		if _, err := formatter.SourceRange(source, cfg, offset, offset); err != nil {
+			b.Fatal(err)
+		}
+	}
 }
