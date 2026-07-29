@@ -2,6 +2,13 @@
 
 Notable changes are recorded here.
 
+## 1.3.8 - 2026-07-29
+
+### Performance
+
+- Verify range formatting within the changed declaration instead of reparsing
+  the full output.
+
 ## 1.3.7 - 2026-07-29
 
 ### Performance

@@ -42,10 +42,6 @@ func (formatter *Formatter) FormatRange(source []byte, start, end int) (RangeRes
 		return RangeResult{}, err
 	}
 
-	if err := verifyRangeOutput(source, out, parsed); err != nil {
-		return RangeResult{}, err
-	}
-
 	return RangeResult{Source: out, FormattedRange: Range{Start: replaceStart, End: node.End}}, nil
 }
 
@@ -85,7 +81,17 @@ func (formatter *Formatter) renderRangeReplacement(source []byte, parsed *parser
 		return nil, 0, errors.New("formatted syntax tree no longer matches the selected range")
 	}
 
-	formattedNode := correspondingRangeNode(parent, formattedParsed.Root.Children[0], node)
+	formattedParent := formattedParsed.Root.Children[0]
+
+	if err := verifySemanticTokens(source[parent.Start:parent.End], formattedParentSource); err != nil {
+		return nil, 0, fmt.Errorf("range-formatted output changed source semantics: %w", err)
+	}
+
+	if err := compareSemanticNodes(parent, formattedParent, "range"); err != nil {
+		return nil, 0, fmt.Errorf("range-formatted output changed source structure: %w", err)
+	}
+
+	formattedNode := correspondingRangeNode(parent, formattedParent, node)
 	if formattedNode == nil {
 		return nil, 0, errors.New("could not locate selected syntax in formatted output")
 	}
@@ -139,23 +145,6 @@ func indentReplacement(source, indent []byte) []byte {
 	}
 
 	return out
-}
-
-func verifyRangeOutput(source, out []byte, parsed *parser.File) error {
-	verified := parser.Parse(out)
-	if verified.HasParseErrors() && !parsed.HasParseErrors() {
-		return parseDiagnostic(out, verified, "range-formatted output")
-	}
-
-	if err := verifySemanticTokensFromFiles(parsed, verified, source, out); err != nil {
-		return fmt.Errorf("range-formatted output changed source semantics: %w", err)
-	}
-
-	if err := verifySemanticStructure(parsed, verified); err != nil {
-		return fmt.Errorf("range-formatted output changed source structure: %w", err)
-	}
-
-	return nil
 }
 
 func smallestRangeNode(source []byte, root *parser.Node, start, end int) (*parser.Node, error) {

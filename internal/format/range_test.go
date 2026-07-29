@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/pawnkit/pawn-parser"
 	"github.com/pawnkit/pawnfmt/internal/config"
 	formatter "github.com/pawnkit/pawnfmt/internal/format"
 )
@@ -34,6 +35,10 @@ func TestFormatRangeFormatsOneTopLevelUnitOnly(t *testing.T) {
 	if result.FormattedRange.Start > selection || selection >= result.FormattedRange.End {
 		t.Fatalf("expanded range [%d,%d) does not contain selection %d",
 			result.FormattedRange.Start, result.FormattedRange.End, selection)
+	}
+
+	if parsed := parser.Parse(result.Source); parsed.HasParseErrors() {
+		t.Fatalf("range output does not parse cleanly: %v", parsed.Diagnostics)
 	}
 }
 
@@ -66,6 +71,10 @@ func TestFormatRangeMapsIntentionalControlBodyBraces(t *testing.T) {
 
 	if !strings.Contains(text, "new   untouched=2;") {
 		t.Fatalf("unselected sibling statement was formatted:\n%s", text)
+	}
+
+	if parsed := parser.Parse(result.Source); parsed.HasParseErrors() {
+		t.Fatalf("range output does not parse cleanly: %v", parsed.Diagnostics)
 	}
 }
 
