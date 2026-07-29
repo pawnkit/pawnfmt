@@ -33,3 +33,9 @@ tasks:
     cmds:
       - testdata/real-world/fetch.sh
       - PAWNFMT_CORPUS=1 go test ./internal/format -run=TestCorpusReport
+
+  compiler:
+    cmds:
+      - test -n "${PAWNFMT_PAWNCC:-}" || { echo "set PAWNFMT_PAWNCC"; exit 1; }
+      - test -n "${PAWN_CORPUS_DIR:-}" || { echo "set PAWN_CORPUS_DIR"; exit 1; }
+      - go test -count=1 -run '^TestCompilerEquivalence$' ./internal/format

@@ -86,6 +86,38 @@ jobs:
       - name: Fuzz formatter convergence
         run: go test ./internal/format/... -run=^$ -fuzz=FuzzFormatConverges -fuzztime=30s
 
+  compiler-equivalence:
+    name: Compiler equivalence
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out pawnfmt
+        uses: actions/checkout@v7.0.1
+        with:
+          path: pawnfmt
+
+      - name: Check out pawn-corpus
+        uses: actions/checkout@v7.0.1
+        with:
+          repository: pawnkit/pawn-corpus
+          ref: v0.1.13
+          path: pawn-corpus
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: pawnfmt/go.mod
+
+      - name: Download Pawn compiler 3.10.10
+        run: |
+          curl -fsSL -o pawnc.tar.gz https://github.com/pawn-lang/compiler/releases/download/v3.10.10/pawnc-3.10.10-linux.tar.gz
+          tar -xzf pawnc.tar.gz
+
+      - name: Compare compiler results
+        working-directory: pawnfmt
+        env:
+          PAWN_CORPUS_DIR: ${{ github.workspace }}/pawn-corpus
+          PAWNFMT_PAWNCC: ${{ github.workspace }}/pawnc-3.10.10-linux/bin/pawncc
+        run: go test -count=1 -run '^TestCompilerEquivalence$' ./internal/format
+
   benchmarks:
     name: Benchmarks
     runs-on: ubuntu-latest

@@ -2,6 +2,12 @@
 
 Notable changes are recorded here.
 
+## 1.4.3 - 2026-07-29
+
+### Added
+
+- Compare compiler output before and after formatting a shared corpus fixture.
+
 ## 1.4.2 - 2026-07-29
 
 ### Fixed

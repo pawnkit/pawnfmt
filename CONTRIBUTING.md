@@ -14,3 +14,6 @@ task check
 Formatting must be deterministic. Avoid style changes based only on personal
 preference; explain the Pawn construct or project compatibility issue behind
 the change.
+
+Run `task compiler` with `PAWNFMT_PAWNCC` and `PAWN_CORPUS_DIR` set when a
+change could affect compiled output.
