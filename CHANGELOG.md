@@ -2,6 +2,12 @@
 
 Notable changes are recorded here.
 
+## 1.4.4 - 2026-07-29
+
+### Changed
+
+- Publish archive SBOMs and build provenance with releases.
+
 ## 1.4.3 - 2026-07-29
 
 ### Added
