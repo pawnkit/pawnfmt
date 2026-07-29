@@ -2,6 +2,12 @@
 
 Notable changes are recorded here.
 
+## 1.3.9 - 2026-07-29
+
+### Fixed
+
+- Format editor ranges that span more than one top-level declaration.
+
 ## 1.3.8 - 2026-07-29
 
 ### Performance

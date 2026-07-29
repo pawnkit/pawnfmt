@@ -42,14 +42,22 @@ func TestFormatRangeFormatsOneTopLevelUnitOnly(t *testing.T) {
 	}
 }
 
-func TestFormatRangeRejectsSelectionAcrossTopLevelUnits(t *testing.T) {
+func TestFormatRangeFormatsSelectionAcrossTopLevelUnits(t *testing.T) {
 	t.Parallel()
 
-	source := []byte("new first=1;\nnew second=2;\n")
+	source := []byte("new first=1;\nnew second=2;\nnew   untouched=3;\n")
 
-	_, err := formatter.SourceRange(source, config.Default(), 4, len(source)-2)
-	if err == nil || !strings.Contains(err.Error(), "crosses multiple") {
-		t.Fatalf("expected a cross-unit range error, got %v", err)
+	result, err := formatter.SourceRange(source, config.Default(), 4, bytes.Index(source, []byte("new   untouched")))
+	if err != nil {
+		t.Fatalf("SourceRange: %v", err)
+	}
+
+	if got := string(result.Source); got != "new first = 1;\nnew second = 2;\nnew   untouched=3;\n" {
+		t.Fatalf("unexpected range output:\n%s", got)
+	}
+
+	if result.FormattedRange.Start != 0 || result.FormattedRange.End != bytes.Index(source, []byte("\nnew   untouched")) {
+		t.Fatalf("formatted range = %#v", result.FormattedRange)
 	}
 }
 

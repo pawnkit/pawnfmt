@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"slices"
 
 	parser "github.com/pawnkit/pawn-parser"
 
@@ -25,27 +26,36 @@ type RangeResult struct {
 	FormattedRange Range
 }
 
-// FormatRange formats the single top-level syntax unit containing [start,end).
+// FormatRange formats the syntax units intersecting [start,end).
 // Everything outside FormattedRange is preserved byte-for-byte.
 func (formatter *Formatter) FormatRange(source []byte, start, end int) (RangeResult, error) {
 	if start < 0 || end < start || end > len(source) {
 		return RangeResult{}, fmt.Errorf("invalid format range [%d,%d) for source of %d bytes", start, end, len(source))
 	}
 
-	parsed, node, err := formatter.locateRangeTarget(source, start, end)
+	parsed, nodes, err := formatter.locateRangeTargets(source, start, end)
 	if err != nil {
 		return RangeResult{}, err
 	}
 
-	out, replaceStart, err := formatter.renderRangeReplacement(source, parsed, node)
-	if err != nil {
-		return RangeResult{}, err
+	out := source
+	for _, node := range slices.Backward(nodes) {
+		out, _, err = formatter.renderRangeReplacement(out, parsed, node)
+		if err != nil {
+			return RangeResult{}, err
+		}
 	}
 
-	return RangeResult{Source: out, FormattedRange: Range{Start: replaceStart, End: node.End}}, nil
+	return RangeResult{
+		Source: out,
+		FormattedRange: Range{
+			Start: indentationStart(source, nodes[0].Start),
+			End:   nodes[len(nodes)-1].End,
+		},
+	}, nil
 }
 
-func (formatter *Formatter) locateRangeTarget(source []byte, start, end int) (*parser.File, *parser.Node, error) {
+func (formatter *Formatter) locateRangeTargets(source []byte, start, end int) (*parser.File, []*parser.Node, error) {
 	parsed := parser.Parse(source)
 	if parsed.HasParseErrors() && formatter.config.ParseMode == config.ParseModeStrict {
 		return nil, nil, parseDiagnostic(source, parsed, "source")
@@ -55,12 +65,35 @@ func (formatter *Formatter) locateRangeTarget(source []byte, start, end int) (*p
 		return nil, nil, errors.New("source has no syntax tree")
 	}
 
-	node, err := smallestRangeNode(source, parsed.Root, start, end)
+	nodes, err := rangeNodes(source, parsed.Root, start, end)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return parsed, node, nil
+	return parsed, nodes, nil
+}
+
+func rangeNodes(source []byte, root *parser.Node, start, end int) ([]*parser.Node, error) {
+	var overlaps []*parser.Node
+
+	if start != end {
+		for _, child := range root.Children {
+			if child.End > start && indentationStart(source, child.Start) < end {
+				overlaps = append(overlaps, child)
+			}
+		}
+	}
+
+	if len(overlaps) > 1 {
+		return overlaps, nil
+	}
+
+	node, err := smallestRangeNode(source, root, start, end)
+	if err != nil {
+		return nil, err
+	}
+
+	return []*parser.Node{node}, nil
 }
 
 func (formatter *Formatter) renderRangeReplacement(source []byte, parsed *parser.File, node *parser.Node) ([]byte, int, error) {
@@ -148,26 +181,12 @@ func indentReplacement(source, indent []byte) []byte {
 }
 
 func smallestRangeNode(source []byte, root *parser.Node, start, end int) (*parser.Node, error) {
-	overlaps := 0
-
-	if start != end {
-		for _, child := range root.Children {
-			if child.End > start && indentationStart(source, child.Start) < end {
-				overlaps++
-			}
-		}
-
-		if overlaps > 1 {
-			return nil, errors.New("format range crosses multiple top-level syntax units")
-		}
-	}
-
 	var match *parser.Node
 
 	for _, child := range root.Children {
 		if rangeContainedByNode(source, child, start, end) {
 			if match != nil {
-				return nil, errors.New("format range crosses multiple top-level syntax units")
+				return nil, errors.New("format range is ambiguous")
 			}
 
 			match = child
