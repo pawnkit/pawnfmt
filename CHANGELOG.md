@@ -2,6 +2,12 @@
 
 Notable changes are recorded here.
 
+## 1.4.1 - 2026-07-29
+
+### Fixed
+
+- Preserve grouped alignment when formatting a range on save.
+
 ## 1.4.0 - 2026-07-29
 
 ### Changed

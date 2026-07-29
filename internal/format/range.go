@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"slices"
 
 	parser "github.com/pawnkit/pawn-parser"
 
 	"github.com/pawnkit/pawnfmt/internal/config"
+	"github.com/pawnkit/pawnfmt/internal/doc"
 	"github.com/pawnkit/pawnfmt/internal/printer"
 	"github.com/pawnkit/pawnfmt/internal/trivia"
 )
@@ -38,21 +38,69 @@ func (formatter *Formatter) FormatRange(source []byte, start, end int) (RangeRes
 		return RangeResult{}, err
 	}
 
-	out := source
-	for _, node := range slices.Backward(nodes) {
-		out, _, err = formatter.renderRangeReplacement(out, parsed, node)
-		if err != nil {
-			return RangeResult{}, err
-		}
+	if len(nodes) > 1 {
+		return formatter.renderTopLevelRange(source, parsed, nodes)
+	}
+
+	out, replaceStart, err := formatter.renderRangeReplacement(source, parsed, nodes[0])
+	if err != nil {
+		return RangeResult{}, err
 	}
 
 	return RangeResult{
 		Source: out,
 		FormattedRange: Range{
-			Start: indentationStart(source, nodes[0].Start),
-			End:   nodes[len(nodes)-1].End,
+			Start: replaceStart,
+			End:   nodes[0].End,
 		},
 	}, nil
+}
+
+func (formatter *Formatter) renderTopLevelRange(source []byte, parsed *parser.File, nodes []*parser.Node) (RangeResult, error) {
+	rangeFormatter := *formatter
+	rangeFormatter.config.SortIncludes = false
+
+	st := newState(parsed, rangeFormatter.config, trivia.Scan(source))
+	st.topLevelContext = true
+	widths := st.alignmentWidths(nodes)
+	macroWidths := st.macroAlignmentWidths(nodes)
+	st.applyCommentAlignment(nodes)
+
+	parts := make([]doc.Doc, 0, len(nodes)*2)
+	for index, node := range nodes {
+		if index > 0 {
+			parts = append(parts, st.topLevelSeparator(nodes[index-1], node))
+		}
+
+		st.hint.alignDeclarationWidth = widths[node]
+		st.hint.alignMacroValueWidth = macroWidths[node]
+		parts = append(parts, st.formatNode(node))
+	}
+
+	options := st.printerOptions()
+	options.InsertFinalNewline = false
+	replacement := []byte(printer.Print(doc.Concat(parts...), options))
+	replaceStart := indentationStart(source, nodes[0].Start)
+	replaceEnd := nodes[len(nodes)-1].End
+	original := source[replaceStart:replaceEnd]
+
+	if err := verifySemanticTokens(original, replacement); err != nil {
+		return RangeResult{}, fmt.Errorf("range-formatted output changed source semantics: %w", err)
+	}
+
+	originalParsed := parser.Parse(original)
+	formattedParsed := parser.Parse(replacement)
+
+	if err := compareSemanticNodes(originalParsed.Root, formattedParsed.Root, "range"); err != nil {
+		return RangeResult{}, fmt.Errorf("range-formatted output changed source structure: %w", err)
+	}
+
+	out := make([]byte, 0, len(source)-len(original)+len(replacement))
+	out = append(out, source[:replaceStart]...)
+	out = append(out, replacement...)
+	out = append(out, source[replaceEnd:]...)
+
+	return RangeResult{Source: out, FormattedRange: Range{Start: replaceStart, End: replaceEnd}}, nil
 }
 
 func (formatter *Formatter) locateRangeTargets(source []byte, start, end int) (*parser.File, []*parser.Node, error) {
@@ -70,7 +118,62 @@ func (formatter *Formatter) locateRangeTargets(source []byte, start, end int) (*
 		return nil, nil, err
 	}
 
+	nodes = formatter.expandMacroAlignmentRange(source, parsed, nodes)
+
 	return parsed, nodes, nil
+}
+
+func (formatter *Formatter) expandMacroAlignmentRange(source []byte, parsed *parser.File, nodes []*parser.Node) []*parser.Node {
+	if !formatter.config.AlignConsecutiveMacros || len(nodes) != 1 || parsed.Root == nil {
+		return nodes
+	}
+
+	selected := topLevelRangeParent(parsed.Root, nodes[0])
+	if !alignableMacro(selected) {
+		return nodes
+	}
+
+	index := topLevelNodeIndex(parsed.Root, selected)
+	if index < 0 {
+		return nodes
+	}
+
+	st := newState(parsed, formatter.config, trivia.Scan(source))
+	first, last := macroGroupBounds(st, parsed.Root.Children, index)
+
+	return parsed.Root.Children[first : last+1]
+}
+
+func topLevelNodeIndex(root, selected *parser.Node) int {
+	for index, child := range root.Children {
+		if child == selected {
+			return index
+		}
+	}
+
+	return -1
+}
+
+func macroGroupBounds(st *state, children []*parser.Node, index int) (int, int) {
+	first, last := index, index
+
+	for first > 0 && alignableMacro(children[first-1]) &&
+		st.blankLinesBefore(children[first].LeadingTrivia()) == 0 &&
+		!hasCommentTrivia(children[first].LeadingTrivia()) {
+		first--
+	}
+
+	for last+1 < len(children) && alignableMacro(children[last+1]) &&
+		st.blankLinesBefore(children[last+1].LeadingTrivia()) == 0 &&
+		!hasCommentTrivia(children[last+1].LeadingTrivia()) {
+		last++
+	}
+
+	return first, last
+}
+
+func alignableMacro(node *parser.Node) bool {
+	return node != nil && node.Kind == parser.KindDirectiveDefine && node.Field("value") != nil
 }
 
 func rangeNodes(source []byte, root *parser.Node, start, end int) ([]*parser.Node, error) {

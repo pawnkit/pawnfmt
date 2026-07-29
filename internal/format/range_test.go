@@ -61,6 +61,36 @@ func TestFormatRangeFormatsSelectionAcrossTopLevelUnits(t *testing.T) {
 	}
 }
 
+func TestFormatRangeKeepsMacroGroupAlignment(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("#define SHORT       1\n#define MUCH_LONGER 2\n")
+
+	result, err := formatter.SourceRange(source, config.Default(), 0, len(source))
+	if err != nil {
+		t.Fatalf("SourceRange: %v", err)
+	}
+
+	if !bytes.Equal(result.Source, source) {
+		t.Fatalf("range formatting removed alignment:\n%s", result.Source)
+	}
+}
+
+func TestFormatRangeExpandsAcrossAlignedMacroGroup(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("#define SHORT       1\n#define MUCH_LONGER 2\n")
+
+	result, err := formatter.SourceRange(source, config.Default(), 8, 13)
+	if err != nil {
+		t.Fatalf("SourceRange: %v", err)
+	}
+
+	if !bytes.Equal(result.Source, source) {
+		t.Fatalf("range formatting removed adjacent alignment:\n%s", result.Source)
+	}
+}
+
 func TestFormatRangeMapsIntentionalControlBodyBraces(t *testing.T) {
 	t.Parallel()
 
