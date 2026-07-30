@@ -104,21 +104,7 @@ func (s *state) macroAlignmentWidths(items []*parser.Node) map[*parser.Node]int 
 }
 
 func (s *state) formatMacroParamList(n *parser.Node) doc.Doc {
-	if len(n.Children) == 0 {
-		return doc.Text("()")
-	}
-
-	sep := ","
-	if s.config.SpaceAfterComma {
-		sep = ", "
-	}
-
-	names := make([]string, 0, len(n.Children))
-	for _, c := range n.Children {
-		names = append(names, c.Text(s.source))
-	}
-
-	return doc.Text("(" + strings.Join(names, sep) + ")")
+	return doc.Text(n.Text(s.source))
 }
 
 func (s *state) formatMacroValue(value *parser.Node) doc.Doc {

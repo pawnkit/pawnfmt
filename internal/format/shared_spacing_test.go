@@ -339,6 +339,22 @@ func TestOpaqueTokenPastingMacroIsPreservedAndIdempotent(t *testing.T) {
 	}
 }
 
+func TestMacroPatternSpacingIsPreserved(t *testing.T) {
+	t.Parallel()
+
+	source := []byte("#define SetItemExtraData(%0,%1) SetItemArrayDataAtCell(%0,%1,0,true)\n")
+	formatted := mustFormat(t, source, config.Default())
+
+	if !strings.Contains(string(formatted), "SetItemExtraData(%0,%1)") {
+		t.Fatalf("macro pattern spacing changed:\n%s", formatted)
+	}
+
+	second := mustFormat(t, formatted, config.Default())
+	if string(second) != string(formatted) {
+		t.Fatalf("macro formatting is not idempotent:\n%s", second)
+	}
+}
+
 func TestSharedConditionalRespectsInnerSpacingOptions(t *testing.T) {
 	t.Parallel()
 

@@ -112,6 +112,10 @@ Notable changes are recorded here.
 - Automatic Pawn project discovery when paths are omitted.
 - Project documentation, contribution guidance, and security policy.
 
+### Fixed
+
+- Preserve whitespace in macro parameter patterns.
+
 ### Changed
 
 - Project discovery now uses the public `pawn-project` v0.1.0 module.
