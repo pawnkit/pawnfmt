@@ -2,6 +2,12 @@
 
 Notable changes are recorded here.
 
+## 1.4.5 - 2026-07-30
+
+### Fixed
+
+- Preserve whitespace in macro parameter patterns.
+
 ## 1.4.4 - 2026-07-29
 
 ### Changed
@@ -111,10 +117,6 @@ Notable changes are recorded here.
 - Public Go formatting API.
 - Automatic Pawn project discovery when paths are omitted.
 - Project documentation, contribution guidance, and security policy.
-
-### Fixed
-
-- Preserve whitespace in macro parameter patterns.
 
 ### Changed
 
