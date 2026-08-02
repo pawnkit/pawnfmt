@@ -2,6 +2,12 @@
 
 Notable changes are recorded here.
 
+## 1.4.7 - 2026-08-02
+
+### Changed
+
+- Use pawn-project 0.34.2 and pawnkit-core 0.5.0.
+
 ## 1.4.6 - 2026-08-02
 
 ### Changed
