@@ -2,6 +2,12 @@
 
 Notable changes are recorded here.
 
+## 1.4.10 - 2026-08-03
+
+### Changed
+
+- Use pawn-parser v1.5.11.
+
 ## 1.4.9 - 2026-08-03
 
 ### Changed
