@@ -10,7 +10,7 @@ require (
 )
 
 require (
-	github.com/alecthomas/kong v1.16.0
+	github.com/alecthomas/kong v1.16.1
 	github.com/editorconfig/editorconfig-core-go/v2 v2.6.4
 )
 
